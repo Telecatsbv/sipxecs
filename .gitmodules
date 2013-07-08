@@ -79,3 +79,6 @@
 [submodule "openacd"]
 	path = openacd
 	url = git://github.com/sipxopenacd/openacd.git
+[submodule "tc-addons"]
+	path = tc-addons
+	url = ssh://git@git.telecats.nl/opt/git/sipxecsTC_addons
