@@ -10,6 +10,6 @@
 	<classpathentry kind="var" path="SIPX_JAVADIR/sipXecs/sipXconfig/agent-bindings.jar"/>
 	<classpathentry kind="var" path="SIPX_JAVADIR/sipXecs/sipXconfig/cdr-bindings.jar"/>
 	<classpathentry kind="var" path="SIPX_JAVADIR"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/sipxcommons"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sipXcommons"/>
 	<classpathentry kind="output" path="bin.eclipse"/>
 </classpath>
