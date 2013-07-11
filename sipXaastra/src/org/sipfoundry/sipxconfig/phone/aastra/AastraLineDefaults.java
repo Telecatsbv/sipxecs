@@ -70,7 +70,11 @@ public class AastraLineDefaults {
     public String getScreenName() {
         User u = m_line.getUser();
         if (u != null) {
-            return u.getUserName() + "@" + m_defaults.getDomainName();
+            String userName = u.getUserName();
+            if(userName!=null && !userName.startsWith("~~"))
+            {
+                return userName;
+            }
             // return u.getFirstName();
         }
         return null;
