@@ -136,6 +136,13 @@
         </type>
         <value>0</value>
       </setting>
+      <setting name="sip_registration_period">
+		<profileName>sip registration period</profileName>
+		<type>
+			<integer min="1000" />
+		</type>
+		<value>3000</value>
+      </setting>
     </group>
     <group name="rtp">
       <setting name="sip_rtp_port">
@@ -6017,13 +6024,6 @@
           <integer />
         </type>
         <value>0</value>
-      </setting>
-      <setting name="sip_registration_period">
-		<profileName>sip registration period</profileName>
-		<type>
-			<integer min="1000" />
-		</type>
-		<value>3000</value>
       </setting>
       <setting name="sip_centralized_conf">
         <profileName>sip centralized conf</profileName>
