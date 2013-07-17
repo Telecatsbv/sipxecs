@@ -272,7 +272,8 @@
       <value>lcr</value>
     </option>
     <option>
-      <value>callers list</value>
+      <label>callers list</label>
+      <value>callers</value>
     </option>
     <option>
       <value>directory</value>
