@@ -36,7 +36,7 @@ public class AastraLineDefaults {
 
     @SettingEntry(path = SIP_AUTH_NAME)
     public String getAuthorizationId() {
-        return getAddress();
+        return m_line.getAuthenticationUserName();
     }
 
     @SettingEntry(path = SIP_USER_NAME)
