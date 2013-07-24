@@ -43,11 +43,14 @@ AC_ARG_VAR(SIPXPBXGROUP, [The sipX service daemon group name, default is value o
 test -n "$SIPXPBXGROUP" || SIPXPBXGROUP=$SIPXPBXUSER
 
 AC_ARG_VAR(PACKAGE_REVISION, [Package revision number, default is pulled from git])
-if test -z "$PACKAGE_REVISION" ; then
+# In mock env we don't have git available, but we do have the .tarball-revision file
+if test -z "$PACKAGE_REVISION" -a -f ".tarball-revision"; then
+    PACKAGE_REVISION=`cat .tarball-revision`
+elif test -z "$PACKAGE_REVISION" ; then
   # Submodules need to add the number of commits of parent plus the number of commits
   # to their repository. Otherwise a rebuild may not increase revision and fresh rpm
   # silently not installed.
-  if test -d "${srcdir}/.git" ; then
+  if test -d "${srcdir}/.git" -a -d "${srcdir}/../.git"; then
     SUBMOD_OPT="-s .."
   fi
   PACKAGE_REVISION=`cd ${srcdir} && ./config/revision-gen ${SUBMOD_OPT} ${PACKAGE_VERSION}`
