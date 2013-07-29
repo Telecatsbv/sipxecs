@@ -13,6 +13,7 @@ if test -f ./tarball-revision; then
     cat ./tarball-revision
     exit
 fi
+
 case $1 in
   -s )
     shift
@@ -23,13 +24,15 @@ case $1 in
     parent_rev=${parent%.*}
     ;;
 esac
+
 VERSION=$1
 VER_REV=`git describe --abbrev=5  HEAD`
 if [ "$?" != "0" ]; then
     echo "Could not find tag v$VERSION" 1>&2
     exit 1
 fi
-REV=`echo "${VER_REV}" | sed 's/\([0-9.]*\)-\([0-9.]*\)-\([0-9.]*\)/\2.\3/g'`
+
+REV=`echo "${VER_REV}" | sed 's/\([0-9.]*\)-\([0-9.]*\)-\([0-9.]*\)-\([0-9.]*\)-\([0-9.]*\)/\2.\3.\4.\5/g'`
 #REV=`echo "${VER_REV}" | sed -e 's/^[0-9.]\+-//g' -e 's/-g\?/./g'`
 if [ -n "$parent_rev" ]; then
   echo $[ ${parent_rev} + ${REV%.*} ].${REV#*.}
