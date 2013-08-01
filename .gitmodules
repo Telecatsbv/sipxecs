@@ -84,4 +84,4 @@
 	url = ssh://git@git.telecats.nl/opt/git/sipxecsTC_addons
 [submodule "sipXhotdesking"]
 	path = sipXhotdesking
-	url = git@git.telecats.nl:sipXhotdesking
+	url = ssh://git@git.telecats.nl/opt/git/sipXhotdesking sipXhotdesking
