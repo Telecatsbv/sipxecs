@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ Copyright (c) 2011 Telecats B.V. All rights reserved. Contributed to SIPfoundry and eZuce, Inc. under a Contributor Agreement.
+ This library or application is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License (AGPL) as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+ This library or application is distributed in the hope that it will be useful, but WITHOUT
+ ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License (AGPL) for more details.
+ -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<bean id="hotdeskingManager" class="org.springframework.aop.framework.ProxyFactoryBean"
+		parent="abstractDao">
+		<property name="proxyInterfaces"
+			value="org.sipfoundry.sipxconfig.hotdesking.HotdeskingManager" />
+		<property name="target">
+			<ref local="hotdeskingManagerImpl" />
+		</property>
+	</bean>
+
+	<bean id="hotdeskingCheckTaskTimer"
+		class="org.sipfoundry.sipxconfig.hotdesking.HotdeskingCheckTaskTimer" />
+
+	<bean id="hotdeskingManagerImpl"
+		class="org.sipfoundry.sipxconfig.hotdesking.HotdeskingManagerImpl" >
+		<property name="sipxServiceManager" ref="sipxServiceManager" />		
+		<property name="sysTempDir" value="${sysdir.tmp}" />
+		<property name="timerTask" ref="hotdeskingCheckTaskTimer" />
+
+		<property name="coreContext" ref="coreContext" />
+		<property name="phoneContext" ref="phoneContextImpl" />
+		<property name="profileManager" ref="eagerPhoneProfileManager" />
+		<property name="restartManager" ref="phoneRestartManager" />
+		<property  name="hotProvisioningManager" ref="phoneProvisionManager" />
+		<property  name="localizationContext" ref="localizationContextImpl" />
+		<property  name="registrationContext" ref="registrationContext" />
+		<property  name="adminContext" ref="adminContext" />
+	</bean>
+
+	<bean id="sipxHotdeskingService"
+		class="org.sipfoundry.sipxconfig.hotdesking.SipxHotdeskingService"
+		parent="sipxService" scope="prototype">
+		<property name="processName" value="sipXhotdesking" />
+		<property name="modelName" value="sipxhotdesking.xml" />
+		<property name="modelDir" value="sipxhotdesking" />
+		<property name="docDir" value="${sysdir.doc}" />
+		<property name="hotdeskingManager" ref="hotdeskingManagerImpl" />
+		<property name="configurations">
+			<list>
+				<ref bean="sipxHotdeskingConfiguration" />
+			</list>
+		</property>
+		<property name="bundles">
+			<set>
+				<ref bean="managementBundle" />
+			</set>
+		</property>
+	</bean>
+
+	<bean id="hotdeskingFreeswitchExtensionProviderImpl"
+		class="org.sipfoundry.sipxconfig.hotdesking.HotdeskingFreeswitchExtensionProviderImpl">
+		<property name="sipxServiceManager" ref="sipxServiceManager" />
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+
+	<bean id="hotdeskingFreeswitchExtensionProvider" class="org.springframework.aop.framework.ProxyFactoryBean"
+		parent="abstractDao">
+		<property name="proxyInterfaces"
+			value="org.sipfoundry.sipxconfig.hotdesking.HotdeskingFreeswitchExtensionProvider" />
+		<property name="target">
+			<ref local="hotdeskingFreeswitchExtensionProviderImpl" />
+		</property>
+	</bean>
+
+
+	<bean id="sipxHotdeskingConfiguration"
+		class="org.sipfoundry.sipxconfig.hotdesking.SipxHotdeskingConfiguration"
+		scope="prototype" parent="serviceConfigurationFile">
+		<property name="template" value="sipxhotdesking/sipxhotdesking.properties.vm" />
+		<property name="name" value="sipxhotdesking.properties" />
+	</bean>
+	
+	<bean id="sipXhotdeskingConfigToProxy" class="org.sipfoundry.sipxconfig.admin.SipxServiceConfigurationAppender" depends-on="sipxProxyService" lazy-init="false">
+		<property name="additionalConfigurationFiles">
+        		<list>
+        			<ref bean="sipxHotdeskingConfiguration" />
+	        	</list>
+     		</property>
+     		<property name="serviceToBindTo" value="sipxProxyService" />
+	</bean>
+</beans>

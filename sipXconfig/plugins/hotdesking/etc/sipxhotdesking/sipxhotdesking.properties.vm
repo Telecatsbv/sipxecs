@@ -1,0 +1,37 @@
+## Copyright (c) 2011 Telecats B.V. All rights reserved. Contributed to SIPfoundry and eZuce, Inc. under a Contributor Agreement.
+## This library or application is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License (AGPL) as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+## This library or application is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License (AGPL) for more details. 
+
+#set($hotdesking=${service.getSettings().getSetting('hotdesking')})
+log.level=$hotdesking.getSetting('log.level').Value
+log.file=${service.logDir}/sipxhotdesking.log
+
+freeswitch.eventSocketPort=$hotdesking.getSetting('freeswitch.eventSocketPort').Value
+
+hotdesking.extension=$hotdesking.getSetting('SIP_HOTDESKING_PREFIX').Value
+hotdesking.logoffUser=$hotdesking.getSetting('LOGOFF_USER').Value
+hotdesking.enableRelogging=$hotdesking.getSetting('ENABLE_RELOGGING').Value
+hotdesking.enablePromptLogoffOtherPhones=$hotdesking.getSetting('ENABLE_PROMPT_LOGOFF_OTHER_PHONES').Value
+hotdesking.enableAutoLogoffOtherPhones=$hotdesking.getSetting('ENABLE_AUTO_LOGOFF_OTHER_PHONES').Value
+hotdesking.enableConfirmation=$hotdesking.getSetting('ENABLE_CONFIRMATION').Value
+hotdesking.auto_logoff_time=$hotdesking.getSetting('AUTO_LOGOFF_TIME').Value
+
+hotdesking.enableWelcomeSkipping=$hotdesking.getSetting('ENABLE_SKIP_WELCOME').Value
+
+hotdesking.enablePincodeSkipping=$hotdesking.getSetting('ENABLE_SKIP_PINCODE').Value
+hotdesking.defaultPincodeIfSkippingPincode=$hotdesking.getSetting('DEFAULT_PINCODE').Value
+
+hotdesking.docDirectory=${service.docDir}
+hotdesking.sipxchangeDomainName=${service.domainName}
+hotdesking.realm=${service.realm}
+
+hotdesking.userPhonesRestUrl=https://${location.fqdn}:8443/sipxconfig/rest/my/phones
+
+hotdesking.supervisorHost=${supervisorHost}
+hotdesking.supervisorHostRpcPort=${service.xmlRpcPort}
+
+#set ( $numberList = $hotdesking.getSetting('SIP_HOTDESKING_ALLOWED').Value.split(" ") )
+#foreach( $number in $numberList )
+hotdesking.allowedNumbers.$velocityCount=$number
+#end
