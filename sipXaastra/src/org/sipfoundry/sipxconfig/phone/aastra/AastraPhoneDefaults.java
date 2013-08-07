@@ -15,7 +15,7 @@ import org.sipfoundry.sipxconfig.setting.SettingEntry;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 
 public class AastraPhoneDefaults {
-    private static final String DEFAULTTIME = "US-Eastern";
+    private static final String DEFAULTTIME = "BE-Brussels";
     private DeviceDefaults m_defaults;
 
     AastraPhoneDefaults(DeviceDefaults defaults) {

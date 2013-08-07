@@ -146,6 +146,10 @@
       <label>lang_it.txt</label>
       <value>lang_it.txt</value>
     </option>
+    <option>
+		<label>lang_nl_nl.txt</label>
+		<value>lang_nl_nl.txt</value>
+	</option>
   </enum>
 </type>
 <type id="time-zone">
@@ -249,6 +253,9 @@
     <option>
       <value>blf</value>
     </option>
+  	<option>
+		<value>blfxfer</value>
+	</option>
     <option>
       <value>list</value>
     </option>
@@ -265,7 +272,8 @@
       <value>lcr</value>
     </option>
     <option>
-      <value>callers list</value>
+      <label>callers list</label>
+      <value>callers</value>
     </option>
     <option>
       <value>directory</value>
@@ -425,4 +433,52 @@
     </option>
   </enum>
 </type>
-
+<type id="expansion-models">
+	<enum>
+		<option>
+			<value>none</value>
+		</option>
+		<option>
+			<value>M670i</value>
+		</option>
+		<option>
+			<value>M675i</value>
+		</option>
+	</enum>
+</type>
+<type id="log-levels">
+	<enum>
+		<option>
+			<label>Fatal Errors</label>
+			<value>1</value>
+		</option>
+		<option>
+			<label>Errors</label>
+			<value>2</value>
+		</option>
+		<option>
+			<label>Warnings</label>
+			<value>4</value>
+		</option>
+		<option>
+			<label>Init</label>
+			<value>8</value>
+		</option>
+		<option>
+			<label>Functions</label>
+			<value>16</value>
+		</option>
+		<option>
+			<label>Info</label>
+			<value>32</value>
+		</option>
+		<option>
+			<label>OFF</label>
+			<value>0</value>
+		</option>
+		<option>
+			<label>Debug</label>
+			<value>65535</value>
+		</option>
+	</enum>
+</type>
