@@ -56,7 +56,7 @@
       <type />
       <value>0.0.0.0</value>
     </setting>
-    <setting name='proxy_port' advanced="yes">
+    <setting name='aastra_proxy_port' advanced="yes">
       <profileName>proxy port</profileName>
       <type>
         <integer />
@@ -68,7 +68,7 @@
       <type />
       <value>0.0.0.0</value>
     </setting>
-    <setting name='registrar_port' advanced="yes">
+    <setting name='aastra_registrar_port' advanced="yes">
       <profileName>registrar port</profileName>
       <type>
         <integer />

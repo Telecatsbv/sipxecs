@@ -1,35 +1,157 @@
 # ===============================================================================================
-# Aastra SIP IP Phone configuration file
+# Aastra SIP IP Phone configuration file (generated on: ${timestamp})
 # ================================================================================================
 
 #macro(Add_setting_with_subgroup $s)
-# -----------------------------------------
-#foreach ($group in $phone.Settings.Values)
-#if ($group.Name == $s)
-# == Settings for ${group.Name} ==
-#foreach ($setting in $group.Values)
-# __ ${setting.Name} __
-#foreach ($subSetting in $setting.Values)
-${subSetting.profileName}: $!{subSetting.Value}
+	# -----------------------------------------
+	#foreach ($group in $phone.Settings.Values)
+		#if ($group.Name == $s)
+			# == Settings for ${group.Name} ==
+			#foreach ($setting in $group.Values)
+				# __ ${setting.Name} __
+				#if($setting.Name.equals("dir"))
+					#set($dir_disabled = 0)
+					#foreach ($subSetting in $setting.Values)
+						#if ($subSetting.profileName.equals("directory disabled") && $subSetting.Value.equals("1"))
+							#set($dir_disabled = 1)
+							${subSetting.profileName}: $!{subSetting.Value}
+						#elseif($dir_disabled == 1)
+							${subSetting.profileName}:
+						#else
+							${subSetting.profileName}: $!{subSetting.Value}
+						#end
+					#end
+				#else	
+					#foreach ($subSetting in $setting.Values)
+						${subSetting.profileName}: $!{subSetting.Value}
+					#end
+				#end
+			#end
+		#end
+	#end
 #end
-#end
-#end
-#end
-#end
-##
+
 #macro(Add_setting $s)
 # -----------------------------------------
-#foreach ($group in $phone.Settings.Values)
-#if ($group.Name == $s)
-# == Settings for ${s} ==
-#foreach ($setting in $group.Values)
-${setting.profileName}: $!{setting.Value}
+	#foreach ($group in $phone.Settings.Values)
+		#if ($group.Name == $s)
+			# == Settings for ${s} ==
+			#foreach ($setting in $group.Values)
+				${setting.profileName}: $!{setting.Value}
+			#end
+		#end
+	#end
 #end
+
+
+#macro(Add_button $b)
+# -----------------------------------------
+	#set ( $buttongroups = $b.split(",") )
+	#set ($count = 0)
+	#foreach ($bg in $buttongroups)
+		#foreach ($group in $phone.Settings.Values)
+			#if ($group.Name == $bg)
+				#if ($bg.substring(0,6) == "expmod")
+					#foreach ($sett in $group.Values)
+						#if ($sett.Name == "type")
+							#if ($sett.Value == "none")
+								#set ($max = 0)
+							#elseif ($sett.Value == "M670i")
+								#set ($max = 36)
+							#elseif ($sett.Value == "M675i")
+								#set ($max = 60)
+							#end
+						#end
+					#end
+				#end
+				# == Settings for ${bg} ==
+				#set ($keycount = 1)
+				#foreach ($subgroup in $group.Values)
+					#if ($bg.substring(0,6) != "expmod")
+						#set ($empty = "false")
+						#foreach ($setting in $subgroup.Values)
+							#if ( $setting.profileName == "type" && $setting.Value == "none" )
+								#set ($empty = "true")
+							#end
+						#end
+						#foreach ($setting in $subgroup.Values)
+							#set ($increase = 'no')
+							#if ($empty == 'true')
+								#if ($count < $speeddials.size())
+									#set ($increase = 'yes')
+									#if ( $setting.profileName == "type" )
+										#if ($speeddials.get(${count}).Blf == true)
+											${subgroup.name} ${setting.profileName}: blfxfer
+										#else
+											${subgroup.name} ${setting.profileName}: speeddial
+										#end
+									#elseif ( $setting.profileName == "label" )
+										${subgroup.name} ${setting.profileName}: $speeddials.get(${count}).Label
+									#elseif ( $setting.profileName == "value" )
+										${subgroup.name} ${setting.profileName}: $speeddials.get(${count}).Number
+									#end
+								#else
+									#if ( $setting.profileName == "type" )
+										${subgroup.name} ${setting.profileName}: empty
+									#else
+										${subgroup.name} ${setting.profileName}: $!{setting.Value}
+									#end
+								#end
+							#else
+								${subgroup.name} ${setting.profileName}: $!{setting.Value}
+							#end
+						#end
+						#if ($increase == 'yes')
+							#set ($count = $count + 1)
+						#end
+					#elseif ($bg.substring(0,6) == "expmod" && $keycount <= $max+1)
+						#if ($max != 0)
+							#set ($empty = "false")
+							#foreach ($setting in $subgroup.Values)
+								#if ( $setting.profileName == "type" && $setting.Value == "none" )
+									#set ($empty = "true")
+								#end
+							#end
+							#foreach ($setting in $subgroup.Values)
+								#set ($increase = 'no')
+								#if ($empty == 'true')
+									#if ($count < $speeddials.size())
+										#set ($increase = 'yes')
+										#if ( $setting.profileName == "type" )
+											#if ($speeddials.get(${count}).Blf == true)
+												${bg} ${subgroup.name} ${setting.profileName}: blfxfer
+											#else
+												${bg} ${subgroup.name} ${setting.profileName}: speeddial
+											#end
+										#elseif ( $setting.profileName == "label" )
+											${bg} ${subgroup.name} ${setting.profileName}: $speeddials.get(${count}).Label
+										#elseif ( $setting.profileName == "value" )
+											${bg} ${subgroup.name} ${setting.profileName}: $speeddials.get(${count}).Number
+										#end
+									#else
+										#if ( $setting.profileName == "type" )
+											${bg} ${subgroup.name} ${setting.profileName}: empty
+										#else
+											${bg} ${subgroup.name} ${setting.profileName}: $!{setting.Value}
+										#end
+									#end
+								#else
+									${bg} ${subgroup.name} ${setting.profileName}: $!{setting.Value}
+								#end
+							#end
+							#if ($increase == 'yes')
+								#set ($count = $count + 1)
+							#end
+							#set ($keycount = $keycount + 1)
+						#end
+					#end
+				#end
+			#end
+		#end
+	#end
 #end
-#end
-#end
-##
-##
+
+
 #Add_setting_with_subgroup('network')
 #Add_setting_with_subgroup('globalsr')
 #Add_setting_with_subgroup('server')
@@ -40,6 +162,8 @@ ${setting.profileName}: $!{setting.Value}
 #Add_setting('log')
 #Add_setting('web_server')
 #Add_setting('audioTransmit')
+
+#Add_button('topkeys,topsoftkeys,softkeys,expmod1,expmod2,expmod3')
 
 
 # -----------------------------------------
@@ -59,3 +183,12 @@ sip line${line_id} ${setting.ProfileName}: $!{setting.Value}
 # --- End setings for line${line_id} --
 
 #end
+
+## -----------------------------------------
+## Enable Hot Provisioning
+## -----------------------------------------
+
+sip xml notify event: 1
+#set($pd = $phone.PhoneContext.PhoneDefaults)
+#set ($macAddress = ${phone.SerialNumber.toUpperCase()})
+action uri xml sip notify: http://${pd.TftpServer}:8090/phone/profile/tftproot/${macAddress}.prov.xml
