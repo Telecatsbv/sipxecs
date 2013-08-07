@@ -36,7 +36,6 @@ sipx_core = \
   sipXpolycom \
   sipXrls \
   sipXsaa \
-  sipXaastra \
   sipXrelease
 
 # sipxecs projects that are NOT essential for a running communication system
