@@ -7,4 +7,5 @@ aastra_PKGS = \
 	org.springframework.beans \
 	sipxcommons \
 	sipxconfig-neoconf \
+	plugins/sipXhotdesking \
 	velocity
