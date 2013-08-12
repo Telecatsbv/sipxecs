@@ -20,24 +20,30 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sipfoundry.provisioning.hot.HotProvisionable;
+import org.sipfoundry.provisioning.hot.HotProvisioningManager;
 import org.sipfoundry.sipxconfig.device.Device;
 import org.sipfoundry.sipxconfig.device.Profile;
 import org.sipfoundry.sipxconfig.device.ProfileContext;
 import org.sipfoundry.sipxconfig.device.ProfileFilter;
+import org.sipfoundry.sipxconfig.device.RestartException;
 import org.sipfoundry.sipxconfig.phone.Line;
 import org.sipfoundry.sipxconfig.phone.LineInfo;
 import org.sipfoundry.sipxconfig.phone.Phone;
 import org.sipfoundry.sipxconfig.phonebook.PhonebookEntry;
 import org.sipfoundry.sipxconfig.phonebook.PhonebookManager;
 import org.sipfoundry.sipxconfig.setting.SettingEntry;
+import org.sipfoundry.sipxconfig.sip.SipService;
 import org.sipfoundry.sipxconfig.speeddial.Button;
 import org.sipfoundry.sipxconfig.speeddial.SpeedDial;
 
-public class AastraPhone extends Phone {
+public class AastraPhone extends Phone implements HotProvisionable {
     private static final String LAST_REBOOT_REQUEST_TS_PREFIX = "# last reboot request at:";
     
     private static final Log LOG = LogFactory.getLog(AastraPhone.class);
@@ -47,13 +53,16 @@ public class AastraPhone extends Phone {
     static final String PASSWORD_PATH = "sip_id/password";
     static final String USER_ID_PATH = "sip_id/user_name";
     static final String AUTHORIZATION_ID_PATH = "sip_id/auth_name";
-    private static final String REGISTRATION_PORT_PATH = "server/registrar_port";
+    static final String PHONE_SIP_EXCEPTION = "&phone.sip.exception";
+    static final String REGISTRATION_PORT_PATH = "server/registrar_port";
+    static final String APPLICATION_XML = "application/xml";
 
-    private String m_phonebookFilename = "{0}-Directory.csv";
+    String m_phonebookFilename = "{0}-Directory.csv";
     private String m_xmlCleaningFilename = "aastra-cleaning.xml";
+    private String m_xmlProvisioningFilename = "{0}.prov.xml";
     
     private String m_parentDir;
-
+    
     public AastraPhone() {
     }
 
@@ -184,19 +193,20 @@ public class AastraPhone extends Phone {
 
     @Override
     public Profile[] getProfileTypes() {
-        Profile[] profileTypes;
+        List<Profile> profileTypes = new ArrayList<Profile>();
+        profileTypes.add(new Profile(this));
+        
+        // phonebook profile
         PhonebookManager phonebookManager = getPhonebookManager();
         if (phonebookManager.getPhonebookManagementEnabled()) {
-            profileTypes = new Profile[] {
-                new Profile(this), new PhonebookProfile(getPhonebookFilename())
-            };
-        } else {
-            profileTypes = new Profile[] {
-                new Profile(this)
-            };
+            profileTypes.add(new PhonebookProfile(getPhonebookFilename()));
         }
 
-        return profileTypes;
+        // xml provisioning
+        profileTypes.add(new XmlProvisionProfile(getXmlProvisioningFilename()));
+
+        Profile[] result = profileTypes.toArray(new Profile[profileTypes.size()]);
+        return result;
     }
 
     public ProfileContext getPhonebook() {
@@ -245,5 +255,90 @@ public class AastraPhone extends Phone {
             return getPhonebookFilename();
         }
     }
+    
+    public String getXmlProvisioningFilename() {
+        return MessageFormat.format(m_xmlProvisioningFilename, getSerialNumber().toUpperCase());
+    }
 
+    @Override
+    public void performHotProvisioning(HashMap<String, String> hotProvProps) {
+        String instrAddr = getInstrumentAddrSpec();
+        SipService m_sip = getSipService();
+//        instrAddr = hotProvProps.get(HotProvisioningManager.SIP_CONTACT_HOST_PROP);
+        LOG.debug("AastraPhone: performHotProvisioning instrAddr:" + instrAddr);
+
+        // check prov file is up-2-date, of wait for it to be updated
+        long ageThreshold = 10 * 1000; // 10 sec
+        long waitPeriod = 1000; // 1sec
+        int maxRetry = 5; // 5 x 1sec = maxWait 15sec
+
+        // perform up-2-date check
+        File provXmlFile = new File(getParentDir(), getXmlProvisioningFilename());
+        LOG.debug("AastraPhone: configFilePath:" + provXmlFile.getAbsolutePath());
+        long age = (System.currentTimeMillis() - provXmlFile.lastModified());
+        int retryAttempt = 0;
+        while (age > ageThreshold && retryAttempt < maxRetry) {
+            LOG.debug("AastraPhone: hotProvXmlFile outdated (older then:" + ageThreshold + ", wait:'" + waitPeriod
+                    + "'ms for new file to become available and retry. Attempt:" + retryAttempt);
+            retryAttempt++;
+            synchronized (this) {
+                try {
+                    wait(waitPeriod);
+                } catch (InterruptedException ie) {
+                    // ignore
+                }
+            }
+            age = (System.currentTimeMillis() - provXmlFile.lastModified());
+        }
+
+        if (age > ageThreshold) {
+            LOG.warn("AastraPhone: hotProvXmlFile outdated, older then:" + ageThreshold + ", age is:" + age
+                    + ", file:" + provXmlFile.getAbsolutePath());
+        }
+
+        // empty redial list and missed calls
+        File cleanXmlFile = new File(getParentDir(), getXmlCleaningFilename());
+        String cleanFilePath = cleanXmlFile.getAbsolutePath();
+        File cleanFile = new File(cleanFilePath);
+        LOG.debug("Aastra: cleanFile: " + cleanFile.exists());
+        StringBuffer cleanData = new StringBuffer();
+        try {
+            BufferedReader brc = new BufferedReader(new FileReader(cleanFilePath));
+            String line = brc.readLine();
+            while (line != null) {
+                cleanData.append(line);
+                line = brc.readLine();
+            }
+        } catch (IOException e1) {
+            LOG.error("Aastra: Error reading hotProvision clean file:" + cleanFilePath + "," + e1.getMessage(), e1);
+            return;
+        }
+
+        // send notify
+        try {
+            LOG.debug("AastraPhone: hotProvXmlFile age:" + age);
+            getSipService().sendNotify(instrAddr, "aastra-xml", APPLICATION_XML, String.valueOf(cleanData).getBytes());
+            getSipService().sendNotify(instrAddr, "aastra-xml", APPLICATION_XML, new byte[] {});
+        } catch (RuntimeException ex) {
+            String msg=ex.getMessage();
+            ex.printStackTrace();
+            throw new RestartException(PHONE_SIP_EXCEPTION);
+        }
+    }
+    
+    public class XmlProvisionProfile extends Profile {
+        public XmlProvisionProfile(String name) {
+            super(name, APPLICATION_XML);
+        }
+
+        protected ProfileFilter createFilter(Device device) {
+            return null;
+        }
+
+        protected ProfileContext createContext(Device device) {
+            SpeedDial speedDial = getPhoneContext().getSpeedDial((AastraPhone) device);
+            return new AastraProfileContext((AastraPhone) device, speedDial, getModel().getProfileTemplate()
+                    .replace(".cfg.", ".prov.xml."));
+        }
+    }
 }

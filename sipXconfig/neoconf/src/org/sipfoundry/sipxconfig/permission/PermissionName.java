@@ -27,6 +27,12 @@ public enum PermissionName {
 
     /** call handling */
     NINEHUNDERED_DIALING(Type.CALL, "900Dialing", CallTag.REST),
+    
+    HOTDESKING(Type.CALL, "hotdesking", CallTag.HTD),
+
+    HOTDESKING_WITHOUT_PINCODE(Type.APPLICATION, "hotdeskingWithoutPincode"),
+
+    HOTDESKING_AUTO_LOGOFF(Type.APPLICATION,"hotdeskingAutoLogoff"),
 
     AUTO_ATTENDANT_DIALING(Type.CALL, "AutoAttendant", CallTag.AA),
 

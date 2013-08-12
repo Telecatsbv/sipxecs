@@ -82,3 +82,9 @@
 [submodule "tc-addons"]
 	path = tc-addons
 	url = ssh://git@git.telecats.nl/opt/git/sipxecsTC_addons
+[submodule "sipXtcexample"]
+	path = sipXtcexample
+	url = ssh://git@git.telecats.nl/opt/git/sipXtcexample
+[submodule "sipXhotdesking"]
+	path = sipXhotdesking
+	url = ssh://git@git.telecats.nl/opt/git/sipXhotdesking
