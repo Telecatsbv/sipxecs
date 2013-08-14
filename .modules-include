@@ -1,1 +1,1 @@
-  \$(sipx_core) \$(telecats_build)
+$(sipx_core) $(telecats_build)
