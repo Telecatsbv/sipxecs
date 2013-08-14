@@ -1,0 +1,48 @@
+Name: @PACKAGE@
+Version: @VERSION@
+Release: @PACKAGE_REVISION@
+Epoch:  @PACKAGE_EPOCH@
+
+Summary: VoIP PBX plugin.
+License: LGPL
+Group: Telcommunications
+Vendor: SIPLABS
+Packager: SIPLABS <info@siplabs.ru>
+Url: http://www.siplabs.ru
+
+BuildRequires: automake
+BuildRequires: java-devel >= 1.6
+BuildRequires: zip
+BuildRequires: sipxcommons >= %version
+BuildRequires: sipxconfig >= %version
+
+Requires: sipxconfig
+Requires: sipxcommons >= %version
+
+Source: %name-%version.tar.gz
+
+Prefix: %_prefix
+BuildRoot: %{_tmppath}/%name-%version-root
+
+%description
+Configuration support yealink phones
+
+%prep
+%setup -q
+
+%build
+%configure @SIPX_RPM_CONFIGURE_OPTIONS@
+cp config.log %name.configlog
+make all
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make DESTDIR=$RPM_BUILD_ROOT install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(644,sipxchange,sipxchange,755)
+%{_sysconfdir}/sipxpbx/yealinkPhone/*
+%attr(755,sipxchange,sipxchange) %{_datadir}/java/sipXecs/sipXconfig/yealink-phones.jar
