@@ -4,6 +4,7 @@ yealink_PKGS = \
 	commons-io \
 	commons-collections \
 	org.springframework.beans \
+        plugins/sipXhotdesking \
 	sipxcommons \
 	sipxconfig-neoconf \
 	velocity \

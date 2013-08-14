@@ -48,12 +48,13 @@ import org.sipfoundry.sipxconfig.phonebook.PhonebookEntry;
 import org.sipfoundry.sipxconfig.setting.Setting;
 import org.sipfoundry.sipxconfig.setting.SettingExpressionEvaluator;
 import org.sipfoundry.sipxconfig.speeddial.SpeedDial;
+import org.sipfoundry.provisioning.hot.HotProvisionable;
 //import org.sipfoundry.sipxconfig.phone.yealink.writer.PropertyConfigWriter;
 
 /**
  * Yealink abstract phone.
  */
-public class yealinkPhone extends Phone {
+public class yealinkPhone extends Phone implements HotProvisionable {
 
 	// Common static members
 	private static final Log LOG = LogFactory.getLog(yealinkPhone.class);
