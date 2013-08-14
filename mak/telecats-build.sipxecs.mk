@@ -1,5 +1,6 @@
 telecats_build = \
   sipXacccode \
+  sipXcustomCallerId \
   sipXviewer \
   sipXimbot \
   sipXrest \
@@ -10,4 +11,6 @@ telecats_build = \
   sipXsbc \
   sipXhomer \
   sipXhotdesking \
-  sipXaastra
+  sipXaastra \
+  sipXyealink \
+  sipXlang-nl
