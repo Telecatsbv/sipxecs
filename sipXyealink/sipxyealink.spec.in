@@ -1,7 +1,6 @@
 Name: @PACKAGE@
 Version: @VERSION@
 Release: @PACKAGE_REVISION@
-Epoch:  @PACKAGE_EPOCH@
 
 Summary: VoIP PBX plugin.
 License: LGPL
