@@ -1,6 +1,5 @@
 telecats_build = \
   sipXacccode \
-  sipXcustomCallerId \
   sipXviewer \
   sipXimbot \
   sipXrest \
