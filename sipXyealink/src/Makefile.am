@@ -18,7 +18,7 @@ yealink_SRC = $(shell cd $(srcdir); find org -type f -name '*.java')
 yealink_RESOURCES = sipxplugin.beans.xml
 
 yealink_DEPS = \
-	$(call JavaDep,@SIPX_JAVADIR@/sipXconfig @SIPX_JAVADIR@/sipXcommons,$(yealink_PKGS))
+	$(call JavaDep,@SIPX_JAVADIR@/sipXconfig @SIPX_JAVADIR@/sipXconfig/plugins @SIPX_JAVADIR@/sipXcommons,$(yealink_PKGS))
 
 
 $(JAR_FILE) : javac-yealink $(yealink_RESOURCES)
