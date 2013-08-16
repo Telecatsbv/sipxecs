@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sipXconfig-web"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sipXconfig-neoconf"/>
+	<classpathentry kind="var" path="SIPX_CONFIG/lib/tapestry-annotations-4.1.6.jar"/>
+	<classpathentry kind="var" path="SIPX_CONFIG/lib/tapestry-contrib-4.1.6.jar"/>
+	<classpathentry kind="var" path="SIPX_CONFIG/lib/tapestry-framework-4.1.6.jar"/>
+	<classpathentry kind="var" path="SIPX_CONFIG/lib/hivemind-1.1.1.jar"/>
+	<classpathentry kind="output" path="bin_eclipse"/>
+</classpath>

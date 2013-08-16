@@ -1,0 +1,3 @@
+telecats-sipXaddons= \
+  sipXhotdesking \
+  sipXyealink

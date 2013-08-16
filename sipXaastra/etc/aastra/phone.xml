@@ -137,11 +137,11 @@
         <value>0</value>
       </setting>
       <setting name="sip_registration_period">
-		<profileName>sip registration period</profileName>
-		<type>
-			<integer min="1000" />
-		</type>
-		<value>3000</value>
+        <profileName>sip registration period</profileName>
+        <type>
+          <integer min="1000" />
+        </type>
+        <value>3000</value>
       </setting>
     </group>
     <group name="rtp">
@@ -214,7 +214,7 @@
     <setting name="time_format">
       <profileName>time format</profileName>
       <type refid="time-format" />
-      <value>0</value>
+      <value>1</value>
     </setting>
     <setting name="date_format">
       <profileName>date format</profileName>
@@ -229,7 +229,7 @@
     <setting name="time_zone_name">
       <profileName>time zone name</profileName>
       <type refid="time-zone" />
-      <value>US-Eastern</value>
+      <value>BE-Brussels</value>
     </setting>
   </group>
   <group name="preferences">
@@ -397,7 +397,7 @@
       <setting name="tone_set">
         <profileName>tone set</profileName>
         <type refid="country-tone" />
-        <value>US</value>
+        <value>Europe</value>
       </setting>
       <setting name="ring_tone">
         <profileName>ring tone</profileName>
@@ -479,7 +479,7 @@
             <pattern>\*?\d*</pattern>
           </string>
         </type>
-        <value />
+        <value>*78</value>
       </setting>
       <setting name="play_a_ring_splash">
         <profileName>play a ring splash</profileName>
@@ -552,7 +552,7 @@
         <type>
           <boolean />
         </type>
-        <value>0</value>
+        <value>1</value>
       </setting>
       <setting name="directory1" advanced="yes">
         <profileName>directory 1</profileName>
@@ -836,6 +836,15 @@
         <value>0</value>
       </setting>
     </group>
+    <group name="advanced">
+      <setting name="lldp">
+        <profileName>lldp</profileName>
+        <type>
+          <boolean />
+        </type>
+        <value>0</value>
+      </setting>
+    </group>
   </group>
   <group name="web_server">
     <setting name="web_interface_enabled" hidden="yes">
@@ -889,14 +898,14 @@
           </option>
         </enum>
       </type>
-      <value>SSL 3.0</value>
+      <value>TLS 1.0</value>
     </setting>
     <setting name="https_redirect_http_get" advanced="yes">
       <profileName>https redirect http get</profileName>
       <type>
         <boolean />
       </type>
-      <value>1</value>
+      <value>0</value>
     </setting>
     <setting name="https_block_http_post_xml" advanced="yes">
       <profileName>https block http post xml</profileName>
