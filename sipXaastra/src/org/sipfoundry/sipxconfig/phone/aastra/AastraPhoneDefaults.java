@@ -52,6 +52,11 @@ public class AastraPhoneDefaults {
     public String getEmergencyNumber() {
         return m_defaults.getEmergencyNumber();
     }
+    
+    @SettingEntry(path = "server/xml_push/xml_application_post_list")
+    public String getXmlApplicationIp() {
+        return m_defaults.getTftpServer().getAddress();
+    }
 
     private static String getTimezoneFromRawOffsetSeconds(int offset) {
 
