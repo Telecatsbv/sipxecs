@@ -94,6 +94,7 @@ public class AastraPhone extends Phone {
                 Collection<Button> speeddials = new ArrayList<Button>();
                 Collection<Button> buttons = m_speeddial.getButtons();
                 for (Button button : buttons) {
+                    speeddials.add(button);
                     if (button.isBlf()) {
                         hasBlf = true;
                         Line line = new Line();
@@ -101,8 +102,6 @@ public class AastraPhone extends Phone {
                         phone.initializeLine(line);
                         line.setSettingValue(DISPLAY_NAME_PATH, button.getLabel());
                         phone.addLine(line);
-                    } else {
-                        speeddials.add(button);
                     }
                 }
                 context.put("has_blf", hasBlf);
