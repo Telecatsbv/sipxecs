@@ -88,3 +88,6 @@
 [submodule "sipXhotdesking"]
 	path = sipXhotdesking
 	url = ssh://git@git.telecats.nl/opt/git/sipXhotdesking
+[submodule "sipXyealink"]
+	path = sipXyealink
+	url = ssh://git@git.telecats.nl/opt/git/sipXyealink
