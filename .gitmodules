@@ -82,3 +82,6 @@
 [submodule "tc-addons"]
 	path = tc-addons
 	url = ssh://git@git.telecats.nl/opt/git/sipxecsTC_addons
+[submodule "sipXyealink"]
+	path = sipXyealink
+	url = ssh://git@git.telecats.nl/opt/git/sipXyealink
