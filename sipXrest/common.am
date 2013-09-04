@@ -7,6 +7,7 @@ rest_PKGS = \
 	commons-digester \
 	commons-io \
 	commons-logging \
+	commons-lang \
 	dnsjava \
 	jain-sip-sdp \
 	javax.servlet \
@@ -18,4 +19,17 @@ rest_PKGS = \
 	ws-commons-util \
 	xmlrpc-client \
 	postgresql \
-	xmlrpc-server
+	xmlrpc-server \
+	org.springframework.beans \
+        org.springframework.web \
+        org.springframework.context \
+        org.springframework.context.support \
+        org.springframework.core \
+        org.springframework.jdbc \
+        org.springframework.transaction \
+        org.springframework.expression \
+        org.springframework.aop \
+        org.springframework.asm \
+        spring-data-commons-core \
+        spring-data-mongodb \
+	axis
