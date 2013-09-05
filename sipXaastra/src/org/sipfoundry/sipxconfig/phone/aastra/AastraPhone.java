@@ -8,11 +8,22 @@
  */
 package org.sipfoundry.sipxconfig.phone.aastra;
 
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.MessageFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sipfoundry.sipxconfig.device.Device;
 import org.sipfoundry.sipxconfig.device.Profile;
 import org.sipfoundry.sipxconfig.device.ProfileContext;
@@ -27,6 +38,10 @@ import org.sipfoundry.sipxconfig.speeddial.Button;
 import org.sipfoundry.sipxconfig.speeddial.SpeedDial;
 
 public class AastraPhone extends Phone {
+    private static final String LAST_REBOOT_REQUEST_TS_PREFIX = "# last reboot request at:";
+    
+    private static final Log LOG = LogFactory.getLog(AastraPhone.class);
+    
     static final String REGISTRATION_PATH = "server/registrar_ip";
     static final String DISPLAY_NAME_PATH = "sip_id/screen_name";
     static final String PASSWORD_PATH = "sip_id/password";
@@ -35,6 +50,9 @@ public class AastraPhone extends Phone {
     private static final String REGISTRATION_PORT_PATH = "server/registrar_port";
 
     private String m_phonebookFilename = "{0}-Directory.csv";
+    private String m_xmlCleaningFilename = "aastra-cleaning.xml";
+    
+    private String m_parentDir;
 
     public AastraPhone() {
     }
@@ -76,6 +94,7 @@ public class AastraPhone extends Phone {
                 Collection<Button> speeddials = new ArrayList<Button>();
                 Collection<Button> buttons = m_speeddial.getButtons();
                 for (Button button : buttons) {
+                    speeddials.add(button);
                     if (button.isBlf()) {
                         hasBlf = true;
                         Line line = new Line();
@@ -83,13 +102,12 @@ public class AastraPhone extends Phone {
                         phone.initializeLine(line);
                         line.setSettingValue(DISPLAY_NAME_PATH, button.getLabel());
                         phone.addLine(line);
-                    } else {
-                        speeddials.add(button);
                     }
                 }
                 context.put("has_blf", hasBlf);
                 context.put("speeddials", speeddials);
                 context.put("speeddial", m_speeddial);
+                context.put("timestamp", SimpleDateFormat.getDateTimeInstance().format(new Date()));
             }
 
             int speeddialOffset = 0;
@@ -127,7 +145,35 @@ public class AastraPhone extends Phone {
 
     @Override
     public void restart() {
-        sendCheckSyncToFirstLine();
+        updateRestartTimestamp();
+        sendCheckSyncToMac();
+    }
+    
+    /**
+     * When config file not changed, aastra phone's won't restart. This is why we add
+     * restartTimestamp to the config file.
+     */
+    private void updateRestartTimestamp() {
+        File cfgFile = new File(getProfileDir(), getProfileFilename());
+        File updatedCfgFile = new File(getProfileDir(), getProfileFilename() + ".restartTrigger");
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(cfgFile));
+            BufferedWriter bw = new BufferedWriter(new FileWriter(updatedCfgFile));
+            bw.write(LAST_REBOOT_REQUEST_TS_PREFIX + SimpleDateFormat.getDateTimeInstance().format(new Date())+"\n");
+            String line = br.readLine();
+            while (line != null) {
+                if (!line.startsWith(LAST_REBOOT_REQUEST_TS_PREFIX)) {
+                    bw.write(line + "\n");
+                }
+                line = br.readLine();
+            }
+            bw.close();
+            updatedCfgFile.renameTo(cfgFile);
+        } catch (IOException ex) {
+            LOG.warn("Couldn't add "+LAST_REBOOT_REQUEST_TS_PREFIX+" to config file:"+cfgFile.getAbsolutePath(),ex);
+            updatedCfgFile.delete();
+        }
     }
 
     @Override
@@ -174,6 +220,18 @@ public class AastraPhone extends Phone {
 
     public void setPhonebookFilename(String phonebookFilename) {
         m_phonebookFilename = phonebookFilename;
+    }
+
+    public String getXmlCleaningFilename() {
+        return m_xmlCleaningFilename;
+    }
+
+    public String getParentDir() {
+        return m_parentDir;
+    }
+
+    public void setParentDir(String parentDir) {
+        this.m_parentDir = parentDir;
     }
 
     public String getPhonebookFilename() {

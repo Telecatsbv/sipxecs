@@ -36,7 +36,7 @@ public class AastraLineDefaults {
 
     @SettingEntry(path = SIP_AUTH_NAME)
     public String getAuthorizationId() {
-        return getAddress();
+        return m_line.getAuthenticationUserName();
     }
 
     @SettingEntry(path = SIP_USER_NAME)
@@ -70,7 +70,11 @@ public class AastraLineDefaults {
     public String getScreenName() {
         User u = m_line.getUser();
         if (u != null) {
-            return u.getUserName() + "@" + m_defaults.getDomainName();
+            String userName = u.getUserName();
+            if(userName!=null && !userName.startsWith("~~"))
+            {
+                return userName;
+            }
             // return u.getFirstName();
         }
         return null;
