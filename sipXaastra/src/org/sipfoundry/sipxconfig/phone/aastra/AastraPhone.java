@@ -135,9 +135,9 @@ public class AastraPhone extends Phone {
             context.put("speeddial_offset", speeddialOffset);
 
             return context;
-        }
+        }*/
     }
-*/
+
 
     @Override
     protected void setLineInfo(Line line, LineInfo externalLine) {
