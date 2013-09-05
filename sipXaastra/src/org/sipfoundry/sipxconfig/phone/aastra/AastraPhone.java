@@ -144,9 +144,9 @@ public class AastraPhone extends Phone implements HotProvisionable {
             context.put("speeddial_offset", speeddialOffset);
 
             return context;
-        }
+        }*/
     }
-*/
+
 
     @Override
     protected void setLineInfo(Line line, LineInfo externalLine) {
