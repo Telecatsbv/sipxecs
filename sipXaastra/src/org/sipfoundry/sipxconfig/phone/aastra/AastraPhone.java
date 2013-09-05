@@ -93,8 +93,25 @@ public class AastraPhone extends Phone implements HotProvisionable {
             super(phone, profileTemplate);
             m_speeddial = speeddial;
         }
+	
+	public Map<String, Object> getContext() {
+            Map<String, Object> context = super.getContext();
+            Phone phone = (Phone) getDevice();
 
-        public Map<String, Object> getContext() {
+            Collection<Button> speeddials = new ArrayList<Button>();
+            if (m_speeddial != null) {
+                Collection<Button> buttons = m_speeddial.getButtons();
+                for (Button button : buttons) {
+                    speeddials.add(button);
+                }
+            }
+            context.put("speeddials", speeddials);
+            context.put("timestamp", SimpleDateFormat.getDateTimeInstance().format(new Date()));
+            return context;
+        }
+
+        /*
+ * 	public Map<String, Object> getContext() {
             Map<String, Object> context = super.getContext();
             Phone phone = (Phone) getDevice();
 
@@ -129,6 +146,7 @@ public class AastraPhone extends Phone implements HotProvisionable {
             return context;
         }
     }
+*/
 
     @Override
     protected void setLineInfo(Line line, LineInfo externalLine) {
