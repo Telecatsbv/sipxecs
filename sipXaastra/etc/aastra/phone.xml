@@ -1119,7 +1119,7 @@
 			<value>0</value>
 		</setting>
   </group>
-  <group name="topkeys">
+  <group name="topkeys" unless="aastra57i">
     <group name="prgkey1">
       <setting name="type">
         <profileName>type</profileName>
@@ -1205,12 +1205,12 @@
       </setting>
     </group>
   </group>
-  <group name="topsoftkeys">
+  <group name="topsoftkeys" if="aastra57i">i
     <group name="topsoftkey1">
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1231,7 +1231,7 @@
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1252,7 +1252,7 @@
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1273,7 +1273,7 @@
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1294,7 +1294,7 @@
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1315,7 +1315,7 @@
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1336,7 +1336,7 @@
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1357,7 +1357,7 @@
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1378,7 +1378,7 @@
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1399,7 +1399,7 @@
       <setting name="type">
         <profileName>type</profileName>
         <type refid="exp-key-type" />
-        <value>empty</value>
+        <value>none</value>
       </setting>
       <setting name="label">
         <profileName>label</profileName>
@@ -1417,7 +1417,7 @@
       </setting>
     </group>
   </group>
-  <group name="softkeys">
+  <group name="softkeys" unless="aastra53i">
     <group name="softkey1">
       <setting name="type">
         <profileName>type</profileName>
