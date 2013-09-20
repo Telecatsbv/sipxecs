@@ -94,3 +94,6 @@
 [submodule "sipXchefsec"]
         path = sipXchefsec
         url = ssh://git@git.telecats.nl/opt/git/sipXchefsec
+[submodule "sipXlang-nl_TC"]
+	path = sipXlang-nl_TC
+	url = ssh://git@git.telecats.nl/opt/git/sipXlang-nl_TC
