@@ -55,6 +55,7 @@ public abstract class AbstractRing extends BeanWithId {
     public static class Type extends Enum {
         public static final Type DELAYED = new Type("If no response");
         public static final Type IMMEDIATE = new Type("At the same time");
+        public static final Type RANDOM = new Type("Random");
 
         public Type(String name) {
             super(name);
