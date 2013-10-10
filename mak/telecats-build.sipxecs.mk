@@ -13,4 +13,5 @@ telecats_build = \
   sipXhotdesking \
   sipXaastra \
   sipXyealink \
-  sipXlang-nl
+  sipXlang-nl \
+  sipXrandomGroupdial
