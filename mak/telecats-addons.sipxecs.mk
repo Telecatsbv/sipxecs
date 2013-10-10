@@ -1,3 +1,4 @@
 telecats-sipXaddons= \
   sipXhotdesking \
-  sipXyealink
+  sipXyealink \
+  sipXrandomGroupDial
