@@ -78,7 +78,7 @@ public abstract class AbstractRing extends BeanWithId {
     /**
      * Retrieves the user part of the contact used to calculate contact
      *
-     * @return String or object implementing toString method
+     * @return String or object implementing toString method 
      */
     protected abstract Object getUserPart();
 
