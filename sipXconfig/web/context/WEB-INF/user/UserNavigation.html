@@ -9,6 +9,9 @@
         <span jwcid="@setting/SettingsNavigation" bean="ognl:bean"
           activeSetting="ognl:activeSetting" groupsToHide="ognl:groupsToHide"
           editSettingsListener="listener:editSettings">
+          
+          <!-- <span jwcid="@common/Plugin" blockId="UserSettingsTop"/> -->
+          
           <span jwcid="@common/Tab" isActive="ognl:identificationTabActive">
             <a jwcid="editUserLink@DirectLink" listener="listener:editUser"
               parameters="ognl:bean.id">
@@ -93,6 +96,24 @@
               <span key="link.hotelling">Hot Desking</span>
             </a>
           </span>
+          
+          <!-- <span jwcid="@common/Plugin" blockId="UserSettingsBottom"/> -->
+          
+          
+          
+          <!--
+          	href="/sipxconfig/plugin/ChefsecPage,$user$UserNavigation.chefsecLink.sdirect?
+          -->
+          <span jwcid="@If" condition='ognl:isPluginFeatureEnabled("chefsec")'>
+	      	<span jwcid="chefsec@common/Tab" isActive='ognl:isPluginTabActive("plugin/ChefsecPage")' >
+	          	<a jwcid="chefsecLink@DirectLink"
+	              listener="listener:editPluginPage" parameters='ognl:{"plugin/ChefsecPage", bean.id}'>
+	              <span key="link.chefsec">CHEFSEC UserNavigation</span>
+	            </a>
+	        </span>
+	      </span>
+	      
+	      
         </span>
       </div>
       <span jwcid="@RenderBody"/>
