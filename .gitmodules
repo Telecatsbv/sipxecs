@@ -97,3 +97,6 @@
 [submodule "sipXlang-nl_telecats"]
 	path = sipXlang-nl_telecats
 	url = ssh://git@git.telecats.nl/opt/git/sipXlang-nl_TC
+[submodule "sipXhotprovisioning"]
+	path = sipXhotprovisioning
+	url = git@github.com:Telecats/sipXhotprovisioning.git

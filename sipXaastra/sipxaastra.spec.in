@@ -17,10 +17,10 @@ BuildRequires: java-devel >= 1.6
 BuildRequires: automake
 BuildRequires: sipxcommons >= %version
 BuildRequires: sipxconfig >= %version
-BuildRequires: sipxhotdesking
+BuildRequires: sipxhotprovisioning
 
 Requires: sipxconfig
-Requires: sipxhotdesking
+Requires: sipxhotprovisioning
 
 Source: %name-%version.tar.gz
 
