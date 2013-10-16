@@ -15,4 +15,5 @@ telecats_build = \
   sipXyealink \
   sipXlang-nl \
   sipXlang-nl_telecats \
-  sipXchefsec
+  sipXchefsec \
+  sipXcisco
