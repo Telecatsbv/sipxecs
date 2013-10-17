@@ -55,6 +55,7 @@ public abstract class AbstractRing extends BeanWithId {
     public static class Type extends Enum {
         public static final Type DELAYED = new Type("If no response");
         public static final Type IMMEDIATE = new Type("At the same time");
+        public static final Type RANDOM = new Type("Random");
 
         public Type(String name) {
             super(name);
@@ -77,7 +78,7 @@ public abstract class AbstractRing extends BeanWithId {
     /**
      * Retrieves the user part of the contact used to calculate contact
      *
-     * @return String or object implementing toString method
+     * @return String or object implementing toString method 
      */
     protected abstract Object getUserPart();
 

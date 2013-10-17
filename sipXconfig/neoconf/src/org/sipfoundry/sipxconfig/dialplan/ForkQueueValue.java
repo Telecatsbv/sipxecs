@@ -24,6 +24,7 @@ public class ForkQueueValue {
 
     private float m_step;
     private float m_value = MAX;
+    private int m_groupNumber;
 
     public ForkQueueValue(int sequenceCont) {
         m_format.setMaximumFractionDigits(MAX_FRAC);
@@ -49,13 +50,21 @@ public class ForkQueueValue {
      * It is safe to call this function even if getNextValue has not been called first.
      */
     public String getParallel() {
-        return "q=" + m_format.format(m_value);
+    	return "q=" + m_format.format(m_value) + ";sipx-random=" + m_groupNumber;
     }
 
     public String getValue(Ring.Type type) {
         if (Ring.Type.IMMEDIATE.equals(type)) {
             return getParallel();
+        } else if(Ring.Type.RANDOM.equals(type)) { 
+        	return getRandom(); 
         }
         return getSerial();
     }
+    
+    public String getRandom() { 
+    	m_groupNumber++; 
+    	return getParallel(); 
+    }
+    
 }

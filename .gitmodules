@@ -97,3 +97,6 @@
 [submodule "sipXlang-nl_telecats"]
 	path = sipXlang-nl_telecats
 	url = ssh://git@git.telecats.nl/opt/git/sipXlang-nl_TC
+[submodule "sipXrandomGroupDial"]
+	path = sipXrandomGroupDial
+	url = ssh://git@git.telecats.nl/opt/git/sipXrandomGroupDial
