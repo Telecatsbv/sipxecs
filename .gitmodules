@@ -100,3 +100,6 @@
 [submodule "sipXrandomGroupDial"]
 	path = sipXrandomGroupDial
 	url = ssh://git@git.telecats.nl/opt/git/sipXrandomGroupDial
+[submodule "sipXtcCustomCallerId"]
+	path = sipXtcCustomCallerId
+	url = ssh://git@git.telecats.nl/opt/git/sipXtcCustomCallerId

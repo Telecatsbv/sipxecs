@@ -17,4 +17,5 @@ telecats_build = \
   sipXlang-nl_telecats \
   sipXchefsec \
   sipXrandomGroupdial \
-  sipXcisco
+  sipXcisco \
+  sipXtcCustomCallerId
