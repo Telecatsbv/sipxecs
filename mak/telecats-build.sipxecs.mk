@@ -16,4 +16,5 @@ telecats_build = \
   sipXlang-nl \
   sipXlang-nl_telecats \
   sipXchefsec \
-  sipXrandomGroupdial
+  sipXrandomGroupdial \
+  sipXtcDhcp
