@@ -18,4 +18,5 @@ telecats_build = \
   sipXchefsec \
   sipXrandomGroupdial \
   sipXcisco \
-  sipXtcCustomCallerId
+  sipXtcCustomCallerId \
+  $(telecats_sipXaddons)
