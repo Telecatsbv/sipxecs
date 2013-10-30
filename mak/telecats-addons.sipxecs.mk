@@ -6,4 +6,5 @@ telecats-sipXaddons= \
   sipXlang-nl_telecats \
   sipXchefsec \
   sipXtcCustomCallerId \
+  sipXtcDhcp \
   sipXonnetSelector
