@@ -1,4 +1,9 @@
 telecats-sipXaddons= \
+  sipXhotprovisioning \
   sipXhotdesking \
   sipXyealink \
-  sipXrandomGroupDial
+  sipXrandomGroupDial \
+  sipXlang-nl_telecats \
+  sipXchefsec \
+  sipXtcCustomCallerId \
+  sipXonnetSelector

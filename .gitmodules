@@ -103,3 +103,6 @@
 [submodule "sipXtcCustomCallerId"]
 	path = sipXtcCustomCallerId
 	url = ssh://git@git.telecats.nl/opt/git/sipXtcCustomCallerId
+[submodule "sipXhotprovisioning"]
+	path = sipXhotprovisioning
+	url = https://github.com/Telecats/sipXhotprovisioning.git

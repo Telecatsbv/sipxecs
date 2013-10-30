@@ -10,12 +10,7 @@ telecats_build = \
   sipXrecording \
   sipXsbc \
   sipXhomer \
-  sipXhotdesking \
-  sipXaastra \
-  sipXyealink \
   sipXlang-nl \
-  sipXlang-nl_telecats \
-  sipXchefsec \
-  sipXrandomGroupdial \
   sipXcisco \
-  sipXtcCustomCallerId
+  $(telecats-sipXaddons) \
+  sipXaastra
