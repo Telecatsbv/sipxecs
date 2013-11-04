@@ -79,6 +79,7 @@ public class User {
     private Distributions m_distributions;
     private String m_moh;
     private String m_timeZone;
+    private boolean m_operatorInIvr;
 
     public enum EmailFormats {
         FORMAT_NONE("NONE"), FORMAT_FULL("FULL"), FORMAT_MEDIUM("MEDIUM"), FORMAT_BRIEF("BRIEF"), FORMAT_IMAP("IMAP");
@@ -671,5 +672,13 @@ public class User {
 
     public void setTimeZone(String timeZone) {
         m_timeZone = timeZone;
+    }
+    
+    public void setOperatorInIvr(boolean operatorInIvr) {
+    	m_operatorInIvr = operatorInIvr;
+    }
+    
+    public boolean hasOperatorInIvr() {
+    	return m_operatorInIvr;
     }
 }

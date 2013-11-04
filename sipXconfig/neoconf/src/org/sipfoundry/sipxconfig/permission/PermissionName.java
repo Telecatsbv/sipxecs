@@ -55,7 +55,9 @@ public enum PermissionName {
     /** Voicemail */
     EXCHANGE_VOICEMAIL(Type.VOICEMAIL_SERVER, "ExchangeUMVoicemailServer"),
 
-    FREESWITH_VOICEMAIL(Type.VOICEMAIL_SERVER, "FreeswitchVoicemailServer");
+    FREESWITH_VOICEMAIL(Type.VOICEMAIL_SERVER, "FreeswitchVoicemailServer"),
+    
+    OPERATOR_IN_IVR(Type.APPLICATION, "operator-in-ivr");
 
     private Type m_type;
 
