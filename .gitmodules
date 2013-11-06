@@ -118,15 +118,7 @@
 	path = sipXtcDhcp
 	url = ssh://git@git.telecats.nl/opt/git/sipXtcDhcp
   branch = devel-4.6
-[submodule "sipXonnetSelector"]
-	path = sipXonnetSelector
-	url = ssh://git@git.telecats.nl/opt/git/sipXonnetSelector
-  branch = devel-4.6
 [submodule "sipXclick2dial"]
 	path = sipXclick2dial
 	url = ssh://git@git.telecats.nl/opt/git/sipXclick2dial
-  branch = devel-4.6
-[submodule "sipXonnetSelector"]
-	path = sipXonnetSelector
-	url = ssh://git@git.telecats.nl/opt/git/sipXonnetSelector
   branch = devel-4.6
