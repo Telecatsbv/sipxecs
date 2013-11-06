@@ -61,6 +61,16 @@
       </option>
     </enum>
   </type>
+  <type id="truefalse">
+    <boolean>
+      <true>
+        <value>true</value>
+      </true>
+      <false>
+        <value>false</value>
+      </false>
+    </boolean>
+  </type>
   <group name="ivr">
     <setting name="log.level">
       <type refid="loglevel" />
@@ -112,6 +122,19 @@
       </type>
       <value>stdui</value>
     </setting>
-    
+  </group>
+  <group name="ivr_mail">
+    <setting name="ivr.force_host">
+      <type><truefalse /></type>
+    </setting>
+    <setting name="ivr.forced_host">
+      <type><string /></type>
+    </setting>
+    <setting name="ivr.force_address">
+      <type><truefalse /></type>
+    </setting>
+    <setting name="ivr.forced_address">
+      <type><string /></type>
+    </setting>
   </group>
 </model>
