@@ -76,6 +76,10 @@
     <property name="binDirectory" value="${ivr.binDirectory}" />
     <property name="logDirectory" value="${ivr.logDirectory}" />
     <property name="backupPath" value="${ivr.backupPath}" />
+    <property name="forceHost" value="${ivr.force_host}" />
+    <property name="forcedHost" value="${ivr.forced_host}" />
+    <property name="forceAddress" value="${ivr.force_address}" />
+    <property name="forcedAddress" value="${ivr.forced_address}" />
   </bean>
 
   <bean id="fsEventSocket" class="org.sipfoundry.commons.freeswitch.FreeSwitchEventSocket" scope="eslRequest">

@@ -17,6 +17,7 @@ import org.sipfoundry.commons.userdb.ValidUsers;
 import org.sipfoundry.voicemail.mailbox.VmMessage;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.sipfoundry.sipxivr.SipxIvrConfiguration;
 
 public class EmailFormatter implements ApplicationContextAware {
 
@@ -24,6 +25,7 @@ public class EmailFormatter implements ApplicationContextAware {
     private Object[] m_args;
     private User m_user;
     private ApplicationContext m_context;
+    private SipxIvrConfiguration m_ivrConfig;
     
     /**
      * A formatter for e-mail messages.
@@ -41,6 +43,7 @@ public class EmailFormatter implements ApplicationContextAware {
         Object[] args = new Object[15];
         String fromUri = "";
         String fromUser = "";
+        String emailAddressUrl = m_ivrConfig.isForceAddress() ? m_ivrConfig.getForcedAddress() : m_emailAddressUrl;
         
         if(vmessage != null) {
             fromUri = vmessage.getDescriptor().getFromUri();
@@ -61,7 +64,7 @@ public class EmailFormatter implements ApplicationContextAware {
         args[ 2] = fromUser;                                    //  2 From User Part (phone number, most likely)
         args[ 3] = fromDisplay;                                 //  3 From Display Name
         args[ 4] = String.format("%s/sipxconfig/mailbox/%s/inbox/", 
-                m_emailAddressUrl, m_user.getUserName());
+                emailAddressUrl, m_user.getUserName());
                                                                 //  4 Portal Link URL             
         // Using the existing args, add some more, recursively as they are defined with some of the above variables.
         args[ 7] = fmt("SenderName", args);                     //  7 Sender Name
@@ -129,5 +132,9 @@ public class EmailFormatter implements ApplicationContextAware {
     @Override
     public void setApplicationContext(ApplicationContext context) {
         m_context = context;
+    }
+
+    public void setIvrConfig(SipxIvrConfiguration config) {
+        m_ivrConfig = config;
     }
 }

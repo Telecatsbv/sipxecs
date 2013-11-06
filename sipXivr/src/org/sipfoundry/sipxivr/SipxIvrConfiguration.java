@@ -47,6 +47,10 @@ public class SipxIvrConfiguration {
     private String m_binDirectory;
     private String m_logDirectory;
     private String m_backupPath;
+    private boolean m_forceHost; //Override the default hostname resolution for links when sending mail?
+    private boolean m_forceAddress; //Override the default return address when sending mail?
+    private String m_forcedHost; //The hostname that will override the default.
+    private String m_forcedAddress; //The return address that will override the default.
 
     public String getLogLevel() {
         return m_logLevel;
@@ -238,6 +242,38 @@ public class SipxIvrConfiguration {
 
     public void setSipxSupervisorXmlRpcPort(int port) {
         m_sipxSupervisorXmlRpcPort = port;
+    }
+
+    public void setForceHost(boolean forceHost) {
+        m_forceHost = forceHost;
+    }
+
+    public boolean isForceHost() {
+        return m_forceHost;
+    }
+
+    public void setForceAddress(boolean forceAddress) {
+        m_forceAddress = forceAddress;
+    }
+
+    public boolean isForceAddress() {
+        return m_forceAddress;
+    }
+
+    public void setForcedHost(String forcedHost) {
+        m_forcedHost = forcedHost;
+    }
+
+    public String getForcedHost() {
+        return m_forcedHost;
+    }
+
+    public void setForcedAddress(String forcedAddress) {
+        m_forcedAddress = forcedAddress;
+    }
+
+    public String getForcedAddress() {
+        return m_forcedAddress;
     }
 
 }
