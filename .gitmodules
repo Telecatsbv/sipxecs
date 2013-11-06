@@ -113,7 +113,6 @@
 [submodule "sipXhotprovisioning"]
 	path = sipXhotprovisioning
 	url = https://github.com/Telecats/sipXhotprovisioning.git
-  branch = devel-4.6
 [submodule "sipXtcDhcp"]
 	path = sipXtcDhcp
 	url = ssh://git@git.telecats.nl/opt/git/sipXtcDhcp
