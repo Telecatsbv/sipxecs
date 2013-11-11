@@ -14,10 +14,11 @@ import java.util.Locale;
 
 import org.sipfoundry.commons.userdb.User;
 import org.sipfoundry.commons.userdb.ValidUsers;
+import org.sipfoundry.sipxivr.SipxIvrConfiguration;
 import org.sipfoundry.voicemail.mailbox.VmMessage;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.sipfoundry.sipxivr.SipxIvrConfiguration;
+import org.springframework.context.MessageSource;
 
 public class EmailFormatter implements ApplicationContextAware {
 
@@ -38,12 +39,12 @@ public class EmailFormatter implements ApplicationContextAware {
      */
     
     public void init(User user, VmMessage vmessage) {
-        m_user = user;
+    	m_user = user;
         String fromDisplay = null;
         Object[] args = new Object[15];
         String fromUri = "";
         String fromUser = "";
-        String emailAddressUrl = m_ivrConfig.isForceAddress() ? m_ivrConfig.getForcedAddress() : m_emailAddressUrl;
+        String emailAddressUrl = m_ivrConfig.isForceHost() ? m_ivrConfig.getForcedHost() : m_emailAddressUrl;
         
         if(vmessage != null) {
             fromUri = vmessage.getDescriptor().getFromUri();
@@ -89,11 +90,20 @@ public class EmailFormatter implements ApplicationContextAware {
         if (text == null) {
             return value;
         }
+        
+        MessageSource messages = (MessageSource)m_context;
+        if(m_ivrConfig.isOverrideTemplate()) {
+        	messages = (MessageSource)m_context.getBean("messageSourceOverride");
+        }
+        text = m_ivrConfig.isOverrideTemplate() ? "ivr.template_override." + text : text;
+        
         Locale locale = m_user.getLocale();
         if (locale == null) {
             locale = Locale.getDefault();
         }
-        return m_context.getMessage(text, args, "Not Found", locale);
+        value = messages.getMessage(text, args, "Not Found", locale);
+        //System.out.println(String.format("%s resolved to: %s", new Object[] {text, value}));
+        return value;
     }
 
     
