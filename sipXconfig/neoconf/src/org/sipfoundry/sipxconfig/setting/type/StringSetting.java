@@ -25,6 +25,8 @@ public class StringSetting extends AbstractSettingType {
     private boolean m_password;
 
     private boolean m_multiLine;
+    
+    private boolean m_renderDefaultValueAsPre;
 
     public int getMaxLen() {
         return m_maxLen;
@@ -92,4 +94,12 @@ public class StringSetting extends AbstractSettingType {
         }
         return convertToStringValue(value);
     }
+
+	public boolean isRenderDefaultValueAsPre() {
+		return m_renderDefaultValueAsPre;
+	}
+
+	public void setRenderDefaultValueAsPre(boolean renderDefaultValueAsPre) {
+		this.m_renderDefaultValueAsPre = renderDefaultValueAsPre;
+	}
 }
