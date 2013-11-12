@@ -5070,13 +5070,13 @@
         <type>
 	      <string />
 	    </type>
-        <value>ezLogo320x240.jpg</value>        
+        <value></value>        
       </setting>
        <setting name="bm.1.name">
         <type>
           <string />
         </type>
-        <value>ezLogo320x240.jpg</value>        
+        <value></value>        
       </setting>
     </group>
     <group name="polycom550bg" hidden="yes">
@@ -5084,19 +5084,19 @@
         <type>
           <string />
         </type>
-        <value>3,1</value>
+        <value>3,6</value>
       </setting>
       <setting name="bm.1.em.name">
       <type>
         <string />
       </type>
-      <value>ezLogo320x160.jpg</value>        
+      <value></value>        
       </setting>
       <setting name="bm.1.name">
         <type>
           <string />
         </type>
-        <value>ezLogo320x160.jpg</value>        
+        <value></value>        
       </setting>
       <setting name="bm.1.adj">
         <type>
@@ -5110,19 +5110,19 @@
         <type>
           <string />
         </type>
-        <value>3,1</value>
+        <value>3,6</value>
       </setting>
       <setting name="bm.1.em.name">
         <type>
           <string />
         </type>
-        <value>ezLogo320x160.jpg</value>        
+        <value></value>        
       </setting>
       <setting name="bm.1.name">
         <type>
           <string />
         </type>
-        <value>ezLogo320x160.jpg</value>
+        <value></value>
       </setting>
     </group>
     <group name="polycom450bg" hidden="yes">
@@ -5130,13 +5130,13 @@
         <type>
           <string />
         </type>
-        <value>3,1</value>
+        <value>3,6</value>
       </setting>
       <setting name="bm.1.name">
         <type>
           <string />
         </type>
-        <value>ezLogo250x116.jpg</value>
+        <value></value>
       </setting>
       <setting name="bm.1.adj">
         <type>
@@ -5150,13 +5150,13 @@
         <type>
           <string />
         </type>
-        <value>3,1</value>
+        <value>3,6</value>
       </setting>
       <setting name="bm.1.em.name">
         <type>
           <string />
         </type>
-        <value>ezLogo800x480.jpg</value>
+        <value></value>
       </setting>
     </group>
     <group name="calendar" if="exchangeIntegration">

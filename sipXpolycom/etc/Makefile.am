@@ -18,5 +18,3 @@ dist_cfgvm32_DATA = $(shell cd $(srcdir); find polycom/mac-address.d.32 -type f)
 cfgvm41dir = $(SIPX_CONFDIR)/polycom/mac-address.d.41
 dist_cfgvm41_DATA = $(shell cd $(srcdir); find polycom/mac-address.d.41 -type f)
 
-tftpdir = @SIPX_VARDIR@/configserver/phone/profile/tftproot
-tftp_DATA = $(shell cd $(srcdir); find polycom/images -type f)
