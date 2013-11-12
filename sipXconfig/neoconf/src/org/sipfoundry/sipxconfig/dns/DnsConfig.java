@@ -43,6 +43,7 @@ import org.sipfoundry.sipxconfig.domain.Domain;
 import org.sipfoundry.sipxconfig.im.ImManager;
 import org.sipfoundry.sipxconfig.proxy.ProxyManager;
 import org.sipfoundry.sipxconfig.registrar.Registrar;
+import org.sipfoundry.sipxconfig.setting.Setting;
 
 public class DnsConfig implements ConfigProvider {
     private static final Log LOG = LogFactory.getLog(DnsConfig.class);
@@ -124,7 +125,7 @@ public class DnsConfig implements ConfigProvider {
     void writeSettings(Writer w, boolean namedOn, boolean resolvOn, DnsSettings settings) throws IOException {
         CfengineModuleConfiguration config = new CfengineModuleConfiguration(w);
         config.writeClass("resolv", resolvOn);
-        config.writeClass("sipxdns", namedOn);
+        config.writeClass("sipxdns", namedOn);        
         String fwders = "";
         List<Address> fwd = settings.getDnsForwarders();
         if (fwd != null && fwd.size() > 0) {
