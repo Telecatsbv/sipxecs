@@ -61,6 +61,12 @@
       </option>
     </enum>
   </type>
+  <type id="truefalse">
+    <boolean>
+      <true><value>true</value></true>
+      <false><value>false</value></false>
+    </boolean>
+  </type>
   <group name="ivr">
     <setting name="log.level">
       <type refid="loglevel" />
