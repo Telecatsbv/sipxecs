@@ -450,6 +450,7 @@
   	<antcall target="branch-timezone" />
   	<antcall target="add_value_storage_to_openacdline"/>
   	<antcall target="add-chefsec"/>
+  	<antcall target="add_timeout_to_ldap"/>
   </target>
 
   <target name="plugin-patches">
@@ -1342,6 +1343,9 @@
   </target>
   <target name="add-chefsec" unless="add-chefsec">
 	<db-patch patch="add-chefsec"/>
+  </target>
+  <target name="add_timeout_to_ldap" unless="add_timeout_to_ldap">
+	<db-patch patch="add_timeout_to_ldap"/>
   </target>
   <!--
     - SUPPORT UTILITIES
