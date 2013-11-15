@@ -10,7 +10,7 @@ telecats_build = \
   sipXrecording \
   sipXsbc \
   sipXhomer \
-  sipXlang-nl \
   sipXcisco \
-  $(telecats-sipXaddons) \
-  sipXaastra
+  sipXaastra \
+  sipXcallQueue \
+  $(telecats-sipXaddons)

@@ -5,8 +5,7 @@ telecats-sipXaddons= \
   sipXrandomGroupDial \
   sipXlang-nl_telecats \
   sipXchefsec \
-  sipXtcCustomCallerId \
-  sipXtcDhcp \
   sipXclick2dial \
   sipXtcDhcp \
-  sipXtcCustomCallerId
+  sipXtcCustomCallerId \
+  sipXonnetSelector 
