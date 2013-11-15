@@ -11,6 +11,5 @@ telecats_build = \
   sipXsbc \
   sipXhomer \
   sipXcisco \
-  sipXaastra \
   sipXcallQueue \
   $(telecats-sipXaddons)
