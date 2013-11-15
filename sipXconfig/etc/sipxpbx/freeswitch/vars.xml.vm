@@ -28,6 +28,8 @@
   <X-PRE-PROCESS cmd="set" data="domain_name=$${domain}"/>
   <X-PRE-PROCESS cmd="set" data="hold_music=local_stream://moh"/>
   <X-PRE-PROCESS cmd="set" data="use_profile=internal"/>
+  <X-PRE-PROCESS cmd="set" data="recordings_dir=@SIPX_VARDIR@/tmp/freeswitch/recordings"/>
+  <X-PRE-PROCESS cmd="set" data="temp_dir=@SIPX_VARDIR@/tmp/freeswitch"/>
 
   <!--
       Enable ZRTP globally you can override this on a per channel basis
