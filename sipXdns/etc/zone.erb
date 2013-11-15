@@ -9,7 +9,7 @@
                        <%= serialno %> ; serial#
                        1800            ; refresh, seconds
                        1800            ; retry, seconds
-                       1800            ; expire, seconds
+                       3d              ; expire, seconds
                        1800 )          ; minimum TTL, seconds
 <% 
   unless dns_servers.nil?
