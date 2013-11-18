@@ -590,7 +590,12 @@ SubscribeServerThread::isAuthorized (
                         {
                             nextPermissionMatched = TRUE;
                             break;
-                        }
+                        } else if( pluginPermission->compareTo("voicemail", UtlString::ignoreCase ) == 0 ) {
+                            //Telecats: SIPXECS-705 (devel 25.1), SIPXECS-839 (devel-4.6.0-8.1)
+                            //Let phones without voicemail permission receive status OK on MWI subscription.
+                            //Otherwhise the phones will retry and retry without degrading gracefully
+                            nextPermissionMatched = TRUE;
+			}
                     }
                 }
                 delete pluginPermissionIterator;
@@ -606,17 +611,7 @@ SubscribeServerThread::isAuthorized (
                 {
                     Os::Logger::instance().log(FAC_AUTH, PRI_DEBUG, "SubscribeServerThread::isAuthorized() -"
                         " One or more Permissions did not match - request is UNAUTHORIZED");
-
-                    //Telecats: SIPXECS-705 (devel 25.1), SIPXECS-839 (devel-4.6.0-8.1)
-                    //Let phones without voicemail permission receive status OK on MWI subscription.
-                    //Otherwhise the phones will retry and retry without degrading gracefully
-                    if (pluginPermission->compareTo("voicemail", UtlString::ignoreCase ) == 0) {
-                        retIsAuthorized = TRUE;
-                        Os::Logger::instance().log(FAC_AUTH, PRI_DEBUG, "SubscribeServerThread::isAuthorized() -"
-                        " Voicemail Permissions did not match BUT sending STATUS.OK to prevent retrial on Subscribe MWI - request is AUTHORIZED");
-                    } else {
-                        retIsAuthorized = FALSE;
-                    }
+                    retIsAuthorized = FALSE;
                 }
             }
             else
