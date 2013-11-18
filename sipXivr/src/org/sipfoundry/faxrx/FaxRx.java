@@ -64,10 +64,14 @@ public class FaxRx extends SipxIvrApp {
         }
 
         finally {
-            m_faxProcessor.queueFaxProcessing(user, faxPathName, faxReceive.getRemoteStationId(),
-                    controller.getChannelCallerIdName(), controller.getChannelCallerIdNumber(),
-                    faxReceive.faxTotalPages(), faxReceive.rxSuccess(), faxReceive.getResultCode(),
-                    faxReceive.getResultText());
+            if( faxReceive.faxTotalPages() > 0 ) {
+                m_faxProcessor.queueFaxProcessing(user, faxPathName, faxReceive.getRemoteStationId(),
+                        controller.getChannelCallerIdName(), controller.getChannelCallerIdNumber(),
+                        faxReceive.faxTotalPages(), faxReceive.rxSuccess(), faxReceive.getResultCode(),
+                        faxReceive.getResultText());
+            } else {
+                LOG.warn("faxReceive: No pages in fax for mailbox: " + mailboxId + ". Dropping " + faxReceive.faxTotalPages() + " pages.");
+            }
         }
     }
 
