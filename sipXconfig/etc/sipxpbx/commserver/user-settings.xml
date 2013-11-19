@@ -61,6 +61,10 @@
         <type refid="enable-disable" />
         <value>ENABLE</value>
       </setting>
+      <setting name="operator-in-ivr">
+        <type refid="enable-disable" />
+        <value>ENABLE</value>
+      </setting>
     </group>
     <group name="call-handling">
       <setting name="900Dialing">
