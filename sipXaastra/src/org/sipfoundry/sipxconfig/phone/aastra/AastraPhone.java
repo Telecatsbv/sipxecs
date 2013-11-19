@@ -281,8 +281,7 @@ public class AastraPhone extends Phone implements HotProvisionable {
     public void performHotProvisioning(HashMap<String, String> hotProvProps) {
         String instrAddr = getInstrumentAddrSpec();
         SipService m_sip = getSipService();
-//        instrAddr = hotProvProps.get(HotProvisioningManager.SIP_CONTACT_HOST_PROP);
-        LOG.debug("AastraPhone: performHotProvisioning instrAddr:" + instrAddr);
+        LOG.info("AastraPhone: performHotProvisioning instrAddr:" + instrAddr);
 
         // check prov file is up-2-date, of wait for it to be updated
         long ageThreshold = 10 * 1000; // 10 sec
@@ -334,7 +333,9 @@ public class AastraPhone extends Phone implements HotProvisionable {
         // send notify
         try {
             LOG.debug("AastraPhone: hotProvXmlFile age:" + age);
+            LOG.info("AastraPhone: sending clean-data notify, instrAddr:"+instrAddr);
             getSipService().sendNotify(instrAddr, "aastra-xml", APPLICATION_XML, String.valueOf(cleanData).getBytes());
+            LOG.info("AastraPhone: sending aastra-xml notify, instrAddr:"+instrAddr);
             getSipService().sendNotify(instrAddr, "aastra-xml", APPLICATION_XML, new byte[] {});
         } catch (RuntimeException ex) {
             String msg=ex.getMessage();
