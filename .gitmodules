@@ -79,45 +79,45 @@
 [submodule "openacd"]
 	path = openacd
 	url = git://github.com/sipxopenacd/openacd.git
-[submodule "tc-addons"]
-	path = tc-addons
-	url = ssh://git@git.telecats.nl/opt/git/sipxecsTC_addons
 [submodule "sipXhotdesking"]
 	path = sipXhotdesking
 	url = ssh://git@git.telecats.nl/opt/git/sipXhotdesking
-  branch = devel-4.6
+  	branch = devel-4.6
 [submodule "sipXyealink"]
 	path = sipXyealink
 	url = ssh://git@git.telecats.nl/opt/git/sipXyealink
-  branch = devel-4.6
+  	branch = devel-4.6
 [submodule "sipXtcExample"]
 	path = sipXtcExample
 	url = ssh://git@git.telecats.nl/opt/git/sipXtcExample
-  branch = devel-4.6
+  	branch = devel-4.6
 [submodule "sipXchefsec"]
-  path = sipXchefsec
-  url = ssh://git@git.telecats.nl/opt/git/sipXchefsec
-  branch = devel-4.6
+  	path = sipXchefsec
+  	url = ssh://git@git.telecats.nl/opt/git/sipXchefsec
+  	branch = devel-4.6
 [submodule "sipXlang-nl_telecats"]
 	path = sipXlang-nl_telecats
 	url = ssh://git@git.telecats.nl/opt/git/sipXlang-nl_TC
-  branch = devel-4.6
+  	branch = devel-4.6
 [submodule "sipXrandomGroupDial"]
 	path = sipXrandomGroupDial
 	url = ssh://git@git.telecats.nl/opt/git/sipXrandomGroupDial
-  branch = devel-4.6
+  	branch = devel-4.6
 [submodule "sipXtcCustomCallerId"]
 	path = sipXtcCustomCallerId
 	url = ssh://git@git.telecats.nl/opt/git/sipXtcCustomCallerId
-  branch = devel-4.6
+  	branch = devel-4.6
 [submodule "sipXhotprovisioning"]
 	path = sipXhotprovisioning
 	url = https://github.com/Telecats/sipXhotprovisioning.git
 [submodule "sipXtcDhcp"]
 	path = sipXtcDhcp
 	url = ssh://git@git.telecats.nl/opt/git/sipXtcDhcp
-  branch = devel-4.6
+  	branch = devel-4.6
 [submodule "sipXclick2dial"]
 	path = sipXclick2dial
 	url = ssh://git@git.telecats.nl/opt/git/sipXclick2dial
-  branch = devel-4.6
+  	branch = devel-4.6
+[submodule "sipXcallQueue"]
+	path = sipXcallQueue
+	url = git://github.com/dhubler/sipXcallQueue.git

@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/utility.am
 include $(top_srcdir)/config/java.am
+include $(top_srcdir)/config/sipxconfig.am
 include $(top_srcdir)/common.am
 
 EXTRA_DIST = \
@@ -61,5 +62,5 @@ validate-xml : validate-spring-xml;
 
 validate-spring-xml : $(SPRING_XML)
 	xmllint --noout \
-	  --schema $(SIPX_DATADIR)/schema/spring-beans-2.0.xsd  \
+	  --schema $(SIPX_DATADIR)/schema/spring-all.xsd \
 	$^

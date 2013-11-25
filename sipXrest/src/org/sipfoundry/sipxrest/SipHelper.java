@@ -5,6 +5,7 @@
  */
 package org.sipfoundry.sipxrest;
 
+import gov.nist.javax.sip.DialogExt;
 import gov.nist.javax.sip.header.HeaderFactoryImpl;
 import gov.nist.javax.sip.header.extensions.ReferredByHeader;
 
@@ -63,6 +64,8 @@ public class SipHelper {
 
     private AbstractSipListener abstractListener;
 
+    public static final String BUSY_MESSAGE = "Busy Here";
+
     SipHelper(AbstractSipListener abstractListener) {
         this.abstractListener = abstractListener;
     }
@@ -98,6 +101,10 @@ public class SipHelper {
         return contactHeader;
     }
 
+    final public ReasonHeader createBusyReasonHeader(String sipVersion) throws ParseException, InvalidArgumentException {
+        return getStackBean().getHeaderFactory().createReasonHeader(sipVersion, 486, BUSY_MESSAGE);
+    }
+
     static final public long getSequenceNumber(Message sipMessage) {
         CSeqHeader cseqHeader = (CSeqHeader) sipMessage.getHeader(CSeqHeader.NAME);
         return cseqHeader.getSeqNumber();
@@ -115,7 +122,7 @@ public class SipHelper {
     final public AcceptHeader createAcceptHeader(String type, String subType) throws ParseException {
         return getStackBean().getHeaderFactory().createAcceptHeader(type, subType);
     }
-    
+
     final public ViaHeader createViaHeader() throws ParseException, InvalidArgumentException {
 
         String host = RestServer.getRestServerConfig().getIpAddress();
@@ -185,10 +192,10 @@ public class SipHelper {
            message.setContent(sdpContent, cth);
        } catch (Exception ex) {
            logger.error("Unexpected exception creating header", ex);
-           throw new SipxRestException(ex);  
+           throw new SipxRestException(ex);
        }
     }
-    
+
     final public ReferToHeader createReferToHeader(String referToAddrSpec) {
         try {
             String referToUri = "sip:" + referToAddrSpec;
@@ -202,9 +209,13 @@ public class SipHelper {
             throw new SipxRestException(ex);
         }
     }
-    
 
     final public void tearDownDialog(Dialog dialog) {
+        tearDownDialog(dialog, null);
+    }
+
+
+    final public void tearDownDialog(Dialog dialog, ReasonHeader reasonHeader) {
         logger.debug("Tearinging Down Dialog : " + dialog);
         if (dialog == null) {
             return;
@@ -212,12 +223,16 @@ public class SipHelper {
         try {
             if (dialog.getState() == DialogState.CONFIRMED) {
                 Request request = dialog.createRequest(Request.BYE);
-                ClientTransaction ctx = this.getNewClientTransaction(request);
+                if (reasonHeader != null) {
+                    request.addHeader(reasonHeader);
+                }
+                SipProvider provider = ((DialogExt) dialog).getSipProvider();
+                ClientTransaction ctx = provider.getNewClientTransaction(request);
                 dialog.sendRequest(ctx);
             } else if (dialog.getState() != DialogState.TERMINATED) {
                 dialog.delete();
             }
-        } catch (SipException e) {
+        } catch (Exception e) {
             logger.error("Unexpected exception sending BYE", e);
         }
     }
@@ -451,7 +466,7 @@ public class SipHelper {
             throw new SipxRestException(ex);
         }
     }
-    
+
     /**
      * @return the m_stackBean
      */

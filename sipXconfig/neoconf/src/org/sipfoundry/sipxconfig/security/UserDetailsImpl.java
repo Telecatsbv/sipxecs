@@ -9,27 +9,29 @@
  */
 package org.sipfoundry.sipxconfig.security;
 
-import org.acegisecurity.GrantedAuthority;
-import org.acegisecurity.userdetails.UserDetails;
+import java.util.Collection;
 import org.sipfoundry.sipxconfig.common.User;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 public class UserDetailsImpl implements UserDetails {
     private final String m_canonicalUserName;
     private final Integer m_userId;
     private final String m_userNameOrAlias;
     private final String m_pintoken;  // MD5-encoded password
-    private final GrantedAuthority[] m_authorities;
+    private final Collection<GrantedAuthority> m_authorities;
     private final String m_userDomain;
     private final boolean m_enabled;
+    private final boolean m_ldapManaged;
 
     /**
      * UserDetails constructor
      *
-     * Create an Acegi Security UserDetails object based on the sipXconfig User, the
+     * Create an Spring Security UserDetails object based on the sipXconfig User, the
      * userNameOrAlias that is the userName part of the user's credentials, and the
      * authorities granted to this user.
      */
-    public UserDetailsImpl(User user, String userNameOrAlias, GrantedAuthority... authorities) {
+    public UserDetailsImpl(User user, String userNameOrAlias, Collection<GrantedAuthority> authorities) {
         m_canonicalUserName = user.getUserName();
         m_userId = user.getId();
         m_userNameOrAlias = userNameOrAlias;
@@ -37,6 +39,7 @@ public class UserDetailsImpl implements UserDetails {
         m_authorities = authorities;
         m_userDomain = user.getUserDomain();
         m_enabled = user.isEnabled();
+        m_ldapManaged = user.isLdapManaged();
     }
 
     @Override
@@ -50,7 +53,7 @@ public class UserDetailsImpl implements UserDetails {
     }
 
     @Override
-    public GrantedAuthority[] getAuthorities() {
+    public Collection<GrantedAuthority> getAuthorities() {
         return m_authorities;
     }
 
@@ -92,5 +95,9 @@ public class UserDetailsImpl implements UserDetails {
 
     public String getUserDomain() {
         return m_userDomain;
+    }
+
+    public boolean isLdapManaged() {
+        return m_ldapManaged;
     }
 }

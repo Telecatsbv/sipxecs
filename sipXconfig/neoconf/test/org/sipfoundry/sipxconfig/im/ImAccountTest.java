@@ -75,6 +75,22 @@ public class ImAccountTest extends TestCase {
         assertEquals("joe im", imAccount.getImDisplayName());
     }
 
+    public void testDisplayNameComponents() throws Exception {
+        User user = new User();
+        ImAccount imAccount = new ImAccount(user);
+
+        user.setFirstName("John");
+        assertEquals("John", imAccount.getImDisplayName());
+        assertEquals("John", user.getImDisplayName());
+        user.setLastName("Fitzgerald");
+        assertEquals("John Fitzgerald", imAccount.getImDisplayName());
+        assertEquals("John Fitzgerald", user.getImDisplayName());
+        user.setFirstName(null);
+        user.setLastName("Doe");
+        assertEquals("Doe", imAccount.getImDisplayName());
+        assertEquals("Doe", user.getImDisplayName());
+    }
+
     public void testSetImDisplayName() throws Exception {
         User user = new User();
         ImAccount imAccount = new ImAccount(user);
@@ -89,6 +105,8 @@ public class ImAccountTest extends TestCase {
 
         imAccount.setImDisplayName("jane");
         assertEquals("jane", imAccount.getImDisplayName());
-        assertNull(user.getImDisplayName());
+        //we need to always set imDisplayName even if is equal with username.
+        //we need it replicated in potential plugins for vcard in openfire
+        assertEquals("jane", user.getImDisplayName());
     }
 }

@@ -7,16 +7,17 @@ SUBDIRS = \
 
 EXTRA_DIST = \
 	$(example_SRC) \
-	$(example_RESOURCES)
+	plugin \
+	src/sipxplugin.beans.xml
 
 jardir = @SIPX_JAVADIR@/sipXconfig/plugins
 JAR_FILE = sipxexample-config.jar
 jar_DATA = $(JAR_FILE)
 
 example_SRC = $(shell cd $(srcdir); find src -type f -name '*.java')
-example_RESOURCES = \
-	$(shell cd $(srcdir); find plugin -type f) \
-	sipxplugin.beans.xml
+
+plugin_RESOURCES = \
+	$(shell cd $(srcdir); find plugin -type f)
 
 example_PKGS = \
 	sipxconfig-neoconf \
@@ -30,7 +31,8 @@ example_DEPS = \
 $(JAR_FILE) : javac-example $(example_RESOURCES)
 	jar cf $@ \
 	  $(call JarInclude,$(JAVAROOT),.) \
-	  $(call JarInclude,$(srcdir),$(example_RESOURCES))
+	  $(call JarInclude,$(srcdir),$(plugin_RESOURCES)) \
+	  $(call JarInclude,$(srcdir)/src,sipxplugin.beans.xml)
 
 # style checks java source code coding style agains proper sipxecs conforming. Not nec.
 # but you will probably find very useful
@@ -38,7 +40,7 @@ style_SRC = $(example_SRC)
 
 precommit : style validate;
 
-validate : sipxplugin.beans.xml
+validate : src/sipxplugin.beans.xml
 	xmllint --noout \
 	  --schema $(SIPX_DATADIR)/schema/spring-beans-2.0.xsd  \
 	$^

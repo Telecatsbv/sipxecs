@@ -39,11 +39,15 @@ public interface Voicemail extends Serializable {
 
     String getForwardedFromBrief();
 
+    String getAudioFormat();
+
     Date getTimestamp();
 
     Date getForwardedTimestamp();
 
     int getDurationsecs();
+
+    long getContentLength();
 
     int getForwardedDurationsecs();
 

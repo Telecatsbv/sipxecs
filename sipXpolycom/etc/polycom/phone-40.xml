@@ -2795,7 +2795,7 @@
         </setting>
         <setting name="class">
           <type refid="ringtones"/>
-          <value>custom1</value>
+          <value>custom2</value>
         </setting>
       </group>
       <group name="3">
@@ -2810,7 +2810,7 @@
         </setting>
         <setting name="class">
           <type refid="ringtones"/>
-          <value>custom1</value>
+          <value>custom2</value>
         </setting>
       </group>
       <!-- reserved for sipXpage - call with this value of alert-info will be used for paging -->
@@ -5159,6 +5159,13 @@
         <value></value>
       </setting>
     </group>
+  <group name="e911" hidden="yes">
+    <setting name="location">
+      <type>
+        <integer/>
+      </type>
+    </setting>    
+  </group>
     <group name="calendar" if="exchangeIntegration">
       <setting name="feature.exchangeCalendar.enabled">
         <type><boolean /></type>

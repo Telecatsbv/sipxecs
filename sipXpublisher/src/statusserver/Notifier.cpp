@@ -19,6 +19,7 @@
 #include "sipdb/EntityDB.h"
 #include "statusserver/Notifier.h"
 #include "statusserver/StatusServer.h"
+#include "statusserver/SubscribeServerThread.h"
 
 // DEFINES
 // MACROS
@@ -48,7 +49,8 @@ UtlString Notifier::sNotifycseqKey ("notifycseq");
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-Notifier::Notifier(SipUserAgent* sipUserAgent)
+Notifier::Notifier(SipUserAgent* sipUserAgent) :
+  _pSubscribeServer(0)
 {
     mpSipUserAgent = sipUserAgent;
     mpStaticSeq = 0;
@@ -149,17 +151,22 @@ Notifier::sendNotifyForeachSubscription (
     EntityRecord entity;
     if (server->getEntityDb()->findByIdentity(std::string(key), entity))
     {
-        std::vector<EntityRecord::StaticUserLoc> staticUserLoc = entity.staticUserLoc();
-        if (staticUserLoc.size() > 0)
+        std::vector<EntityRecord::StaticUserLoc> staticUserLocVec = entity.staticUserLoc();
+        std::vector<EntityRecord::StaticUserLoc>::const_iterator it;
+        for (it = staticUserLocVec.begin(); it != staticUserLocVec.end(); it++)
         {
+            const EntityRecord::StaticUserLoc& staticUserLoc = *it;
             //staticUserLoc[0].event.c_str();
-            userContact = staticUserLoc[0].contact.c_str();
-            userFromUri = staticUserLoc[0].fromUri.c_str();
-            userToUri = staticUserLoc[0].toUri.c_str();
-            userCallid = staticUserLoc[0].callId.c_str();
+            userContact = staticUserLoc.contact.c_str();
+            userFromUri = staticUserLoc.fromUri.c_str();
+            userToUri = staticUserLoc.toUri.c_str();
+            userCallid = staticUserLoc.callId.c_str();
 
-             Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                           "Notifier::sendNotifyForeachSubscription configured contact %s", userUri.data());
+            Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
+                "Notifier::sendNotifyForeachSubscription for external mwi:"
+                "contact='%s', fromUri='%s', toUri='%s', callid prefix='%s'",
+                userContact.data(), userFromUri.data(), userToUri.data(), userCallid.data());
+
              int notifycseq = 0;
              userCallid.append("-");
              userCallid.appendNumber((mpStaticSeq++ & 0xFFFF), "%04x");
@@ -233,6 +240,10 @@ Notifier::sendNotifyForeachSubscription (
             {
                subscriptionState = SIP_SUBSCRIPTION_TERMINATED;
                // the subscription should be removed from the database after this NOTIFY is sent
+               if (_pSubscribeServer)
+               {
+                 _pSubscribeServer->removeSubscription(subscribe);
+               }
             }
             else
             {

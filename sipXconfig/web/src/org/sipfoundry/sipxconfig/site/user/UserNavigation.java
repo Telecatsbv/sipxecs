@@ -22,6 +22,7 @@ import org.apache.tapestry.annotations.Parameter;
 import org.sipfoundry.sipxconfig.common.CoreContext;
 import org.sipfoundry.sipxconfig.components.AdminNavigation;
 import org.sipfoundry.sipxconfig.feature.FeatureManager;
+import org.sipfoundry.sipxconfig.hotelling.HotellingLocator;
 import org.sipfoundry.sipxconfig.imbot.ImBot;
 import org.sipfoundry.sipxconfig.ivr.Ivr;
 import org.sipfoundry.sipxconfig.setting.Setting;
@@ -40,6 +41,9 @@ import org.sipfoundry.sipxconfig.vm.MailboxManager;
 public abstract class UserNavigation extends BeanNavigation {
 
     private static final String PERSONAL_ATTENDANT = "personal-attendant";
+
+    @InjectObject(value = "spring:hotellingLocator")
+    public abstract HotellingLocator getHotellingLocator();
 
     @Parameter(required = false, defaultValue = "true")
     public abstract void setRenderCondition(boolean renderCondition);
@@ -204,6 +208,10 @@ public abstract class UserNavigation extends BeanNavigation {
     	return hookPage;
     }
 
+    public boolean isHotellingEnabled() {
+        return getHotellingLocator().isHotellingEnabled();
+    }
+
     public String getGroupsToHide() {
         List<String> names = new LinkedList<String>();
         names.add("voicemail");
@@ -212,6 +220,7 @@ public abstract class UserNavigation extends BeanNavigation {
         names.add("moh");
         names.add("timezone");
         names.add("hotelling");
+        names.add("e911");
         if (!getFeatureManager().isFeatureEnabled(ImBot.FEATURE)) {
             names.add("im_notification");
         }

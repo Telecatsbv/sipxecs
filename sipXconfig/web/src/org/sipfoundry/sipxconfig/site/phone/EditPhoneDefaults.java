@@ -11,7 +11,10 @@ package org.sipfoundry.sipxconfig.site.phone;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.tapestry.IComponent;
 import org.apache.tapestry.IPage;
 import org.apache.tapestry.IRequestCycle;
@@ -19,12 +22,12 @@ import org.apache.tapestry.annotations.InjectObject;
 import org.apache.tapestry.annotations.Persist;
 import org.apache.tapestry.event.PageBeginRenderListener;
 import org.apache.tapestry.event.PageEvent;
+import org.apache.tapestry.web.WebContext;
 import org.sipfoundry.sipxconfig.components.LocalizationUtils;
-import org.sipfoundry.sipxconfig.components.SipxBasePage;
 import org.sipfoundry.sipxconfig.device.DeviceVersion;
+import org.sipfoundry.sipxconfig.hotelling.HotellingLocator;
 import org.sipfoundry.sipxconfig.phone.Line;
 import org.sipfoundry.sipxconfig.phone.Phone;
-import org.sipfoundry.sipxconfig.phone.PhoneContext;
 import org.sipfoundry.sipxconfig.phone.PhoneModel;
 import org.sipfoundry.sipxconfig.setting.BeanWithSettings;
 import org.sipfoundry.sipxconfig.setting.Group;
@@ -33,25 +36,20 @@ import org.sipfoundry.sipxconfig.setting.SettingDao;
 import org.sipfoundry.sipxconfig.setting.SettingFilter;
 import org.sipfoundry.sipxconfig.setting.SettingUtil;
 
-public abstract class EditPhoneDefaults extends SipxBasePage implements PageBeginRenderListener {
-
+public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeginRenderListener {
     public static final String PAGE = "phone/EditPhoneDefaults";
 
-    private static final int FW_TAB = -1;
+    public static final int FW_TAB = -1;
 
-    private static final int PHONE_SETTINGS = 0;
+    public static final int PHONE_SETTINGS = 0;
 
     private static final int LINE_SETTITNGS = 1;
 
+    @InjectObject(value = "spring:hotellingLocator")
+    public abstract HotellingLocator getHotellingLocator();
+
     @InjectObject(value = "spring:settingDao")
     public abstract SettingDao getSettingDao();
-
-    @InjectObject(value = "spring:phoneContext")
-    public abstract PhoneContext getPhoneContext();
-
-    public abstract void setPhone(Phone phone);
-
-    public abstract Phone getPhone();
 
     @Persist
     public abstract PhoneModel getPhoneModel();
@@ -89,6 +87,9 @@ public abstract class EditPhoneDefaults extends SipxBasePage implements PageBegi
     public abstract void setDeviceVersion(DeviceVersion version);
 
     public abstract DeviceVersion getDeviceVersion();
+
+    @InjectObject(value = "service:tapestry.globals.WebContext")
+    public abstract WebContext getWebContext();
 
     /**
      * Entry point for other pages to edit a phone model's default settings
@@ -177,7 +178,7 @@ public abstract class EditPhoneDefaults extends SipxBasePage implements PageBegi
     /**
      * Based on current (persistent) page state, setup the settings data for the setting edit form
      */
-    private void editSettings() {
+    public void editSettings() {
         BeanWithSettings bean;
         if (getResourceId() == FW_TAB) {
             return;
@@ -192,7 +193,8 @@ public abstract class EditPhoneDefaults extends SipxBasePage implements PageBegi
         if (subset == null) {
             // Only time this is true is if navigation on an item that doesn't
             // exist anymore because a a new firmware version was selected. IMO
-            // resetting navigation each time you change version is an inconvience.
+            // resetting navigation each time you change version is an
+            // inconvience.
             subset = settings.getValues().iterator().next();
             setEditFormSettingName(subset.getName());
         }
@@ -243,5 +245,17 @@ public abstract class EditPhoneDefaults extends SipxBasePage implements PageBegi
         } else {
             return null;
         }
+    }
+
+    public String getGroupsToHide() {
+        List<String> names = new LinkedList<String>();
+        if (!isHotellingEnabled()) {
+            names.add("prov");
+        }
+        return StringUtils.join(names, ",");
+    }
+
+    public boolean isHotellingEnabled() {
+        return getHotellingLocator().isHotellingEnabled();
     }
 }

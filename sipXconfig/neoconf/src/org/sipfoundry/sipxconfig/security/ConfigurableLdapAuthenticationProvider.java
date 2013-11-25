@@ -20,41 +20,45 @@ import static org.sipfoundry.commons.security.Util.retrieveDomain;
 import static org.sipfoundry.commons.security.Util.retrieveUsername;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import org.acegisecurity.Authentication;
-import org.acegisecurity.AuthenticationException;
-import org.acegisecurity.AuthenticationServiceException;
-import org.acegisecurity.ldap.DefaultInitialDirContextFactory;
-import org.acegisecurity.ldap.InitialDirContextFactory;
-import org.acegisecurity.ldap.LdapUserSearch;
-import org.acegisecurity.ldap.search.FilterBasedLdapUserSearch;
-import org.acegisecurity.providers.AuthenticationProvider;
-import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
-import org.acegisecurity.providers.ldap.LdapAuthenticationProvider;
-import org.acegisecurity.providers.ldap.LdapAuthenticator;
-import org.acegisecurity.providers.ldap.LdapAuthoritiesPopulator;
-import org.acegisecurity.providers.ldap.authenticator.BindAuthenticator;
-import org.acegisecurity.userdetails.UserDetails;
-import org.acegisecurity.userdetails.UserDetailsService;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sipfoundry.sipxconfig.bulk.ldap.AttrMap;
 import org.sipfoundry.sipxconfig.bulk.ldap.LdapConnectionParams;
 import org.sipfoundry.sipxconfig.bulk.ldap.LdapManager;
 import org.sipfoundry.sipxconfig.bulk.ldap.LdapSystemSettings;
 import org.sipfoundry.sipxconfig.common.event.DaoEventListener;
-import org.springframework.dao.DataAccessException;
+import org.springframework.ldap.core.ContextSource;
+import org.springframework.ldap.core.support.BaseLdapPathContextSource;
+import org.springframework.ldap.core.support.LdapContextSource;
+import org.springframework.security.authentication.AuthenticationServiceException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.ldap.authentication.BindAuthenticator;
+import org.springframework.security.ldap.authentication.LdapAuthenticationProvider;
+import org.springframework.security.ldap.authentication.LdapAuthenticator;
+import org.springframework.security.ldap.search.FilterBasedLdapUserSearch;
+import org.springframework.security.ldap.search.LdapUserSearch;
 
 /**
- * Creates a rebuildable reference to Acegi's real LdapAuthenticationProvider as settings change.
- * We cannot use LdapAuthenticationProvider directly because ldap settings are immutable and
- * Spring keeps a more permanent reference list of auth providers.
+ * Creates a rebuildable reference to Spring Security real LdapAuthenticationProvider as settings
+ * change. We cannot use LdapAuthenticationProvider directly because ldap settings are immutable
+ * and Spring keeps a more permanent reference list of auth providers.
  */
-public class ConfigurableLdapAuthenticationProvider implements AuthenticationProvider, DaoEventListener {
+public class ConfigurableLdapAuthenticationProvider extends AbstractUserDetailsAuthenticationProvider implements
+    DaoEventListener {
 
+    private static final Log LOG = LogFactory.getLog(ConfigurableLdapAuthenticationProvider.class);
     private LdapManager m_ldapManager;
     private List<SipxLdapAuthenticationProvider> m_providers = new ArrayList<SipxLdapAuthenticationProvider>();
-    private LdapAuthoritiesPopulator m_authoritiesPopulator;
     private UserDetailsService m_userDetailsService;
     private boolean m_initialized;
 
@@ -74,48 +78,87 @@ public class ConfigurableLdapAuthenticationProvider implements AuthenticationPro
         m_ldapManager = ldapManager;
     }
 
-    public LdapAuthoritiesPopulator getAuthoritiesPopulator() {
-        return m_authoritiesPopulator;
-    }
-
-    public void setAuthoritiesPopulator(LdapAuthoritiesPopulator authoritiesPopulator) {
-        m_authoritiesPopulator = authoritiesPopulator;
-    }
-
     public void addProvider(SipxLdapAuthenticationProvider provider) {
         m_providers.add(provider);
     }
 
     @Override
-    public Authentication authenticate(Authentication authentication) {
+    protected void additionalAuthenticationChecks(UserDetails userDetails,
+            UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
+        // do nothing
+    }
+
+    @Override
+    protected UserDetails retrieveUser(String userLoginName, UsernamePasswordAuthenticationToken authentication)
+        throws AuthenticationException {
         if (!m_ldapManager.getSystemSettings().isConfigured()) {
-            return null;
+            String message = "LDAP Authentication not configured";
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(message);
+            }
+            throw new AuthenticationServiceException(message);
         }
         initialize();
         if (!isEnabled()) {
-            return null;
+            String message = "LDAP Authentication not enabled";
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(message);
+            }
+            throw new AuthenticationServiceException(message);
         } else {
             Authentication result = null;
-            String username = authentication.getName();
-            String userDomain = retrieveDomain(username);
+            String username = retrieveUsername(userLoginName);
+            String userDomain = retrieveDomain(userLoginName);
+            UserDetailsImpl loaddedUser = (UserDetailsImpl) m_userDetailsService.loadUserByUsername(username);
+            if (loaddedUser == null) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("userDetailsService didnt find any user " + username);
+                }
+                throw new AuthenticationServiceException("UserDetailsService returned null, which "
+                        + "is an interface contract violation");
+            }
 
             for (SipxLdapAuthenticationProvider provider : m_providers) {
-                if (userDomain != null && !userDomain.equals(provider.getDomain())) {
+                String providerDomain = provider.getDomain();
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("current provider domain is " + providerDomain + " user input domain is " + userDomain);
+                }
+                // verify if user input domain can be handled by this provider, continue with next
+                // provider
+                if (userDomain != null && !userDomain.equals(providerDomain)) {
                     continue;
                 }
+
+                // if no domain specified by user, compare the one from database with the provider
+                // domain
+                if (userDomain == null) {
+                    String savedDomain = loaddedUser.getUserDomain();
+                    if (!StringUtils.equals(StringUtils.defaultString(savedDomain, StringUtils.EMPTY),
+                            StringUtils.defaultString(providerDomain, StringUtils.EMPTY))) {
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("provider domain different than user domain " + savedDomain);
+                        }
+                        throw new AuthenticationServiceException(
+                                "The following domain does not belong to the actual user: " + userDomain
+                                        + " in the system - is an interface contract violation");
+                    }
+                }
+
                 try {
-                    result = provider.authenticate(authentication);
+                    UsernamePasswordAuthenticationToken myAuthentication = new UsernamePasswordAuthenticationToken(
+                            loaddedUser.getCanonicalUserName(), authentication.getCredentials());
+                    result = provider.authenticate(myAuthentication);
                 } catch (AuthenticationException ex) {
                     result = null;
                 }
                 if (result == null) {
                     continue;
                 } else {
-                    return result;
+                    return loaddedUser;
                 }
             }
         }
-        return null;
+        throw new AuthenticationServiceException("not able to authenticate user against LDAP providers chain");
     }
 
     @Override
@@ -163,32 +206,46 @@ public class ConfigurableLdapAuthenticationProvider implements AuthenticationPro
         if (params == null) {
             return null;
         }
-        InitialDirContextFactory dirFactory = getDirFactory(params);
-        BindAuthenticator authenticator = new BindAuthenticator(dirFactory);
-        authenticator.setUserSearch(getSearch(dirFactory, connectionId)); // used for user login
+        ContextSource dirFactory = getDirFactory(params);
+        BindAuthenticator authenticator = new BindAuthenticator((BaseLdapPathContextSource) dirFactory);
+        authenticator.setUserSearch(getSearch((BaseLdapPathContextSource) dirFactory, connectionId)); // used
+                                                                                                      // for
+                                                                                                      // user
+                                                                                                      // login
         SipxLdapAuthenticationProvider provider = new SipxLdapAuthenticationProvider(authenticator);
         provider.setDomain(params.getDomain());
         return provider;
     }
 
-    InitialDirContextFactory getDirFactory(LdapConnectionParams params) {
+    ContextSource getDirFactory(LdapConnectionParams params) {
         String bindUrl = params.getUrl();
-        DefaultInitialDirContextFactory dirContextFactory = new DefaultInitialDirContextFactory(bindUrl);
-        //allow anonymous access if so configured in LDAP server configuration page
+        LdapContextSource dirContextFactory = new LdapContextSource();
+        dirContextFactory.setUrl(bindUrl);
+        // allow anonymous access if so configured in LDAP server configuration page
         if (!StringUtils.isEmpty(params.getPrincipal())) {
-            dirContextFactory.setManagerDn(params.getPrincipal());
-            dirContextFactory.setManagerPassword(params.getSecret());
+            dirContextFactory.setUserDn(params.getPrincipal());
+            dirContextFactory.setPassword(params.getSecret());
+        } else {
+            dirContextFactory.setAnonymousReadOnly(true);
+        }
+        Map<String, String> envProps = new HashMap<String, String>();
+        envProps.put(LdapConnectionParams.LDAP_TIMEOUT, String.valueOf(params.getTimeout()));
+        dirContextFactory.setBaseEnvironmentProperties(envProps);
+        try {
+            dirContextFactory.afterPropertiesSet();
+        } catch (Exception ex) {
+            LOG.error("LdapContextSource not corectly initialized");
         }
         return dirContextFactory;
     }
 
-    LdapUserSearch getSearch(InitialDirContextFactory dirFactory, int connectionId) {
+    LdapUserSearch getSearch(BaseLdapPathContextSource dirFactory, int connectionId) {
         AttrMap attrMap = m_ldapManager.getAttrMap(connectionId);
 
         String sbase = StringUtils.defaultString(attrMap.getSearchBase());
-        //Any additional LDAP filters (RFC 2254) are removed from authentication search because
-        //here the filter is used to specify what LDAP attribute represents the username and it
-        //does not respect RFC2254 guidelines
+        // Any additional LDAP filters (RFC 2254) are removed from authentication search because
+        // here the filter is used to specify what LDAP attribute represents the username and it
+        // does not respect RFC2254 guidelines
         String filter = String.format("(%s={0})", attrMap.getIdentityAttributeName());
 
         FilterBasedLdapUserSearch search = new FilterBasedLdapUserSearch(sbase, filter, dirFactory);
@@ -196,10 +253,6 @@ public class ConfigurableLdapAuthenticationProvider implements AuthenticationPro
         return search;
     }
 
-    /**
-     * we need to construct UserDetailsImpl objects because that's what web layer expects,
-     * otherwise we wouldn't have have to extend LdapAuthenticationProvider
-     */
     class SipxLdapAuthenticationProvider extends LdapAuthenticationProvider {
         private String m_domain;
 
@@ -217,42 +270,6 @@ public class ConfigurableLdapAuthenticationProvider implements AuthenticationPro
             m_domain = domain;
         }
 
-        /**
-         * When the user id introduced in the login form is user's alias, we need to tell LDAP the true user ID
-         * otherwise cannot get authenticated against LDAP using user alias
-         */
-        @Override
-        protected UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication) {
-            UserDetailsImpl user = null;
-            String userLoginName = retrieveUsername(username);
-            String domain = retrieveDomain(username);
-            try {
-                user = (UserDetailsImpl) m_userDetailsService.loadUserByUsername(userLoginName);
-                if (user == null) {
-                    throw new AuthenticationServiceException("UserDetailsService returned null, which "
-                        + "is an interface contract violation");
-                }
-                if (domain != null && !StringUtils.equals(user.getUserDomain(), domain)) {
-                    throw new AuthenticationServiceException(
-                            "The following domain does not belong to the actual user: " + domain
-                            + " in the system - is an interface contract violation");
-                }
-                UsernamePasswordAuthenticationToken myAuthentication = new UsernamePasswordAuthenticationToken(
-                        user.getCanonicalUserName(), authentication.getCredentials());
-                //we call the super method to verifiy true username/password ldap authentication
-                //we don't return default LDAP retrieved user, but our sipX user, authenticated against LDAP
-                super.retrieveUser(user.getCanonicalUserName(), myAuthentication);
-            } catch (DataAccessException repositoryProblem) {
-                throw new AuthenticationServiceException(repositoryProblem.getMessage(), repositoryProblem);
-            }
-            return user;
-        }
-
-        @Override
-        protected void additionalAuthenticationChecks(UserDetails userDetails,
-                UsernamePasswordAuthenticationToken authentication) {
-            // passwords are checked in ldap layer, nothing else to do here
-        }
     }
 
     @Override

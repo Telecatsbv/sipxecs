@@ -19,11 +19,14 @@ import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.sipfoundry.sipxconfig.cdr.CdrSearch.Mode;
+import org.sipfoundry.sipxconfig.common.CoreContext;
+import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.test.IntegrationTestCase;
 import org.sipfoundry.sipxconfig.time.NtpManager;
 
 public class CdrManagerImplTestIntegration extends IntegrationTestCase {
     private CdrManagerImpl m_cdrManagerImpl;
+    private CoreContext m_coreContext;
     
     @Override
     protected void onSetUpBeforeTransaction() throws Exception {
@@ -34,6 +37,7 @@ public class CdrManagerImplTestIntegration extends IntegrationTestCase {
         EasyMock.replay(ntpManager);
         m_cdrManagerImpl.setNtpManager(ntpManager);
         clear();
+        sql("commserver/SeedLocations.sql");
     }
 
     public void testGetCdrs() {
@@ -70,7 +74,7 @@ public class CdrManagerImplTestIntegration extends IntegrationTestCase {
             "200"
         });
         List<Cdr> cdrs = m_cdrManagerImpl.getCdrs(null, null, cdrSearch, null);
-        assertTrue(cdrs.size() == 3);
+        assertTrue(cdrs.size() == 4);
     }
 
     public void testGetCdrsSearchTo() {
@@ -90,7 +94,7 @@ public class CdrManagerImplTestIntegration extends IntegrationTestCase {
             "200"
         });
         List<Cdr> cdrs = m_cdrManagerImpl.getCdrs(null, null, cdrSearch, null);
-        assertTrue(cdrs.size() == 5);
+        assertTrue(cdrs.size() == 6);
     }
 
     /*timestamp should display in system timezone
@@ -102,12 +106,32 @@ public class CdrManagerImplTestIntegration extends IntegrationTestCase {
         List<Cdr> cdrs = m_cdrManagerImpl.getCdrs(from.toDate(), to.toDate(), null);
         assertTrue(cdrs.size() == 1);
         Cdr cdr = cdrs.get(0);
-        DateTime start = new DateTime(cdr.getStartTime());
-        assertEquals(10, start.getHourOfDay());
+        cdr.getStartTime().getHours();
+
+        assertEquals(10, cdr.getStartTime().getHours());
+    }
+    
+    public void testGetCdrTimestampUser(){
+        User u = m_coreContext.newUser();
+        u.setUserName("200");
+        u.setSettingValue("timezone/timezone", "GMT+5");
+        u.setPin("123123123");
+        m_coreContext.saveUser(u);
+        DateTime from = new DateTime(2013, 1, 16, 0, 0, 0, 0);
+        DateTime to = new DateTime(2013, 1, 17, 0, 0, 0, 0);
+        List<Cdr> cdrs = m_cdrManagerImpl.getCdrs(from.toDate(), to.toDate(), u);
+        assertTrue(cdrs.size() == 1);
+        Cdr cdr = cdrs.get(0);
+
+        assertEquals(14, cdr.getStartTime().getHours());
     }
     
     public void setCdrManagerImpl(CdrManagerImpl cdrManager) {
         m_cdrManagerImpl = cdrManager;
+    }
+
+    public void setCoreContext(CoreContext coreContext) {
+        m_coreContext = coreContext;
     }
 
 }

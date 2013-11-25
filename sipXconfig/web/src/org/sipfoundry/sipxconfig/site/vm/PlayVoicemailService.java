@@ -47,6 +47,10 @@ public class PlayVoicemailService extends AssetService {
 
     private static final String FOLDER = "folder";
 
+    private static final String AUDIO_FORMAT = "format";
+
+    private static final String CONTENT_LENGTH = "contentlength";
+
     private MailboxManager m_mailboxManager;
 
     private LinkFactory m_linkFactory;
@@ -57,6 +61,7 @@ public class PlayVoicemailService extends AssetService {
 
     private ApplicationStateManager m_stateManager;
 
+    @Override
     public String getName() {
         return SERVICE_NAME;
     }
@@ -64,10 +69,16 @@ public class PlayVoicemailService extends AssetService {
     /**
      * The only parameter is the service parameters[dirName, fileName]
      */
+    @Override
     public void service(IRequestCycle cycle) throws IOException {
         Address addressCache = m_mailboxManager.getLastGoodIvrNode();
         String urlCache = null;
-        OutputStream responseOutputStream = m_response.getOutputStream(new ContentType("audio/x-wav"));
+        String contentType = StringUtils.equals(cycle.getParameter(AUDIO_FORMAT), "wav") ? "audio/wav" : "audio/mpeg";
+        String contentLength = cycle.getParameter(CONTENT_LENGTH);
+        if (Long.valueOf(contentLength) > 0) {
+            m_response.setHeader("Content-Length", contentLength);
+        }
+        OutputStream responseOutputStream = m_response.getOutputStream(new ContentType(contentType));
         if (addressCache != null) {
             urlCache = m_mailboxManager.getMediaFileURL(
                     addressCache,
@@ -119,15 +130,19 @@ public class PlayVoicemailService extends AssetService {
         private String m_messageId;
         private String m_folderId;
         private String m_userId;
+        private String m_audioFormat;
+        private long m_contentLength;
 
         public Info(Object[] serviceParameters) {
             m_messageId = (String) serviceParameters[1];
         }
 
-        public Info(String folderId, String messageId, String userId) {
+        public Info(String folderId, String messageId, String userId, String audioFormat, long contentLength) {
             m_folderId = folderId;
             m_messageId = messageId;
             m_userId = userId;
+            m_audioFormat = audioFormat;
+            m_contentLength = contentLength;
         }
 
         public String getFolderId() {
@@ -142,14 +157,24 @@ public class PlayVoicemailService extends AssetService {
             return m_userId;
         }
 
+        public String getAudioFormat() {
+            return m_audioFormat;
+        }
+
+        public long getContentLength() {
+            return m_contentLength;
+        }
     }
 
+    @Override
     public ILink getLink(boolean post, Object parameter) {
         requireUserId();
         Info info = (Info) parameter;
         Map<String, String> params = new HashMap<String, String>();
-        params.put(MESSAGE_ID, ((Info) info).getMessageId());
-        params.put(FOLDER, ((Info) info).getFolderId());
+        params.put(MESSAGE_ID, info.getMessageId());
+        params.put(FOLDER, info.getFolderId());
+        params.put(AUDIO_FORMAT, info.getAudioFormat());
+        params.put(CONTENT_LENGTH, String.valueOf(info.getContentLength()));
         return m_linkFactory.constructLink(this, post, params, false);
     }
 
@@ -157,10 +182,12 @@ public class PlayVoicemailService extends AssetService {
         m_mailboxManager = mailboxManager;
     }
 
+    @Override
     public void setResponse(WebResponse response) {
         m_response = response;
     }
 
+    @Override
     public void setLinkFactory(LinkFactory linkFactory) {
         m_linkFactory = linkFactory;
     }

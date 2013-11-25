@@ -22,18 +22,20 @@ import org.apache.tapestry.IRequestCycle;
 import org.apache.tapestry.annotations.InitialValue;
 import org.apache.tapestry.annotations.InjectObject;
 import org.apache.tapestry.annotations.Persist;
+import org.apache.tapestry.event.PageBeginRenderListener;
 import org.apache.tapestry.event.PageEvent;
 import org.apache.tapestry.form.IPropertySelectionModel;
 import org.apache.tapestry.form.StringPropertySelectionModel;
+import org.apache.tapestry.web.WebContext;
 import org.sipfoundry.sipxconfig.common.CoreContext;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.components.TapestryUtils;
 import org.sipfoundry.sipxconfig.conference.ConferenceBridgeContext;
-import org.sipfoundry.sipxconfig.device.HotellingManager;
 import org.sipfoundry.sipxconfig.device.ProfileManager;
 import org.sipfoundry.sipxconfig.feature.FeatureManager;
 import org.sipfoundry.sipxconfig.forwarding.ForwardingContext;
 import org.sipfoundry.sipxconfig.forwarding.UserGroupSchedule;
+import org.sipfoundry.sipxconfig.hotelling.HotellingLocator;
 import org.sipfoundry.sipxconfig.imbot.ImBot;
 import org.sipfoundry.sipxconfig.ivr.Ivr;
 import org.sipfoundry.sipxconfig.permission.Permission;
@@ -51,10 +53,9 @@ import org.sipfoundry.sipxconfig.vm.MailboxManager;
 
 import com.davekoelle.AlphanumComparator;
 
-public abstract class UserGroupSettings extends GroupSettings {
+public abstract class UserGroupSettings extends GroupSettings implements PageBeginRenderListener {
     public static final String PAGE = "user/UserGroupSettings";
-
-    private static final String SEPARATOR = ",";
+    public static final String SEPARATOR = ",";
 
     private static final String SCHEDULES = "schedules";
     private static final String CONFERENCE = "conference";
@@ -67,6 +68,9 @@ public abstract class UserGroupSettings extends GroupSettings {
     private static final String TIMEZONE_SETTING = "timezone/timezone";
     private static final String HOTELLING_TAB = "hotelling";
     private static final String HOTELLING_SETTING = "hotelling/enable";
+
+    @InjectObject(value = "spring:hotellingLocator")
+    public abstract HotellingLocator getHotellingLocator();
 
     @InjectObject(value = "spring:forwardingContext")
     public abstract ForwardingContext getForwardingContext();
@@ -143,8 +147,8 @@ public abstract class UserGroupSettings extends GroupSettings {
 
     public abstract void setTab(String tab);
 
-    @InjectObject("spring:hotellingManager")
-    public abstract HotellingManager getHotellingManager();
+    @InjectObject(value = "service:tapestry.globals.WebContext")
+    public abstract WebContext getWebContext();
 
     public Collection<String> getAvailableTabNames() {
         Collection<String> tabNames = new ArrayList<String>();
@@ -152,9 +156,12 @@ public abstract class UserGroupSettings extends GroupSettings {
         if (isVoicemailEnabled()) {
             tabNames.add(VOICEMAIL);
         }
-        tabNames.addAll(Arrays.asList(SCHEDULES, CONFERENCE, EXTCONTACT, SPEEDDIAL, TIMEZONE_TAB, HOTELLING_TAB));
+        tabNames.addAll(Arrays.asList(SCHEDULES, CONFERENCE, EXTCONTACT, SPEEDDIAL, TIMEZONE_TAB));
         if (isVoicemailEnabled()) {
             tabNames.add(MOH);
+        }
+        if (isHotellingEnabled()) {
+            tabNames.add(HOTELLING_TAB);
         }
         return tabNames;
     }
@@ -245,6 +252,7 @@ public abstract class UserGroupSettings extends GroupSettings {
             setIsTabsSelected(false);
         }
         setHotellingSetting(getSettings().getSetting(HOTELLING_SETTING));
+
     }
 
     public IPage addSchedule(IRequestCycle cycle) {
@@ -358,6 +366,7 @@ public abstract class UserGroupSettings extends GroupSettings {
         if (!isVoicemailEnabled()) {
             names.add("personal-attendant");
         }
+        names.add("e911");
         names.add(TIMEZONE_TAB);
         names.add(HOTELLING_TAB);
         return StringUtils.join(names, SEPARATOR);
@@ -394,9 +403,13 @@ public abstract class UserGroupSettings extends GroupSettings {
         return !Permission.isEnabled(setting.getValue());
     }
 
+    public boolean isHotellingEnabled() {
+        return getHotellingLocator().isHotellingEnabled();
+    }
+
     public void onChangeHotelling() {
         getGroup().setSettingValue(HOTELLING_SETTING, getHotellingSetting().getValue());
         apply();
-        getHotellingManager().generate(getGroup());
+        getHotellingLocator().getHotellingBean().generate(getGroup());
     }
 }

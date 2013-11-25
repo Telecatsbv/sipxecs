@@ -1,5 +1,6 @@
 include $(top_srcdir)/config/utility.am
 include $(top_srcdir)/config/java.am
+include $(top_srcdir)/config/sipxconfig-integration-testing.am
 include $(top_srcdir)/common.am
 
 EXTRA_DIST = \
@@ -43,32 +44,23 @@ test_PKGS = \
 	regexp \
 	sac \
 	slf4j-api \
-	slf4j-log4j12
+	xmlunit \
+	slf4j-log4j12 \
+	spring-mock
 
 test_DEPS = \
 	$(JAVAROOT) \
 	$(srcdir) \
 	$(neoconf_SRCDIR) \
 	$(neoconf_JAVAROOT) \
+	$(neoconf_TESTROOT) \
 	$(web_SRCDIR) \
 	$(web_JAVAROOT) \
-	$(call JavaDep,@SIPX_JAVADIR@/sipXcommons $(top_srcdir)/lib,$(test_PKGS)) \
-	@SIPX_JAVADIR@/sipXconfig/agent-bindings.jar \
-	@SIPX_JAVADIR@/sipXconfig/cdr-bindings.jar
-
-javac-test : test.properties
-
-# send autoconf variables to prop file available to test env.
-DOMAIN=$(shell hostname -f)
-test.properties : Makefile
-	@echo -e "$(subst $(space),\n,$(foreach V,DOMAIN $(CommonVariablesNames),$(V)=$($(V))))" > $@
+	$(call JavaDep,@SIPX_JAVADIR@/sipXcommons $(top_srcdir)/lib,$(test_PKGS))
 
 test_SRC = \
 	$(shell cd $(srcdir); find org \( \
 	  -name '*.java' \
 	\))
-
-reset-environment :
-	@SIPX_BINDIR@/sipxconfig.sh -d unittest-reset
 
 precommit : check

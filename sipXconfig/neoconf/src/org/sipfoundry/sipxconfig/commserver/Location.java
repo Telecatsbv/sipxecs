@@ -38,13 +38,21 @@ public class Location extends BeanWithId implements DeployConfigOnEdit, Comparab
     public static final String ROLE_LOCATION = "ROLE_LOCATION";
     public static final int PROCESS_MONITOR_PORT = 8092;
     public static final Transformer GET_ADDRESS = new Transformer() {
+        @Override
         public Object transform(Object o) {
             return (o == null ? null : ((Location) o).getAddress());
         }
     };
-    public static final Transformer GET_HOSTNAME = new Transformer() {
+    public static final Transformer GET_FQDN = new Transformer() {
+        @Override
         public Object transform(Object o) {
             return (o == null ? null : ((Location) o).getFqdn());
+        }
+    };
+    public static final Transformer GET_HOSTNAME = new Transformer() {
+        @Override
+        public Object transform(Object o) {
+            return (o == null ? null : ((Location) o).getHostname());
         }
     };
     private static final int SOFTWARE_ADMIN_PORT = 8092;
@@ -261,7 +269,11 @@ public class Location extends BeanWithId implements DeployConfigOnEdit, Comparab
     }
 
     public String getHostnameInSipDomain() {
-        return getHostname() + DOT + Domain.getDomain().getName();
+        String sipDomainName = Domain.getDomain().getName();
+        if (m_fqdn.equals(sipDomainName)) {
+            return m_fqdn;
+        }
+        return getHostname() + DOT + sipDomainName;
     }
 
     public boolean isPrimary() {
@@ -403,5 +415,18 @@ public class Location extends BeanWithId implements DeployConfigOnEdit, Comparab
             return 1;
         }
         return getId() - o.getId();
+    }
+
+    @Override
+    public String toString() {
+        return "Location [m_name=" + m_name + ", m_address=" + m_address + ", m_fqdn=" + m_fqdn + ", m_password="
+                + m_password + ", m_primary=" + m_primary + ", m_registered=" + m_registered + ", m_callTraffic="
+                + m_callTraffic + ", m_state=" + m_state + ", m_lastAttempt=" + m_lastAttempt
+                + ", m_failedReplications=" + m_failedReplications + ", m_branch=" + m_branch
+                + ", m_setFqdnOrIpChangedOnSave=" + m_setFqdnOrIpChangedOnSave + ", m_useStun=" + m_useStun
+                + ", m_stunAddress=" + m_stunAddress + ", m_stunInterval=" + m_stunInterval + ", m_publicAddress="
+                + m_publicAddress + ", m_publicPort=" + m_publicPort + ", m_publicTlsPort=" + m_publicTlsPort
+                + ", m_startRtpPort=" + m_startRtpPort + ", m_stopRtpPort=" + m_stopRtpPort + ", m_hostName="
+                + m_hostName + "]";
     }
 }

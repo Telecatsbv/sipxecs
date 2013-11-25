@@ -1,15 +1,16 @@
 /*
- * 
- * 
- * Copyright (C) 2009 Nortel Corp., certain elements licensed under a Contributor Agreement.  
+ *
+ *
+ * Copyright (C) 2009 Nortel Corp., certain elements licensed under a Contributor Agreement.
  * Contributors retain copyright to elements licensed under a Contributor Agreement.
  * Licensed to the User under the LGPL license.
- * 
+ *
  * $
  */
 
 package org.sipfoundry.callcontroller;
 
+import static org.apache.commons.lang.StringUtils.containsIgnoreCase;
 import gov.nist.javax.sip.DialogExt;
 import gov.nist.javax.sip.clientauthutils.UserCredentialHash;
 
@@ -167,7 +168,7 @@ public class DialogContext {
         if (firstDialog == null) {
              this.firstDialog = dialog;
              logger.debug("firstDialog = " + firstDialog);
-             
+
         }
     }
 
@@ -177,7 +178,7 @@ public class DialogContext {
             return null;
         assert (dialogs[0] == dialog || dialogs[1] == dialog);
         if ( dialogs[0] == dialog ) {
-            return (Dialog) dialogs[1]; 
+            return (Dialog) dialogs[1];
         } else if (dialogs[1] == dialog) {
             return (Dialog) dialogs[0];
         } else {
@@ -367,7 +368,13 @@ public class DialogContext {
 
                 if (subscriptionState.getState().equalsIgnoreCase(
                         SubscriptionStateHeader.TERMINATED)) {
-                    SipListenerImpl.getInstance().getHelper().tearDownDialog(dialog);
+                    String content = new String(request.getRawContent());
+                    ReasonHeader busyHeader = null;
+                    if (containsIgnoreCase(content, SipHelper.BUSY_MESSAGE)) {
+                        busyHeader = SipListenerImpl.getInstance().getHelper().createBusyReasonHeader(request.getSIPVersion());
+                    }
+
+                    SipListenerImpl.getInstance().getHelper().tearDownDialog(dialog, busyHeader);
                 }
             } else {
                 this.forwardRequest(requestEvent);
@@ -440,7 +447,7 @@ public class DialogContext {
 
     /**
      * Initiate a transfer.
-     * 
+     *
      * @param target -- the transfer target.
      * @throws SipException -- if the transfer request could not be sent.
      */
@@ -453,7 +460,7 @@ public class DialogContext {
     }
 
     public void solicitSdpOffer(Dialog dialog) throws SipException {
-        
+
         try {
             logger.debug("peerDialog " + dialog);
             SipHelper sipHelper = SipListenerImpl.getInstance().getHelper();
@@ -471,8 +478,8 @@ public class DialogContext {
             this.tearDownDialogs("Unexpected exception");
         }
     }
-    
-    
+
+
     public void sendSdpAnswerInAck(Dialog dialog, Response response) {
         try {
             this.pendingOperation = PendingOperation.PENDING_RE_INVITE;
@@ -494,7 +501,7 @@ public class DialogContext {
             Dialog peerDialog = this.getPeer(dialog);
             Request request = peerDialog.createRequest(Request.INVITE);
             SessionDescription sd = SipHelper.getSessionDescription(response);
-           
+
             SipHelper.incrementSessionDescriptionVersionNumber(sd);
             SipHelper sipHelper = SipListenerImpl.getInstance().getHelper();
             sipHelper.addSdpContent(request, sd.toString());
@@ -522,18 +529,18 @@ public class DialogContext {
                     fromAddrSec, toAddrSpec, false);
             SipListenerImpl.getInstance().addCallId(SipHelper.getCallId(request));
             sipHelper.addSdpContent(request, sessionDescription);
-            ClientTransaction ctx = sipHelper.getNewClientTransaction(request);        
+            ClientTransaction ctx = sipHelper.getNewClientTransaction(request);
             TransactionContext context =  TransactionContext.attach(ctx, Operator.SEND_SDP_OFFER);
             context.setUserCredentials(this.userCredentials);
-                
+
             String key = agent + ":" + target + ":" + calledParty;
             DialogContext dialogContext = SipUtils.createDialogContext(key, timeout, cacheTimeout, this.userCredentials, method,
-                    agent,target,calledParty);       
-          
+                    agent,target,calledParty);
+
             dialogContext.addDialog(ctx.getDialog(), request);
             dialogContext.setLastSdpSent(ctx.getDialog(), sessionDescription );
-            Dialog peerDialog = this.getPeer(this.firstDialog); 
-          
+            Dialog peerDialog = this.getPeer(this.firstDialog);
+
             Request req = this.getRequest(peerDialog);
             String sdpOffer = this.getLastSdpSent(peerDialog);
             String sdpAnswer = this.getLastSdpReceived(peerDialog);
@@ -544,7 +551,7 @@ public class DialogContext {
             if ( sdpOffer != null) {
                 dialogContext.setLastSdpSent(peerDialog,sdpOffer);
             }
-                     
+
             dialogContext.setPendingOperation(PendingOperation.PENDING_RE_INVITE);
             ctx.sendRequest();
             /*
@@ -569,11 +576,11 @@ public class DialogContext {
     public void setAgent(String agent) {
        this.agent = agent;
     }
-    
+
     public void setCallingParty(String callingParty) {
         this.callingParty = callingParty;
     }
-    
+
     public void setCalledParty(String calledParty) {
         this.calledParty = calledParty;
     }
@@ -581,15 +588,15 @@ public class DialogContext {
     public void setLastSdpSent(Dialog dialog, String sdp) {
        this.lastOffer.put(dialog,sdp);
     }
-    
+
     public String getLastSdpSent(Dialog dialog) {
         return this.lastOffer.get(dialog);
     }
 
     public void setLastSdpReceived(Dialog dialog , String sdpAnswer) {
-       this.lastAnswer.put(dialog,sdpAnswer);    
+       this.lastAnswer.put(dialog,sdpAnswer);
     }
-    
+
     public String getLastSdpReceived(Dialog dialog) {
         return this.lastAnswer.get(dialog);
     }
@@ -612,7 +619,7 @@ public class DialogContext {
            logger.error("Unexpected exception", ex);
            this.tearDownDialogs("Unexpected exception");
        }
-      
+
     }
 
 }

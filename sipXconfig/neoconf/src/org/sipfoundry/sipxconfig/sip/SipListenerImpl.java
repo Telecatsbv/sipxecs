@@ -9,6 +9,8 @@
  */
 package org.sipfoundry.sipxconfig.sip;
 
+import static org.apache.commons.lang.StringUtils.containsIgnoreCase;
+
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -19,6 +21,7 @@ import javax.sip.ServerTransaction;
 import javax.sip.SipListener;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
+import javax.sip.header.ReasonHeader;
 import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
@@ -36,14 +39,17 @@ class SipListenerImpl implements SipListener {
         m_stackBean = stackBean;
     }
 
+    @Override
     public void processDialogTerminated(DialogTerminatedEvent dialogTerminatedEvent) {
 
     }
 
+    @Override
     public void processIOException(IOExceptionEvent exceptionEvent) {
 
     }
 
+    @Override
     public void processRequest(RequestEvent requestEvent) {
         try {
             ServerTransaction serverTransaction = requestEvent.getServerTransaction();
@@ -65,7 +71,12 @@ class SipListenerImpl implements SipListener {
                         (SubscriptionStateHeader) request.getHeader(SubscriptionStateHeader.NAME);
                 if (subscriptionState.getState().equalsIgnoreCase(SubscriptionStateHeader.TERMINATED)) {
                     Dialog dialog = requestEvent.getDialog();
-                    m_stackBean.tearDownDialog(dialog);
+                    String content = new String(request.getRawContent());
+                    ReasonHeader busyHeader = null;
+                    if (containsIgnoreCase(content, SipStackBean.BUSY_MESSAGE)) {
+                        busyHeader = m_stackBean.createBusyReasonHeader(request.getSIPVersion());
+                    }
+                    m_stackBean.tearDownDialog(dialog, busyHeader);
                 }
             }
         } catch (Exception ex) {
@@ -75,6 +86,7 @@ class SipListenerImpl implements SipListener {
         }
     }
 
+    @Override
     public void processResponse(ResponseEvent responseEvent) {
         try {
             ClientTransaction clientTransaction = responseEvent.getClientTransaction();
@@ -98,6 +110,7 @@ class SipListenerImpl implements SipListener {
         }
     }
 
+    @Override
     public void processTimeout(TimeoutEvent timeoutEvent) {
         if (!timeoutEvent.isServerTransaction()) {
             ClientTransaction clientTransaction = timeoutEvent.getClientTransaction();
@@ -117,6 +130,7 @@ class SipListenerImpl implements SipListener {
         }
     }
 
+    @Override
     public void processTransactionTerminated(TransactionTerminatedEvent transactionTerminatedEvent) {
     }
 }
