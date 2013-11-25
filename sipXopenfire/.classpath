@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/sipXcommonsLib"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/sipXconfigLib"/>
 	<classpathentry kind="src" path="config-plugin/src"/>
 	<classpathentry kind="src" path="sqa-plugin/src"/>
 	<classpathentry kind="src" path="vcard-provider/src"/>
@@ -26,10 +24,10 @@
 	<classpathentry kind="var" path="OPENFIRE_ROOT/lib/servlet.jar"/>
 	<classpathentry kind="var" path="OPENFIRE_ROOT/lib/startup.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sipXconfig-neoconf"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/sipxcommons"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sipXcommons"/>
 	<classpathentry kind="var" path="OPENFIRE_ROOT"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sipXconfig-web"/>
-	<classpathentry kind="var" path="SIPX_JAVADIR/sipXecs/sipxcommons/sipxsqaclient.jar"/>
+	<classpathentry kind="var" path="SIPX_JAVADIR/sipXecs/sipXcommons/sipxsqaclient.jar"/>
 	<classpathentry kind="var" path="SIPX_COMMONS/lib/xmlrpc-2.0.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/openfire"/>
 	<classpathentry kind="var" path="SIPX_SRC_TOP/openfire/build/lib/merge/tinder.jar"/>

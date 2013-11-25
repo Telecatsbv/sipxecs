@@ -4,9 +4,9 @@
 	<classpathentry kind="src" path="src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="tools/sipunit.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/sipxcommons"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sipXcommons"/>
+	<classpathentry kind="var" path="SIPX_BUILDDIR"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sipXrelay"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/sipXcommonsLib"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/sipXconfigLib"/>
+	<classpathentry kind="var" path="SIPX_COMMONS/lib/junit-4.8.2.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
