@@ -8,4 +8,5 @@ telecats-sipXaddons= \
   sipXchefsec \
   sipXclick2dial \
   sipXtcDhcp \
-  sipXtcCustomCallerId 
+  sipXtcCustomCallerId \
+  sipXonnetSelector

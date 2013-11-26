@@ -121,3 +121,7 @@
 [submodule "sipXcallQueue"]
 	path = sipXcallQueue
 	url = git://github.com/dhubler/sipXcallQueue.git
+[submodule "sipXonnetSelector"]
+	path = sipXonnetSelector
+	url = ssh://git@git.telecats.nl/opt/git/sipXonnetSelector
+	branch = devel-4.6
