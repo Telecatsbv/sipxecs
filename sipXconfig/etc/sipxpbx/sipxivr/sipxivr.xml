@@ -122,6 +122,7 @@
   <group name="ivr_mail_overrides">
     <setting name="ivr.force_host">
       <type refid="truefalse" />
+      <value>false</value>
     </setting>
     <setting name="ivr.forced_host">
       <type><string /></type>
