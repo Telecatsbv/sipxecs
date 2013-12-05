@@ -106,6 +106,7 @@ options {
     forwarders {
       $(sipx.sipxdns_forwarders)
     };
+    empty-zones-enable yes;
 };
 
 zone \"$(sipx.domain)\"  IN  {
