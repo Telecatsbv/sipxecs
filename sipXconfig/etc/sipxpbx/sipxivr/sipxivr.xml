@@ -131,6 +131,7 @@
 <group name="ivr_mail_template" advanced="no">
 	<setting name="ivr.override_template" advanced="no">
 		<type refid="truefalse" />
+      		<value>false</value>
 	</setting>
 	<setting name="ivr.template_override.SenderName" advanced="yes">
 		<type>
