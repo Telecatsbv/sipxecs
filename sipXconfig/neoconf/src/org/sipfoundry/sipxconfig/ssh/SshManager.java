@@ -38,6 +38,7 @@ public class SshManager implements AddressProvider, FirewallProvider {
 
     @Override
     public Collection<Address> getAvailableAddresses(AddressManager manager, AddressType type, Location requester) {
+	/*
         if (!ADDRESSES.contains(type)) {
             return null;
         }
@@ -49,12 +50,13 @@ public class SshManager implements AddressProvider, FirewallProvider {
             }
             return Collections.singleton(new Address(SSH, requester.getAddress()));
         }
-
+	*/
         return null;
     }
 
     @Override
     public Collection<DefaultFirewallRule> getFirewallRules(FirewallManager manager) {
-        return Collections.singleton(new DefaultFirewallRule(SSH, FirewallRule.SystemId.PUBLIC));
+        //return Collections.singleton(new DefaultFirewallRule(SSH, FirewallRule.SystemId.PUBLIC));
+        return Collections.emptyList();
     }
 }
