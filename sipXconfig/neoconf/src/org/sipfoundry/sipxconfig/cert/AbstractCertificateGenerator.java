@@ -28,7 +28,7 @@ public abstract class AbstractCertificateGenerator extends AbstractCertificateCo
     public static final String NETSCAPE_CERT_TYPE_OID = "2.16.840.1.113730.1.1";
     public static final String NETSCAPE_COMMENT_OID = "2.16.840.1.113730.1.13";
     private static final byte[] SERIAL_NO_LOCK = new byte[0];
-    private int m_validYears = 3; // historical default, otherwise insignificant AFAIK
+    private int m_validYears = 10; // historical default, otherwise insignificant AFAIK
     private KeyPair m_keys;
     private X509Certificate m_certificate;
 
