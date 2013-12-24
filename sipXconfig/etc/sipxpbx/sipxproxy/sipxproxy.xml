@@ -76,7 +76,7 @@
       <type><string/></type>      
     </setting>
     <setting name="SIPX_PROXY_MAX_FORWARDS" advanced="yes">
-      <type><integer/></type>      
+      <type><integer/>45</type>      
     </setting>
     <setting name="SIPX_PROXY_STALE_TCP_TIMEOUT" advanced="yes">
       <type><integer/></type>      
