@@ -58,6 +58,8 @@ public abstract class UserPortalNavigation extends BaseComponent {
     
     public boolean hasPermission(String permissionLabel) {
     	Permission permission = getPermissionManager().getPermissionByLabel(permissionLabel);
+    	if(permission == null)
+    		return false;
     	User user = getUserSession().getUser(getCoreContext());
     	return user.hasPermission(permission);
     }
