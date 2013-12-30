@@ -15,6 +15,8 @@ SIP_REGISTRAR.MWI.UA.CISCO : ^(CSCO|Cisco)
 SIP_REGISTRAR_TCP_PORT : $!{registrarService.sipPort}
 SIP_REGISTRAR_UDP_PORT : $!{registrarService.sipPort}
 SIP_REGISTRAR_REG_EVENT_PORT : $!{registrarService.registrarEventSipPort}
+SIP_REGISTRAR_SIP_RTT : $!settings.getSetting('other/SIP_REGISTRAR_SIP_RTT').Value
+
 
 # Configure the redirectors.
 SIP_REDIRECT_HOOK_LIBRARY.090-USERPARAM : @SIPX_LIBDIR@/libRedirectorUserParam.so

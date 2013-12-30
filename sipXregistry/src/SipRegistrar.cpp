@@ -225,6 +225,12 @@ UtlBoolean SipRegistrar::operationalPhase()
       tlsPort = REGISTRAR_DEFAULT_SIPS_PORT;
    }
 
+   int sipRTT;
+   mConfigDb->get("SIP_REGISTRAR_SIP_RTT", sipRTT);
+   if( sipRTT <= 0 ) {
+     sipRTT = SIP_DEFAULT_RTT;
+   }
+
    mSipUserAgent = new SipUserAgent(tcpPort,
                                     udpPort,
                                     tlsPort,
@@ -239,7 +245,7 @@ UtlBoolean SipRegistrar::operationalPhase()
                                     NULL,   // auth user IDs
                                     NULL,   // auth passwords
                                     NULL,   // line mgr
-                                    SIP_DEFAULT_RTT, // first resend timeout
+                                    sipRTT, // first resend timeout
                                     TRUE,   // default to UA transaction
                                     SIPUA_DEFAULT_SERVER_UDP_BUFFER_SIZE, // socket layer read buffer size
                                     SIPUA_DEFAULT_SERVER_OSMSG_QUEUE_SIZE, // OsServerTask message queue size

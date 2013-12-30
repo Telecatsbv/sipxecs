@@ -319,7 +319,14 @@ int proxy()
     osPrintf("SIPX_PROXY_DEFAULT_EXPIRES : %d\n", defaultExpires);
     Os::Logger::instance().log(FAC_SIP, PRI_INFO, "SIPX_PROXY_DEFAULT_SERIAL_EXPIRES : %d", defaultSerialExpires);
     osPrintf("SIPX_PROXY_DEFAULT_SERIAL_EXPIRES : %d\n", defaultSerialExpires);
-      
+    
+    int sipRTT;
+    configDb.get("SIPX_PROXY_SIP_RTT", sipRTT);
+    if(sipRTT <= 0)
+    {
+        sipRTT = SIP_DEFAULT_RTT;
+    }
+
     UtlString hostAliases;
     configDb.get("SIPX_PROXY_HOST_ALIASES", hostAliases);
     if(hostAliases.isNull())
@@ -603,7 +610,7 @@ int proxy()
         NULL, // auth user IDs
         NULL, // auth passwords
         NULL, // line mgr
-        SIP_DEFAULT_RTT, // first resend timeout
+	sipRTT, //first resend timeout
         FALSE, // default to proxy transaction
         SIPUA_DEFAULT_SERVER_UDP_BUFFER_SIZE, // socket layer read buffer size
         SIPUA_DEFAULT_SERVER_OSMSG_QUEUE_SIZE, // OsServerTask message queue size

@@ -217,5 +217,11 @@
       </type>
       <value>false</value>
     </setting>
+    <setting name="SIP_REGISTRAR_SIP_RTT" advanced="yes">
+      <type>
+        <integer />
+      </type>
+      <value>100</value>
+    </setting>
   </group>
 </model>
