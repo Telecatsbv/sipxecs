@@ -83,7 +83,7 @@ public abstract class PhoneTableActions extends BaseComponent {
             context.deletePhone(phone);
         }
 
-        String msg = getMessages().format("msg.success.delete", Integer.toString(ids.size()));
+        String msg = getMessages().format("msg.success.delete", ids.size());
         TapestryUtils.recordSuccess(this, msg);
     }
 }
