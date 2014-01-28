@@ -34,6 +34,14 @@ bundle agent sipxregistrar_config {
         perms => m("644"),
         edit_line => registrar_config_contents(),
         classes => if_repaired("restart_sipxregistrar");
+    
+    any::   
+      "$(sipx.SIPX_CONFDIR)/resource-limits-registrar.ini"
+        comment => "registrar resource limits changed - restart registrar",
+        create => "true",
+        perms => m("644"),
+        copy_from => copy_from_cfdata("$(sipx.location_id)/resource-limits-registrar.ini"),
+        classes => if_repaired("restart_sipxregistrar");        
 }
 
 bundle edit_line registrar_config_contents() {
@@ -62,6 +70,10 @@ bundle agent sipxregistrar_running {
     any::
       "service_command" string => "$(sipx.SIPX_BINDIR)/sipregistrar";
 
+  classes:
+    mongo_local_reconnect::
+      "restart_sipxregistrar" expression => "any";
+
   methods:
     any::
       "any" usebundle => find_sipxservice_by_command("$(service_command)","sipxregistrar_running");
@@ -80,5 +92,5 @@ bundle agent sipxregistrar_running {
     sipxregistrar.sipxregistrar_running.(restart_sipxregistrar|restart_sipxecs)::
       "$(sipx.SIPX_SERVICEDIR)/sipxregistrar"
         comment => "restart sipxregistrar",
-        args => "restart";
+        args => "asyncrestart";
 }

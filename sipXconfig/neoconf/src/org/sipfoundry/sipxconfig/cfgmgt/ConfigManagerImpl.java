@@ -24,6 +24,7 @@ import java.io.Writer;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -42,6 +43,7 @@ import org.sipfoundry.sipxconfig.alarm.AlarmServerManager;
 import org.sipfoundry.sipxconfig.common.LazyDaemon;
 import org.sipfoundry.sipxconfig.common.MongoGenerationFinishedEvent;
 import org.sipfoundry.sipxconfig.common.UserException;
+import org.sipfoundry.sipxconfig.common.event.DaoEventListener;
 import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.commserver.LocationsManager;
 import org.sipfoundry.sipxconfig.commserver.SipxReplicationContext;
@@ -58,7 +60,7 @@ import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.ApplicationListener;
 
 public class ConfigManagerImpl implements AddressProvider, ConfigManager, BeanFactoryAware, AlarmProvider,
-    ConfigCommands, SetupListener, ApplicationListener<MongoGenerationFinishedEvent> {
+    ConfigCommands, SetupListener, ApplicationListener<MongoGenerationFinishedEvent>, DaoEventListener {
     private static final Log LOG = LogFactory.getLog(ConfigManagerImpl.class);
     private File m_cfDataDir;
     private DomainManager m_domainManager;
@@ -75,7 +77,7 @@ public class ConfigManagerImpl implements AddressProvider, ConfigManager, BeanFa
     private SipxReplicationContext m_sipxReplicationContext;
     private JobContext m_jobContext;
     private String m_uploadDir;
-    private Set<String> m_registeredIps;
+    private Set<String> m_registeredIps = new HashSet<String>();
     private boolean m_postSetup;
     private final Object m_lock = new Object();
     // No strict host key checking is only for initial handshake. Once that passes, ssh will
@@ -163,9 +165,11 @@ public class ConfigManagerImpl implements AddressProvider, ConfigManager, BeanFa
     // not synchronized so new incoming work can accumulate.
     public void doWork(ConfigRequest request) {
         String jobLabel = "Configuration generation";
-        runProviders(request, jobLabel);
-        runCfengine(request, jobLabel);
-        runPostProviders(request, jobLabel);
+        if (runPreProviders(request, jobLabel)) {
+            runProviders(request, jobLabel);
+            runCfengine(request, jobLabel);
+            runPostProviders(request, jobLabel);
+        }
     }
 
     @Override
@@ -241,6 +245,22 @@ public class ConfigManagerImpl implements AddressProvider, ConfigManager, BeanFa
                 fail(m_jobContext, jobLabel, jobError, e);
             }
         }
+    }
+
+    private boolean runPreProviders(ConfigRequest request, String jobLabel) {
+        for (ConfigProvider provider : getProviders()) {
+            try {
+                if (provider instanceof PreConfigListener) {
+                    ((PreConfigListener) provider).preReplicate(this, request);
+                }
+            } catch (Exception e) {
+                Serializable jobError = m_jobContext.schedule(jobLabel);
+                m_jobContext.start(jobError);
+                fail(m_jobContext, jobLabel, jobError, e);
+                return false;
+            }
+        }
+        return true;
     }
 
     static void fail(JobContext jc, String label, Serializable job, Exception e) {
@@ -486,5 +506,17 @@ public class ConfigManagerImpl implements AddressProvider, ConfigManager, BeanFa
 
     public void setRemoteHostsFile(String remoteHostsFile) {
         m_remoteHostsFile = remoteHostsFile;
+    }
+
+    @Override
+    public void onSave(Object entity) {
+    }
+
+    @Override
+    public void onDelete(Object entity) {
+        if (entity instanceof Location) {
+            Location deletedLocation = (Location) entity;
+            m_registeredIps.remove(deletedLocation.getAddress());
+        }
     }
 }

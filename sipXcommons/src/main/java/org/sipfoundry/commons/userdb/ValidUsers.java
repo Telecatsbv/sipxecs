@@ -40,7 +40,6 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.QueryBuilder;
-import com.mongodb.WriteResult;
 import com.mongodb.util.JSON;
 
 /**
@@ -59,6 +58,7 @@ public class ValidUsers {
     private static final String IMDB_PERM_VOICEMAIL = "Voicemail";
     private static final String IMDB_PERM_RECPROMPTS = "RecordSystemPrompts";
     private static final String IMDB_PERM_TUICHANGEPIN = "tui-change-pin";
+    private static final String IMDB_PERM_ADMIN = "superadmin";
     private static final String ENTITY_NAME_USER = "user";
     private static final String ENTITY_NAME_GROUP = "group";
     private static final String ENTITY_NAME_IMBOTSETTINGS = "imbotsettings";
@@ -288,7 +288,7 @@ public class ValidUsers {
         user.setConfNum(getStringValue(conference, CONF_EXT));
         user.setConfPin(getStringValue(conference, CONF_PIN));
     }
-
+    
     /**
      * Given a bunch of DTMF digits, return the list of users that matches
      *
@@ -296,7 +296,7 @@ public class ValidUsers {
      * @param onlyVoicemailUsers limit match to users in directory who have voicemail
      * @return a Vector of users that match
      */
-    public List<User> lookupDTMF(String digits, boolean onlyVoicemailUsers) {
+    public List<User> lookupDTMF(String digits, boolean onlyVoicemailUsers, String groups) {
         List<User> matches = new ArrayList<User>();
         BasicDBList permList = new BasicDBList();
         permList.add(IMDB_PERM_AA);
@@ -308,6 +308,16 @@ public class ValidUsers {
         queryAls.put(PERMISSIONS, inDirectory);
         queryAls.put(VALID_USER, Boolean.TRUE);
         queryAls.put(DISPLAY_NAME, hasDisplayName);
+
+        // if user group specified then restrict query
+        if (!StringUtils.isBlank(groups)) {
+            String[] searchGroups = StringUtils.split(groups, " ");
+            BasicDBList groupList = new BasicDBList();
+            for (String searchGroup : searchGroups) {
+                groupList.add(searchGroup);
+            }
+            queryAls.put(GROUPS, new BasicDBObject("$in", groupList));
+        }
         DBCursor aliasResult = getEntityCollection().find(queryAls);
         Iterator<DBObject> objects = aliasResult.iterator();
         while (objects.hasNext()) {
@@ -554,10 +564,18 @@ public class ValidUsers {
             user.setCanRecordPrompts(permissions.contains(IMDB_PERM_RECPROMPTS));
             user.setCanTuiChangePin(permissions.contains(IMDB_PERM_TUICHANGEPIN));
             user.setOperatorInIvr(permissions.contains(IMDB_PERM_OPERATOR_IN_IVR));
+            user.setAdmin(permissions.contains(IMDB_PERM_ADMIN));
         }
 
         user.setUserBusyPrompt(Boolean.valueOf(getStringValue(obj, USERBUSYPROMPT)));
         user.setMoh(getStringValue(obj, MOH));
+        
+        // highest weight group is always the last in the list
+        BasicDBList groups = (BasicDBList) obj.get(GROUPS);
+        if (groups != null) {
+        	user.setHighestWeightGroup((String) groups.get(groups.size() - 1));
+        }
+        
         user.setVoicemailTui(getStringValue(obj, VOICEMAILTUI));
         user.setEmailAddress(getStringValue(obj, EMAIL));
         if (obj.keySet().contains(NOTIFICATION)) {
@@ -647,6 +665,7 @@ public class ValidUsers {
         }
 
         user.setPlayDefaultVmOption(Boolean.valueOf(getStringValue(obj, PLAY_DEFAULT_VM)));
+        user.setDepositVoicemail(Boolean.valueOf(getStringValue(obj, VOICEMAIL_ENABLED)));
 
         // personal attendant related data
         if (obj.keySet().contains(PERSONAL_ATT)) {
@@ -699,7 +718,7 @@ public class ValidUsers {
         }
         return null;
     }
-
+    
     /**
      * Remove all non-letter characters, convert to upper case Remove diacritical marks if
      * possible

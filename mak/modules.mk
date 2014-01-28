@@ -1,7 +1,10 @@
 # Initial Version Copyright (C) 2010 eZuce, Inc., All Rights Reserved.
 # Licensed to the User under the LGPL license.
 
-# sipxecs projects that essential for a running communication system
+# sipXecs projects that are essential for a running communication system.
+# Order is important, projects that are dependant on other project
+# should be listed after it's dependencies.  No circular dependecies
+# allowed.
 sipx_core = \
   sipXportLib \
   sipXtackLib \
@@ -9,18 +12,11 @@ sipx_core = \
   sipXmediaAdapterLib \
   sipXcallLib \
   sipXsupervisor \
-  sipXmongo \
   sipXcommserverLib \
   sipXsqa \
-  sipXsnmp \
-  sipXpostgres \
-  sipXtunnel \
-  sipXdns \
-  sipXhttpd \
   sipXcommons \
   sipXrelay \
   sipXbridge \
-  sipXfreeSwitch \
   sipXcdr \
   sipXacdStatistics \
   sipXconfig \
@@ -36,7 +32,8 @@ sipx_core = \
   sipXpolycom \
   sipXrls \
   sipXsaa \
-  sipXrelease
+  sipXrelease \
+  sipXecs
 
 # sipxecs projects that are NOT essential for a running communication system
 sipx_extra = \
@@ -100,7 +97,7 @@ sipx_all = \
 # re: ruby-postgres, there's a new one we should be using ruby-pgsql i 
 # think it's called as ruby-postgres is obsoleted.
 lib_all = \
-  epel-release \
+  epel \
   resiprocate \
   rubygem-file-tail \
   freeswitch \
@@ -117,24 +114,16 @@ lib_all = \
   ruby-dbi \
   cfengine \
   oss_core \
-  rrdtool \
   nsis \
   nsis-data \
   rubygem-net-ssh \
   rubygem-net-sftp \
   ruby-postgres \
-  sec \
-  js \
-  v8 \
-  mongodb \
-  erlang
-
-lib_exclude_centos_6 = \
-  mongodb \
-  js
+  erlang \
+  jasperserver
 
 lib_exclude_fedora_16 = \
-  epel-release \
+  epel \
   erlang \
   rrdtool \
   nsis \
@@ -144,11 +133,7 @@ lib_exclude_fedora_16 = \
 
 lib_exclude_fedora_17 = \
   $(lib_exclude_fedora_16) \
-  ruby-postgres \
-  sec \
-  js \
-  v8 \
-  mongodb
+  ruby-postgres
 
 lib_exclude_fedora_18 = $(lib_exclude_fedora_17)
 lib_exclude_fedora_19 = $(lib_exclude_fedora_18)
@@ -159,64 +144,36 @@ lib_exclude_fedora_23 = $(lib_exclude_fedora_22)
 
 lib = $(filter-out $(lib_exclude_$(DISTRO_OS)_$(DISTRO_VER)),$(lib_all))
 
-# sort removes dups and should speed maketime
-deps = $(filter-out $(lib_exclude_$(DISTRO_OS)_$(DISTRO_VER)),$(sort $(1) $(foreach D,$(1)_DEPS,$($(D)))))
-
-# lib deps
-mongodb_DEPS = $(call deps,js)
-oss_core_DEPS = $(call deps,v8)
-rubygem-net-sftp_DEPS = $(call deps,rubygem-net-ssh)
-gen_server_mock_DEPS = $(call deps,erlang)
-erlmongo_DEPS = $(call deps,erlang)
-erlang-ej_DEPS = $(call deps,erlang)
-erlang-cowboy_DEPS = $(call deps,erlang)
-erlang-mimetypes_DEPS = $(call deps,erlang)
-erlang-ejrpc2_DEPS = $(call deps,erlang-ej)
-
-#sipx deps
-sipXportLib_DEPS = $(call deps,epel-release)
-sipXtackLib_DEPS = $(call deps,sipXportLib)
-sipXmediaLib_DEPS = $(call deps,sipXtackLib)
-sipXmediaAdapterLib_DEPS = $(call deps,sipXmediaLib)
-sipXcallLib_DEPS = $(call deps,sipXmediaAdapterLib)
-sipXcustomCallerId_DEPS = $(call deps,sipXconfig)
-sipXsupervisor_DEPS = $(call deps,sec cfengine rubygem-net-sftp)
-sipXmongo_DEPS = $(call deps,mongodb sipXsupervisor)
-sipXcommserverLib_DEPS = $(call deps,sipXsupervisor sipXtackLib sipXmongo sipXsnmp)
-sipXsqa_DEPS = $(call deps,hiredis sipXcommserverLib)
-sipXsnmp_DEPS = $(call deps,net-snmp sipXsupervisor)
-sipXpostgres_DEPS = $(call deps,sipXsupervisor)
-sipXtunnel_DEPS = $(call deps,sipXsupervisor)
-sipXdns_DEPS = $(call deps,sipXsupervisor)
-sipXhttpd_DEPS = $(call deps,sipXsupervisor)
-sipXcommons_DEPS = $(call deps,sipXsupervisor)
-sipXrelay_DEPS = $(call deps,sipXcommserverLib sipXcommons)
-sipXbridge_DEPS = $(call deps,sipXrelay)
-sipXfreeSwitch_DEPS = $(call deps,freeswitch sipXcommserverLib)
-sipXcdr_DEPS = $(call deps,ruby-dbi ruby-postgres sipXcommserverLib)
-sipXacdStatistics_DEPS = $(call deps,ruby-dbi ruby-postgres sipXcommons)
-sipXconfig_DEPS = $(call deps,sipXcommons sipXsupervisor sipXacdStatistics sipXcdr sipXpostgres sipXcommserverLib sipXhttpd sipXmongo)
-sipXopenfire_DEPS = $(call deps,openfire sipXconfig sipXsqa)
-sipXcounterpath_DEPS = $(call deps,sipXconfig)
-sipXaudiocodes_DEPS = $(call deps,sipXconfig)
-sipXprompts_DEPS = $(call deps,sipXsupervisor)
-sipXivr_DEPS = $(call deps,sipXconfig)
-sipXproxy_DEPS = $(call deps,sipXcommserverLib)
-sipXpublisher_DEPS = $(call deps,sipXcommserverLib)
-sipXregistry_DEPS = $(call deps,sipXcommserverLib)
-sipXpark_DEPS = $(call deps,sipXcallLib sipXcommserverLib)
-sipXpage_DEPS = $(call deps,sipXcommserverLib sipXcommons)
-sipXpolycom_DEPS = $(call deps,sipXconfig)
-sipXrls_DEPS = $(call deps,sipXsqa sipXcallLib sipXcommserverLib)
-sipXsaa_DEPS = $(call deps,sipXcallLib)
-sipXhomer_DEPS = $(call deps,homer resiprocate sipXsqa)
-sipXsbc_DEPS = $(call deps,oss_core sipXsupervisor sipXconfig sipXsqa sipXregistry)
-sipXrelease_DEPS =
-sipXviewer_DEPS = $(call deps,nsis nsis-data)
-sipXcallQueue_DEPS = $(call deps,sipXconfig)
-
-# uc
-sipXtest_DEPS = $(call deps,rrdtool)
+# Project compile-time dependencies. Only list project that if
+# it's dependecies were recompiled then you'd want to recompile.
+sipXtackLib_DEPS = sipXportLib
+sipXmediaLib_DEPS = sipXtackLib
+sipXmediaAdapterLib_DEPS = sipXmediaLib
+sipXcallLib_DEPS = sipXmediaAdapterLib
+sipXcustomCallerId_DEPS = sipXconfig
+sipXcommserverLib_DEPS = sipXtackLib
+sipXsqa_DEPS = sipXcommserverLib
+sipXrelay_DEPS = sipXcommons
+sipXbridge_DEPS = sipXcommons
+sipXcdr_DEPS = sipXcommons
+sipXacdStatistics_DEPS = sipXcommons
+sipXconfig_DEPS = sipXcommons sipXacdStatistics sipXcdr
+sipXopenfire_DEPS = sipXconfig sipXsqa
+sipXcounterpath_DEPS = sipXconfig
+sipXaudiocodes_DEPS = sipXconfig
+sipXivr_DEPS = sipXconfig
+sipXproxy_DEPS = sipXcommserverLib
+sipXpublisher_DEPS = sipXcommserverLib
+sipXregistry_DEPS = sipXcommserverLib
+sipXpark_DEPS = sipXcallLib sipXcommserverLib
+sipXpage_DEPS = sipXcommons
+sipXpolycom_DEPS = sipXconfig
+sipXrls_DEPS = sipXsqa sipXcallLib sipXcommserverLib
+sipXsaa_DEPS = sipXcallLib
+sipXhomer_DEPS = sipXsqa
+sipXsbc_DEPS = sipXconfig sipXsqa sipXregistry
+sipXcallQueue_DEPS = sipXconfig
+sipXexample_DEPS = sipXcommserverLib sipXconfig
 
 all = \
   $(lib) \

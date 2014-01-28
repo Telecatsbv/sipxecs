@@ -63,6 +63,14 @@ bundle agent sipxproxy_config {
         perms => m("644"),
         edit_line => sipXproxy_config_contents(),
         classes => if_repaired("restart_sipxproxy");
+    
+    any::   
+      "$(sipx.SIPX_CONFDIR)/resource-limits-proxy.ini"
+        comment => "proxy resource limits changed - restart sipXproxy",
+        create => "true",
+        perms => m("644"),
+        copy_from => copy_from_cfdata("$(sipx.location_id)/resource-limits-proxy.ini"),
+        classes => if_repaired("restart_sipxproxy");        
 
     any::
       "$(sipx.SIPX_CONFDIR)/$(xml_file)"
@@ -110,6 +118,10 @@ bundle agent sipxproxy_running {
     any::
       "service_command" string => "$(sipx.SIPX_BINDIR)/sipXproxy";
 
+  classes:
+    mongo_local_reconnect::
+      "restart_sipxproxy" expression => "any";
+
   methods:
     any::
       "any" usebundle => find_sipxservice_by_command("$(service_command)","sipxproxy_running");
@@ -133,7 +145,7 @@ bundle agent sipxproxy_running {
     sipxproxy.sipxproxy_running.(restart_sipxproxy|restart_sipxecs)::
       "$(sipx.SIPX_SERVICEDIR)/sipxproxy"
         comment => "restart sipxproxy",
-        args => "restart";
+        args => "asyncrestart";
 
     redeploy_nat.sipxrelay::
       "$(sipx.SIPX_SERVICEDIR)/sipxrelay"

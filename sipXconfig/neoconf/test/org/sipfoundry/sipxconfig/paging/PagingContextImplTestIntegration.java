@@ -25,7 +25,7 @@ import org.sipfoundry.sipxconfig.test.TestHelper;
 public class PagingContextImplTestIntegration extends IntegrationTestCase {
     private PagingContext m_pagingContext;
     private CoreContext m_coreContext;
-    
+
     public void setCoreContext(CoreContext coreContext) {
         m_coreContext = coreContext;
     }
@@ -33,7 +33,7 @@ public class PagingContextImplTestIntegration extends IntegrationTestCase {
     public void setPagingContext(PagingContext pagingContext) {
         m_pagingContext = pagingContext;
     }
-    
+
     protected void onSetUpInTransaction() throws Exception {
         super.onSetUpInTransaction();
         db().execute("select truncate_all()");
@@ -85,16 +85,57 @@ public class PagingContextImplTestIntegration extends IntegrationTestCase {
         assertEquals(1, groups.size());
     }
 
-    public void testSaveCode() throws Exception {        
-        PagingSettings settings = new PagingSettings();        
+    public void testSaveCode() throws Exception {
+        PagingSettings settings = new PagingSettings();
         settings.setModelFilesContext(TestHelper.getModelFilesContext());
         assertEquals("*77", settings.getPrefix());
         settings = m_pagingContext.getSettings();
         settings.setPrefix("8585");
         m_pagingContext.saveSettings(settings);
         assertEquals("8585", settings.getPrefix());
+        // test null
+        settings.setPrefix("");
+        try {
+            m_pagingContext.saveSettings(settings);
+            fail();
+        } catch (UserException e) {
+
+        }
     }
 
+    public void testInvalidCode() throws Exception {
+        PagingSettings settings = new PagingSettings();
+        settings.setModelFilesContext(TestHelper.getModelFilesContext());
+        assertEquals("*77", settings.getPrefix());
+        settings = m_pagingContext.getSettings();
+        settings.setPrefix("%");
+        try {
+            m_pagingContext.saveSettings(settings);
+            fail();
+        } catch (UserException e) {
+
+        }
+        settings.setPrefix("\\");
+        try {
+            m_pagingContext.saveSettings(settings);
+            fail();
+        } catch (UserException e) {
+
+        }
+        settings.setPrefix("%43");
+        try {
+            m_pagingContext.saveSettings(settings);
+        } catch (UserException e) {
+            fail();
+        }
+        settings.setPrefix("-_.!~*'()=+$,;?a-zA-Z0-9");
+        try {
+            m_pagingContext.saveSettings(settings);
+        } catch (UserException e) {
+            fail();
+        }
+    }
+    
     public void testSavePagingGroup() throws Exception {
         List<PagingGroup> groups = m_pagingContext.getPagingGroups();
         assertEquals(3, groups.size());

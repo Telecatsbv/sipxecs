@@ -13,6 +13,7 @@ import static org.sipfoundry.commons.mongo.MongoConstants.GROUPS;
 import static org.sipfoundry.commons.mongo.MongoConstants.TIMESTAMP;
 import static org.sipfoundry.commons.mongo.MongoConstants.TIMEZONE;
 import static org.sipfoundry.commons.mongo.MongoConstants.UID;
+import static org.sipfoundry.commons.mongo.MongoConstants.VOICEMAIL_ENABLED;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -40,10 +41,12 @@ import org.sipfoundry.sipxconfig.permission.PermissionName;
  * Can be user that logs in, can be superadmin, can be user for phone line
  */
 public class User extends AbstractUser implements Replicable {
+    private static final String VM_ENABLED_SETTING_PATH = "voicemail/vacation/vmEnabled";
     private static final String ALIAS_RELATION = "alias";
     private static final String ALIAS_RELATION_FAX = "fax";
     private static final String TZ = "timezone/timezone";
     private static final String E911_SETTING_PATH = "e911/location";
+    private static final String PHANTOM_USER = "phantom/enabled";
     private String m_identity;
     private boolean m_validUser = true;
 
@@ -162,6 +165,7 @@ public class User extends AbstractUser implements Replicable {
         props.put(CONTACT, getContactUri(domain));
         props.put(GROUPS, getGroupsNames().split(" "));
         props.put(TIMEZONE, getTimezone().getID());
+        props.put(VOICEMAIL_ENABLED, isDepositVoicemail());
         props.put(TIMESTAMP, System.currentTimeMillis());
         return props;
     }
@@ -197,6 +201,14 @@ public class User extends AbstractUser implements Replicable {
         return getUserProfile().getDidNumber();
     }
 
+    public boolean isPhantom() {
+        return (Boolean) getSettingTypedValue(PHANTOM_USER);
+    }
+
+    public void setPhantom(boolean phantom) {
+        getSettings().getSetting(PHANTOM_USER).setTypedValue(phantom);
+    }
+
     public Integer getE911LocationId() {
         if (getSettingTypedValue(E911_SETTING_PATH) == null) {
             return null;
@@ -213,5 +225,13 @@ public class User extends AbstractUser implements Replicable {
             return;
         }
         setSettingTypedValue(E911_SETTING_PATH, id);
+    }
+
+    public boolean isDepositVoicemail() {
+        return ((Boolean) getSettingTypedValue(VM_ENABLED_SETTING_PATH)).booleanValue();
+    }
+
+    public void setDepositVoicemail(boolean value) {
+        setSettingTypedValue(VM_ENABLED_SETTING_PATH, value);
     }
 }

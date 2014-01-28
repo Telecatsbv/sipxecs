@@ -44,6 +44,7 @@ nobase_include_HEADERS = \
     os/OsEvent.h \
     os/OsEventMsg.h \
     os/OsExcept.h \
+    os/OsExceptionHandler.h \
     os/OsFileBase.h \
     os/OsFileInfoBase.h \
     os/OsFileIteratorBase.h \
@@ -73,6 +74,7 @@ nobase_include_HEADERS = \
     os/OsReadLock.h \
     os/OsRpcMsg.h \
     os/OsRWMutex.h \
+    os/OsResourceLimit.h \
     os/OsServerSocket.h \
     os/OsServerTask.h \
     os/OsServerTaskWaitable.h \

@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import junit.framework.TestCase;
+
 import org.apache.commons.io.IOUtils;
 import org.sipfoundry.sipxconfig.address.Address;
 import org.sipfoundry.sipxconfig.address.AddressManager;
@@ -51,6 +52,7 @@ public class PolycomPhoneTest extends TestCase {
     protected void setUp() {
         m_phone = new PolycomPhone();
         PolycomModel model = new PolycomModel();
+        model.setDefaultVersion(PolycomModel.VER_3_1_X);
         m_phone.setModel(model);
         model.setModelId("polycom600");
         Set<String> features = new HashSet<String>();

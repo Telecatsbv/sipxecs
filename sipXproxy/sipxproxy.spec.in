@@ -32,7 +32,11 @@ Requires: pwdutils
 Requires: cron
 %else
 Requires: shadow-utils
-Requires: vixie-cron
+%if 0%{?fedora} >= 17 || 0%{?rhel} >= 7
+BuildRequires: cronie
+%else
+BuildRequires: vixie-cron
+%endif
 %endif
 Requires: sipxcommserverlib >= %version
 Requires: sipxrelay >= %version
@@ -114,4 +118,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/authplugins/libTransferControl.la
 %{_libdir}/libsipXproxy.la
 %{_includedir}/sipxproxy/*
+
+%post
+setcap 'CAP_SYS_RESOURCE=+ep' %{_bindir}/sipXproxy
 

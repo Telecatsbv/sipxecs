@@ -35,11 +35,13 @@ import org.sipfoundry.sipxconfig.setting.Setting;
 import org.sipfoundry.sipxconfig.setting.SettingEntry;
 
 public class OpenfireSettings extends PersistableSettings implements DeployConfigOnEdit {
+    public static final int XMPP_PORT = 5222;
     private static final String LOCALE = "settings/locale";
     private static final String LOG_LEVEL = "settings/log.level";
     private static final String ENABLE_PRESENCE = "settings/enable-presence";
     private static final String WATCHER_PORT = "settings/watcher-port";
-    private static final String XML_RPC_PORT = "settings/openfire-xml-rpc-port";
+    private static final String XML_CONSOLE_PORT = "settings/openfire-console-port";
+    private static final String XML_CONSOLE_SECURE_PORT = "settings/openfire-console-secure-port";
     private static final String XML_RPC_VCARD_PORT = "settings/openfire-xml-rpc-vcard-port";
     private static final String SERVER_TO_SERVER_ENABLED = "openfire-server-to-server/enabled";
     private static final String ALLOWED_SERVERS = "openfire-server-to-server/allowed-servers";
@@ -50,6 +52,9 @@ public class OpenfireSettings extends PersistableSettings implements DeployConfi
     private static final String DISALLOWED_SERVERS =
         "openfire-server-to-server/disallowed-servers";
     private static final String MESSAGE_LOG_ENABLED = "message-logging/enabled";
+    private static final String BOSH_ENABLED = "http-binding/enabled";
+    private static final String BOSH_PORT = "http-binding/port";
+    private static final String BOSH_SECURE_PORT = "http-binding/secure-port";
     private static final AddressType GENERIC_ADDRESS = new AddressType("generic");
     private LocalizationContext m_localizationContext;
     private String m_logDir;
@@ -67,8 +72,12 @@ public class OpenfireSettings extends PersistableSettings implements DeployConfi
         return (Boolean) getSettingTypedValue(ENABLE_PRESENCE);
     }
 
-    public int getXmlRpcPort() {
-        return (Integer) getSettingTypedValue(XML_RPC_PORT);
+    public int getConsolePort() {
+        return (Integer) getSettingTypedValue(XML_CONSOLE_PORT);
+    }
+
+    public int getConsoleSecurePort() {
+        return (Integer) getSettingTypedValue(XML_CONSOLE_SECURE_PORT);
     }
 
     public int getXmlRpcVcardPort() {
@@ -124,6 +133,18 @@ public class OpenfireSettings extends PersistableSettings implements DeployConfi
 
     public String getMessageLogEnabled() {
         return getSettingTypedValue(MESSAGE_LOG_ENABLED).toString();
+    }
+
+    public String getHttpBindingEnabled() {
+        return getSettingTypedValue(BOSH_ENABLED).toString();
+    }
+
+    public Integer getHttpBindingPort() {
+        return (Integer) getSettingTypedValue(BOSH_PORT);
+    }
+
+    public Integer getHttpBindingSecurePort() {
+        return (Integer) getSettingTypedValue(BOSH_SECURE_PORT);
     }
 
     public String getLogDir() {

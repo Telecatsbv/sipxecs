@@ -2,6 +2,25 @@
 ## AC macros for general packages like OpenSSL, Xerces, etc
 ##
 
+AC_DEFUN([SF_ERLANG_NEED_LIB],
+  [AC_ERLANG_CHECK_LIB($1, [],
+    [SF_MISSING_DEP([$1 was not found!])])])
+
+AC_DEFUN([SF_NEED_PROG],
+	[AC_ARG_VAR([$1], [$3])dnl
+
+  if test -n "${$1}"; then
+   AC_MSG_CHECKING([for $2])
+   AC_MSG_RESULT([${$1}])
+  else
+  AC_PATH_PROG([$1], [$2], [no])
+
+  if test "x${$1}" = "xno"; then
+    SF_MISSING_DEP([$2 not found but required])
+  fi
+fi
+])
+
 AC_DEFUN([CHECK_MSGFMT],
 [
   AC_PATH_PROG(MSGFMT,msgfmt)
@@ -198,7 +217,7 @@ AC_DEFUN([CHECK_CPPUNIT],
 [
     AM_PATH_CPPUNIT(1.9,
       [],
-      [AC_MSG_ERROR("cppunit headers not found")]
+      [SF_MISSING_DEP("cppunit headers not found")]
     )
 ])
 
@@ -232,7 +251,7 @@ AC_DEFUN([CHECK_SSL],
         fi
     done
     if test x_$found_ssl_inc != x_yes ; then
-        AC_MSG_ERROR(['openssl/ssl.h' not found; tried ${tried_path}])
+        SF_MISSING_DEP(['openssl/ssl.h' not found; tried ${tried_path}])
     else
         AC_MSG_RESULT($sslincdir)
         HAVE_SSL=yes
@@ -273,7 +292,7 @@ AC_DEFUN([CHECK_SSL],
     done
 
     if test x_$found_ssl_lib != x_yes ; then
-        AC_MSG_ERROR(['libssl.so' not found; tried $openssl_path, each with lib, lib/openssl, and lib/ssl])
+        SF_MISSING_DEP(['libssl.so' not found; tried $openssl_path, each with lib, lib/openssl, and lib/ssl])
     else
         AC_MSG_RESULT($ssllibdir)
        if test x_"`uname -s`" = x_SunOS ; then
@@ -303,7 +322,7 @@ AC_DEFUN([CHECK_SSL],
       done
     fi
     if test x_$krb_found = x_no; then
-        AC_MSG_RESULT(['kerberos krb5.h' not found - looked in /usr/include $openssl_path])
+        SF_MISSING_DEP(['kerberos krb5.h' not found - looked in /usr/include $openssl_path])
     fi
 
     AC_SUBST(SSL_CFLAGS,"$SSL_CFLAGS")
@@ -313,10 +332,10 @@ AC_DEFUN([CHECK_SSL],
 # ============ P O C O  =========================
 AC_DEFUN([CHECK_POCO],
 [
-    AC_CHECK_LIB(PocoFoundation, main,[], [AC_MSG_ERROR("Poco C++ Library not found")])
-    AC_CHECK_LIB(PocoXML, main,[], [AC_MSG_ERROR("PocoXML C++ Library not found")])
-    AC_CHECK_LIB(PocoUtil, main,[], [AC_MSG_ERROR("PocoUtil C++ Library not found")])
-    AC_CHECK_LIB(PocoNet, main,[], [AC_MSG_ERROR("PocoNet C++ Library not found")])
+    AC_CHECK_LIB(PocoFoundation, main,[], [SF_MISSING_DEP("Poco C++ Library not found")])
+    AC_CHECK_LIB(PocoXML, main,[], [SF_MISSING_DEP("PocoXML C++ Library not found")])
+    AC_CHECK_LIB(PocoUtil, main,[], [SF_MISSING_DEP("PocoUtil C++ Library not found")])
+    AC_CHECK_LIB(PocoNet, main,[], [SF_MISSING_DEP("PocoNet C++ Library not found")])
     AC_SUBST(POCO_LIBS, "-lPocoNet -lPocoUtil -lPocoXML -lPocoFoundation")
 ])
 
@@ -408,7 +427,7 @@ AC_DEFUN([CHECK_XERCES],
     done
 
     if test x_$found_xerces != x_yes; then
-        AC_MSG_ERROR([Cannot find xerces - looked for include/xercesc/dom/DOMBuilder.hpp or /include/xercesc/dom/DOMBuilder.hpp in $xerces_path])
+        SF_MISSING_DEP([Cannot find xerces - looked for include/xercesc/dom/DOMBuilder.hpp or /include/xercesc/dom/DOMBuilder.hpp in $xerces_path])
     else
         AC_MSG_RESULT($xercesdirm)
         AC_SUBST(XERCES_CFLAGS,"$XERCES_CFLAGS")
@@ -451,7 +470,7 @@ AC_DEFUN([CHECK_APACHE2],
        AC_MSG_RESULT($apache2_httpd)
        AC_SUBST(APACHE2_HTTPD, $apache2_httpd)
    else
-       AC_MSG_ERROR('httpd' not found; tried: $apache2_bin_search_path)
+       SF_MISSING_DEP('httpd' not found; tried: $apache2_bin_search_path)
    fi
 
    ## APACHE2_VERSION is the Apache version number.
@@ -463,7 +482,7 @@ AC_DEFUN([CHECK_APACHE2],
    AC_MSG_RESULT(apache2_version=$apache2_version)
    AC_MSG_CHECKING(which apache host access module to use)
    case $apache2_version in
-   2.2.*)
+   2.2.* | 2.4.*)
       apache2_host_access="authz_host_module"
       apache2_mod_access="mod_authz_host.so"
       ;;
@@ -474,7 +493,7 @@ AC_DEFUN([CHECK_APACHE2],
    *)
       apache2_host_access="UNKNOWN"
       apache2_mod_access="UNKNOWN"
-      AC_MSG_ERROR(Unknown apache version $apache2_version)
+      SF_MISSING_DEP(Unknown apache version $apache2_version)
       ;;
    esac
    AC_MSG_RESULT($apache2_host_access = $apache2_mod_access)
@@ -523,7 +542,7 @@ AC_DEFUN([CHECK_APACHE2],
        AC_SUBST(APACHE2_MOD, $apache2_mod_override)
        AC_MSG_WARN('$apache2_mod_access', 'mod_cgi.so', and 'httpd.exp' not found; using explicit value: $tried_path)
    else
-       AC_MSG_ERROR('$apache2_mod_access' and 'httpd.exp' not found; tried: $tried_path)
+       SF_MISSING_DEP('$apache2_mod_access' and 'httpd.exp' not found; tried: $tried_path)
    fi
 
    apache2_home=`dirname ${apache2_moddir}`
@@ -624,10 +643,10 @@ AC_DEFUN([CHECK_PCRE],
     # Test that we've been able to find both directories, and set the various
     # makefile variables.
     if test x_$found_pcre_include != x_yes; then
-        AC_MSG_ERROR(Cannot find pcre.h - looked in $includeval)
+        SF_MISSING_DEP(Cannot find pcre.h - looked in $includeval)
     else
         if test x_$found_pcre_lib != x_yes; then
-            AC_MSG_ERROR(Cannot find libpcre.so or libpcre.a libraries - looked in $libval)
+            SF_MISSING_DEP(Cannot find libpcre.so or libpcre.a libraries - looked in $libval)
         else
             ## Test for version
 	    if test x$homeval != x; then
@@ -637,7 +656,7 @@ AC_DEFUN([CHECK_PCRE],
             fi
             AX_COMPARE_VERSION([$pcre_ver],[ge],[4.5],
                                [AC_MSG_RESULT($pcre_ver is ok)],
-                               [AC_MSG_ERROR([pcre version must be >= 4.5 - found $pcre_ver])])
+                               [SF_MISSING_DEP([pcre version must be >= 4.5 - found $pcre_ver])])
 
             AC_MSG_RESULT([    pcre includes found in $includeval])
             AC_MSG_RESULT([    pcre libraries found in $libval])
@@ -1170,10 +1189,10 @@ AC_DEFUN([CHECK_ODBC],
     # Test that we've been able to find both directories, and set the various
     # makefile variables.
     if test x_$found_odbc_include != x_yes; then
-        AC_MSG_ERROR(Cannot find sql.h - looked in $includeval)
+        SF_MISSING_DEP(Cannot find sql.h - looked in $includeval)
     else
         if test x_$found_odbc_lib != x_yes; then
-            AC_MSG_ERROR(Cannot find libodbc.so or libodbc.a libraries - looked in $libval)
+            SF_MISSING_DEP(Cannot find libodbc.so or libodbc.a libraries - looked in $libval)
         else
             ## Test for version
             odbc_ver=`odbcinst --version`

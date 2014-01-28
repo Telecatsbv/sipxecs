@@ -40,6 +40,7 @@ public:
     const std::string& getQvalue() const;
     const std::string& getInstanceId() const;
     const std::string& getGruu() const;
+    unsigned int getShardId() const;
     const std::string& getPath() const;
     unsigned int getCseq() const;
     unsigned int getExpirationTime() const;
@@ -55,6 +56,7 @@ public:
     void setQvalue(const std::string& qvalue);
     void setInstanceId(const std::string& instanceId);
     void setGruu(const std::string& gruu);
+    void setShardId(unsigned int shardId);
     void setPath(const std::string& path);
     void setCseq(unsigned int cseq);
     void setExpirationTime(unsigned int expirationTime);
@@ -62,6 +64,22 @@ public:
     void setLocalAddress(const std::string& localAddress);
     void setTimestamp(int timestamp);
     void setExpired(bool expired);
+
+    static const char* identity_fld();
+    static const char* uri_fld();
+    static const char* callId_fld();
+    static const char* contact_fld();
+    static const char* qvalue_fld();
+    static const char* instanceId_fld();
+    static const char* gruu_fld();
+    static const char* path_fld();
+    static const char* cseq_fld();
+    static const char* expirationTime_fld();
+    static const char* instrument_fld();
+    static const char* localAddress_fld();
+    static const char* timestamp_fld();
+    static const char* expired_fld();
+    static const char* shardId_fld();
 
 private:
     std::string _identity;
@@ -71,6 +89,7 @@ private:
     std::string _qvalue;
     std::string _instanceId;
     std::string _gruu;
+    unsigned int _shardId;
     std::string _path;
     unsigned int _cseq;
     unsigned int _expirationTime;
@@ -118,6 +137,11 @@ inline const std::string& RegBinding::getInstanceId() const
 inline const std::string& RegBinding::getGruu() const
 {
   return _gruu;
+}
+
+inline unsigned int RegBinding::getShardId() const
+{
+  return _shardId;
 }
 
 inline const std::string& RegBinding::getPath() const
@@ -188,6 +212,11 @@ inline void RegBinding::setInstanceId(const std::string& instanceId)
 inline void RegBinding::setGruu(const std::string& gruu)
 {
   _gruu = gruu;
+}
+
+inline void RegBinding::setShardId(unsigned int shardId)
+{
+  _shardId = shardId;
 }
 
 inline void RegBinding::setPath(const std::string& path)

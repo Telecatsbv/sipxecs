@@ -54,10 +54,15 @@ public class CodecGroupsTest extends TestCase {
         assertCodecGroup(CodecGroupType.VVX_500, PolycomModel.VER_4_0_X);
     }
 
+    public void test41CodecGroups() throws DocumentException {
+        assertCodecGroup(CodecGroupType.VVX_500, PolycomModel.VER_4_1_X);
+    }
+
     private void assertCodecGroup(CodecGroupType codecGroup, DeviceVersion version) throws DocumentException {
 
         // Initialize a phone with the codec group under test.
         PolycomModel model = new PolycomModel();
+        model.setDefaultVersion(PolycomModel.VER_4_0_X);
         Set<String> features = new HashSet<String>();
         features.add(String.format("%s_CodecPref", codecGroup));
         model.setSupportedFeatures(features);
@@ -269,6 +274,10 @@ public class CodecGroupsTest extends TestCase {
         CODECGROUP_SELECTED_MAP.put(CodecGroupType.VVX_1500, VVX_1500_LIST);
         
         ArrayList<String> VVX_500_LIST = new ArrayList<String>();
+        VVX_500_LIST.add("G722");
+        VVX_500_LIST.add("G7221.32kbps");
+        VVX_500_LIST.add("G7221_C.48kbps");
+        VVX_500_LIST.add("G729_AB");
         VVX_500_LIST.add("G711_Mu");
         CODECGROUP_SELECTED_MAP.put(CodecGroupType.VVX_500, VVX_500_LIST);
     }

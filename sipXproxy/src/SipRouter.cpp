@@ -195,8 +195,7 @@ SipRouter::SipRouter(SipUserAgent& sipUserAgent,
    }
 #endif
    
-   MongoDB::ConnectionInfo info(MongoDB::ConnectionInfo::connectionStringFromFile(), EntityDB::NS);
-   mpEntityDb = new EntityDB(info);
+   mpEntityDb = new EntityDB(MongoDB::ConnectionInfo::globalInfo());
 
    // All is in readiness... Let the proxying begin...
    mpSipUserAgent->start();
@@ -252,6 +251,8 @@ void SipRouter::readConfig(OsConfigDb& configDb, const Url& defaultUri)
    }
 
    SipTransaction::SendTryingForNist = configDb.getBoolean("SIPX_SEND_TRYING_FOR_NIST", TRUE);
+
+   SipTransaction::gEnableHopByHopCancel = configDb.getBoolean("SIPX_PROXY_HOP_BY_HOP_CANCEL", TRUE);
 
    UtlString hostname;
    configDb.get("SIPX_PROXY_HOST_NAME", hostname);
@@ -1148,6 +1149,19 @@ bool SipRouter::addNatMappingInfoToContacts( SipMessage& sipRequest ) const
         contactNumber++ )
    {
 	   Url newContactUri( contactString );
+     Url::Scheme scheme = newContactUri.getScheme();
+
+     //
+     //  If the scheme is invalid, do not attempt to add NAT information.
+     //  Contact: * is one scenario that this could happen.
+     //  Otherwise, propagate the contact information as is (which
+     //  is what a compliant proxy should do).
+     //
+     if (contactString.compareTo("*") == 0 || scheme != Url::SipUrlScheme || !scheme == Url::SipsUrlScheme)
+     {
+       OS_LOG_NOTICE(FAC_SIP, "SipRouter::addNatMappingInfoToContacts skipping URI: " << contactString.data());
+       continue;
+     }
 
 	   if( bReceivedSet )
 	   {

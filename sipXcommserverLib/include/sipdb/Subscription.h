@@ -25,6 +25,10 @@
 
 class Subscription
 {
+  // The unit test classes needs access to private data.
+  friend class SubscriptionTest;
+  friend class SubscribeDBTest;
+
 public:
     Subscription();
     Subscription(const Subscription& subscription);
@@ -89,6 +93,7 @@ public:
     static const char* file_fld();
     static const char* version_fld();
     static const char* expires_fld();
+    static const char* shardId_fld();
 
 private:
     std::string  _oid;

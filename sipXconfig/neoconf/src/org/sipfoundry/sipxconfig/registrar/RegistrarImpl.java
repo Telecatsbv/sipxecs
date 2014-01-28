@@ -33,6 +33,7 @@ import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.dialplan.DialPlanContext;
 import org.sipfoundry.sipxconfig.dns.DnsManager;
 import org.sipfoundry.sipxconfig.dns.DnsProvider;
+import org.sipfoundry.sipxconfig.dns.ResourceRecord;
 import org.sipfoundry.sipxconfig.dns.ResourceRecords;
 import org.sipfoundry.sipxconfig.feature.Bundle;
 import org.sipfoundry.sipxconfig.feature.FeatureChangeRequest;
@@ -46,15 +47,23 @@ import org.sipfoundry.sipxconfig.firewall.FirewallManager;
 import org.sipfoundry.sipxconfig.firewall.FirewallProvider;
 import org.sipfoundry.sipxconfig.proxy.ProxyManager;
 import org.sipfoundry.sipxconfig.setting.BeanWithSettingsDao;
+import org.sipfoundry.sipxconfig.setup.SetupListener;
+import org.sipfoundry.sipxconfig.setup.SetupManager;
 import org.sipfoundry.sipxconfig.snmp.ProcessDefinition;
 import org.sipfoundry.sipxconfig.snmp.ProcessProvider;
 import org.sipfoundry.sipxconfig.snmp.SnmpManager;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.annotation.Required;
+import org.springframework.data.mongodb.core.MongoTemplate;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCollection;
+import com.mongodb.DBObject;
 
 public class RegistrarImpl implements FeatureProvider, AddressProvider, BeanFactoryAware, Registrar,
-        DnsProvider, ProcessProvider, FirewallProvider {
+        DnsProvider, ProcessProvider, FirewallProvider, SetupListener {
     private static final Collection<AddressType> ADDRESSES = Arrays.asList(new AddressType[] {
         TCP_ADDRESS, UDP_ADDRESS, PRESENCE_MONITOR_ADDRESS, EVENT_ADDRESS
     });
@@ -62,6 +71,7 @@ public class RegistrarImpl implements FeatureProvider, AddressProvider, BeanFact
     private BeanWithSettingsDao<RegistrarSettings> m_settingsDao;
     private ListableBeanFactory m_beanFactory;
     private ConfigManager m_configManager;
+    private MongoTemplate m_nodeDb;
 
     @Override
     public Collection<GlobalFeature> getAvailableGlobalFeatures(FeatureManager featureManager) {
@@ -147,11 +157,18 @@ public class RegistrarImpl implements FeatureProvider, AddressProvider, BeanFact
     }
 
     @Override
-    public List<ResourceRecords> getResourceRecords(DnsManager manager, Location whoIsAsking) {
-        ResourceRecords rr = new ResourceRecords("_sip._tcp", "rr");
-        Collection<Address> addresses = getAvailableAddresses(manager.getAddressManager(), TCP_ADDRESS, whoIsAsking);
-        rr.addAddresses(addresses);
-        return Collections.singletonList(rr);
+    public Collection<ResourceRecords> getResourceRecords(DnsManager manager) {
+        FeatureManager fm = manager.getAddressManager().getFeatureManager();
+        List<Location> locations = fm.getLocationsForEnabledFeature(FEATURE);
+        if (locations == null || locations.isEmpty()) {
+            return Collections.emptyList();
+        }
+        ResourceRecords records = new ResourceRecords("_sip._tcp", "rr", true);
+        int port = getSettings().getSipTcpPort();
+        for (Location l : locations) {
+            records.addRecord(new ResourceRecord(l.getHostname(), port, l.getRegionId()));
+        }
+        return Collections.singleton(records);
     }
 
     public void setConfigManager(ConfigManager configManager) {
@@ -190,5 +207,30 @@ public class RegistrarImpl implements FeatureProvider, AddressProvider, BeanFact
         if (request.hasChanged(FEATURE)) {
             m_configManager.configureEverywhere(DnsManager.FEATURE, DialPlanContext.FEATURE);
         }
+    }
+
+    @Override
+    public boolean setup(SetupManager manager) {
+        String id = "add_shard_id";
+        if (manager.isFalse(id)) {
+            // XX-10812 - After 4.6 update 8, all registrations and subscriptions
+            // require shardId attribute.  Migrate here.
+            String shardId = "shardId";
+            DBObject noShardId = new BasicDBObject();
+            noShardId.put(shardId, new BasicDBObject("$exists", false));
+            DBObject defaultShard = new BasicDBObject("$set", new BasicDBObject(shardId, 0));
+            DBCollection regs = m_nodeDb.getCollection("registrar");
+            regs.update(noShardId, defaultShard);
+            DBCollection subs = m_nodeDb.getCollection("subscription");
+            subs.update(noShardId, defaultShard);
+            manager.setTrue(id);
+        }
+
+        return true;
+    }
+
+    @Required
+    public void setNodeDb(MongoTemplate nodeDb) {
+        m_nodeDb = nodeDb;
     }
 }

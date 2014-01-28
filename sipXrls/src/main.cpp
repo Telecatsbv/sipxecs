@@ -26,6 +26,7 @@
 #include <os/OsLogger.h>
 #include <os/OsLoggerHelper.h>
 #include <os/OsMsgQ.h>
+#include <os/OsResourceLimit.h>
 #include "ResourceListServer.h"
 #include "main.h"
 #include <net/SipLine.h>
@@ -34,7 +35,7 @@
 #include <sipXecsService/SipXecsService.h>
 #include <sipXecsService/daemon.h>
 #include <sipdb/EntityDB.h>
-
+#include <os/OsExceptionHandler.h>
 // DEFINES
 #include "config.h"
 
@@ -91,52 +92,6 @@ UtlBoolean    gShutdownFlag = FALSE;
 
 
 /* ============================ FUNCTIONS ================================= */
-
-// copy error information to log. registered only after logger has been configured.
-void catch_global()
-{
-#define catch_global_print(msg)  \
-  std::ostringstream bt; \
-  bt << msg << std::endl; \
-  void* trace_elems[20]; \
-  int trace_elem_count(backtrace( trace_elems, 20 )); \
-  char** stack_syms(backtrace_symbols(trace_elems, trace_elem_count)); \
-  for (int i = 0 ; i < trace_elem_count ; ++i ) \
-    bt << stack_syms[i] << std::endl; \
-  Os::Logger::instance().log(FAC_LOG, PRI_CRIT, bt.str().c_str()); \
-  std::cerr << bt.str().c_str(); \
-  free(stack_syms);
-
-  try
-  {
-      throw;
-  }
-  catch (std::string& e)
-  {
-    catch_global_print(e.c_str());
-  }
-#ifdef MONGO_assert
-  catch (mongo::DBException& e)
-  {
-    catch_global_print(e.toString().c_str());
-  }
-#endif
-  catch (boost::exception& e)
-  {
-    catch_global_print(diagnostic_information(e).c_str());
-  }
-  catch (std::exception& e)
-  {
-    catch_global_print(e.what());
-  }
-  catch (...)
-  {
-    catch_global_print("Error occurred. Unknown exception type.");
-  }
-
-  std::abort();
-}
-
 
 // Initialize the OsSysLog
 void initSysLog(OsConfigDb* pConfig)
@@ -345,6 +300,10 @@ void signal_handler(int sig) {
 //
 int main(int argc, char* argv[])
 {
+  // register default exception handler methods
+  // exit for mongo tcp related exceptions, core dump for others
+    OsExceptionHandler::instance();
+
     char* pidFile = NULL;
     for(int i = 1; i < argc; i++) {
         if(strncmp("-v", argv[i], 2) == 0) {
@@ -394,7 +353,24 @@ int main(int argc, char* argv[])
 
    // Initialize log file
    initSysLog(&configDb);
-   std::set_terminate(catch_global);
+   std::set_terminate(&OsExceptionHandler::catch_global);
+   
+   //
+   // Raise the file handle limit to maximum allowable
+   //
+   typedef OsResourceLimit::Limit Limit;
+   Limit rescur = 0;
+   Limit resmax = 0;
+   OsResourceLimit resource;
+   if (resource.setApplicationLimits("sipxrls"))
+   {
+     resource.getFileDescriptorLimit(rescur, resmax);
+     OS_LOG_NOTICE(FAC_KERNEL, "Maximum file descriptors set to " << rescur);
+   }
+   else
+   {
+     OS_LOG_ERROR(FAC_KERNEL, "Unable to set file descriptor limit");
+   }
 
    // Read the user agent parameters from the config file.
    int udpPort;
@@ -475,7 +451,8 @@ int main(int argc, char* argv[])
    }
 
    std::string errmsg;
-   mongo::ConnectionString mongoConnectionString = MongoDB::ConnectionInfo::connectionStringFromFile();
+   MongoDB::ConnectionInfo gInfo = MongoDB::ConnectionInfo::globalInfo();
+   mongo::ConnectionString mongoConnectionString = gInfo.getConnectionString();
    if (false == MongoDB::ConnectionInfo::testConnection(mongoConnectionString, errmsg))
    {
        Os::Logger::instance().log(LOG_FACILITY, PRI_CRIT,
@@ -486,8 +463,7 @@ int main(int argc, char* argv[])
        return 1;
    }
 
-   mongoConnectionString = MongoDB::ConnectionInfo::connectionStringFromFile();
-   EntityDB entityDb(MongoDB::ConnectionInfo(mongoConnectionString, EntityDB::NS));
+   EntityDB entityDb(gInfo);
 
    // add the ~~sipXrls credentials so that sipXrls can respond to challenges
    SipLineMgr* lineMgr = addCredentials(domainName, realm, entityDb);
@@ -495,12 +471,13 @@ int main(int argc, char* argv[])
    {
       return 1;
    }
+   SubscribeDB* subscribeDb = NULL;
+
 
    if (!gShutdownFlag)
    {
       // Initialize the ResourceListServer.
-      mongoConnectionString = MongoDB::ConnectionInfo::connectionStringFromFile();
-	  SubscribeDB subscribeDb(MongoDB::ConnectionInfo(mongoConnectionString, SubscribeDB::NS));
+      subscribeDb = SubscribeDB::CreateInstance();
       ResourceListServer rls(domainName, realm, lineMgr,
                              DIALOG_EVENT_TYPE, DIALOG_EVENT_CONTENT_TYPE,
                              tcpPort, udpPort, PORT_NONE, bindIp,
@@ -511,7 +488,7 @@ int main(int argc, char* argv[])
                              serverMinExpiration,
                              serverDefaultExpiration,
                              serverMaxExpiration,
-                             subscribeDb,
+                             *subscribeDb,
                              entityDb);
       rls.start();
 
@@ -536,6 +513,9 @@ int main(int argc, char* argv[])
    
    // Delete the LineMgr Object
    delete lineMgr;
+
+   if (subscribeDb)
+     delete subscribeDb;
 
    //
    // Terminate the timer thread

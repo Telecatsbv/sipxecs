@@ -14,14 +14,14 @@ for a in $@; do
   case $a in
     --prefix*)OPTIONS+=" $a" ;;
     --disable-dep-check*)OPTIONS+=" $a" ;;
-    PACKAGE_REVISION*)OPTIONS+=" $a" ;;        
+    --enable-debug*)OPTIONS+=" $a" ;;
+    PACKAGE_REVISION*)OPTIONS+=" $a" ;;
   esac
 done
 AC_SUBST(OPTIONS)
 
 m4_include([config/autoconf-2.66.m4])
 m4_include([config/sipXlib2.m4])
-m4_include([mak/opensuse-build-service.m4])
 m4_include([mak/rpm.m4])
 m4_include([mak/centos-iso.m4])
 m4_sinclude([custom/custom.m4])
@@ -29,6 +29,7 @@ m4_sinclude([custom/custom.m4])
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([mak/05-build.mk:mak/build.mk.in])
 AC_CONFIG_FILES([mak/20-list-dependencies.mk:mak/list-dependencies.mk.in])
+AC_CONFIG_FILES([mak/30-setup.mk:mak/setup.mk.in])
 
 AC_OUTPUT
 

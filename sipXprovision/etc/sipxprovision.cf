@@ -31,7 +31,8 @@ bundle edit_line sipxprovision_properties_contents {
       "$(sipx.SIPX_CFDATA)/$(sipx.location_id)/sipxprovision-config.part"
         insert_type => "file";
       "log.file=$(sipx.SIPX_LOGDIR)/sipxprovision.log";
-      "provision.sipxchangeDomainName=$(sipx.domain)";    
+      "provision.sipxchangeDomainName=$(sipx.domain)";
+      "provision.hostname=$(sipx.host).$(sipx.net_domain)";
   delete_lines:
     any::
       ".*";
@@ -67,5 +68,5 @@ bundle agent sipxprovision_running {
     sipxprovision.sipxprovision_running.(restart_sipxecs|restart_sipxprovision)::
       "$(sipx.SIPX_SERVICEDIR)/sipxprovision"
         comment => "restart sipxprovision",
-        args => "restart";
+        args => "asyncrestart";
 }

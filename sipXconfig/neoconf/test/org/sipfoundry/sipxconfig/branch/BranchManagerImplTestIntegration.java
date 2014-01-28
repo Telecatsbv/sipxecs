@@ -9,25 +9,34 @@
  */
 package org.sipfoundry.sipxconfig.branch;
 
+import static org.easymock.EasyMock.createMock;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.replay;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.dbunit.dataset.ITable;
+import org.easymock.EasyMock;
 import org.sipfoundry.sipxconfig.common.CoreContext;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.commserver.LocationsManager;
+import org.sipfoundry.sipxconfig.setup.SetupManager;
 import org.sipfoundry.sipxconfig.test.IntegrationTestCase;
+import org.sipfoundry.sipxconfig.test.TestHelper;
+import org.sipfoundry.sipxconfig.time.NtpManager;
 
 public class BranchManagerImplTestIntegration extends IntegrationTestCase {
 
     private static final int NUM_BRANCHES = 5;
 
-    private BranchManager m_branchManager;
+    private BranchManagerImpl m_branchManager;
     private CoreContext m_coreContext;
     private LocationsManager m_locationManager;
 
-    public void setBranchManager(BranchManager branchManager) {
+    public void setBranchManagerImpl(BranchManagerImpl branchManager) {
         m_branchManager = branchManager;
     }
 
@@ -123,22 +132,69 @@ public class BranchManagerImplTestIntegration extends IntegrationTestCase {
     }
 
     public void testLoadBranchesByPage() throws Exception {
-    loadDataSet("branch/branches.db.xml");
+        loadDataSet("branch/branches.db.xml");
 
-    List<Branch> page1 = m_branchManager.loadBranchesByPage(0, 5, new String[] { "name" }, true);
-    // Check that we have the expected number of branches
-    assertEquals(NUM_BRANCHES, page1.size());
+        List<Branch> page1 = m_branchManager.loadBranchesByPage(0, 5, new String[] {
+            "name"
+        }, true);
+        // Check that we have the expected number of branches
+        assertEquals(NUM_BRANCHES, page1.size());
 
-    assertEquals("branch1", page1.get(0).getName());
-    assertEquals("branch2", page1.get(1).getName());
-    assertEquals("branch4", page1.get(3).getName());
+        assertEquals("branch1", page1.get(0).getName());
+        assertEquals("branch2", page1.get(1).getName());
+        assertEquals("branch4", page1.get(3).getName());
 
-    List<Branch> page2 = m_branchManager.loadBranchesByPage(0, 5, new String[] { "description" }, true);
-    // Check that we have the expected number of branches
-    assertEquals(NUM_BRANCHES, page2.size());
+        List<Branch> page2 = m_branchManager.loadBranchesByPage(0, 5, new String[] {
+            "description"
+        }, true);
+        // Check that we have the expected number of branches
+        assertEquals(NUM_BRANCHES, page2.size());
 
-    assertEquals("fifth_", page2.get(0).getDescription());
-    assertEquals("first_", page2.get(1).getDescription());
-    assertEquals("second", page2.get(3).getDescription());
+        assertEquals("fifth_", page2.get(0).getDescription());
+        assertEquals("first_", page2.get(1).getDescription());
+        assertEquals("second", page2.get(3).getDescription());
+    }
+
+    public void testSetup() throws Exception {
+        TestHelper.cleanInsert("ClearDb.xml");
+        getHibernateTemplate().flush();
+        loadDataSet("branch/branches_with-tz.db.xml");
+        getHibernateTemplate().flush();
+
+        m_branchManager.getBranches();
+
+        Branch branch3 = m_branchManager.getBranch("branch30");
+        Branch branch4 = m_branchManager.getBranch("branch40");
+        Branch branch5 = m_branchManager.getBranch("branch50");
+        assertEquals("Africa/Accra", branch4.getTimeZone());
+        assertNull(branch3.getTimeZone());
+        assertEquals("Africa/Abidjan", branch5.getTimeZone());
+
+        SetupManager setupManager = createMock(SetupManager.class);
+        setupManager.isFalse("update_branch_tz");
+        expectLastCall().andReturn(true).times(2);
+
+        setupManager.setTrue("update_branch_tz");
+        expectLastCall().once();
+
+        NtpManager ntpManager = EasyMock.createMock(NtpManager.class);
+        ntpManager.getSystemTimezone();
+        expectLastCall().andReturn(TimeZone.getTimeZone("GMT+1").getID()).anyTimes();
+
+        replay(setupManager, ntpManager);
+        m_branchManager.setNtpManager(ntpManager);
+        m_branchManager.setup(setupManager);
+
+        branch3 = m_branchManager.getBranch("branch30");
+        assertTrue(branch3.getTimeZone().equals("GMT+01:00"));
+
+        branch4 = m_branchManager.getBranch("branch40");
+        assertEquals("Africa/Accra", branch4.getTimeZone());
+
+        branch5 = m_branchManager.getBranch("branch50");
+        assertTrue(branch5.getTimeZone().equals("GMT+01:00"));
+
+        EasyMock.verify(setupManager, ntpManager);
+
     }
 }

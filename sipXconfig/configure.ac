@@ -18,6 +18,7 @@ CHECK_XARGS_REPLACE
 AC_PROG_JAVA_CC([javac])
 AC_PROG_JAVA([java])
 PROG_JAVA_DEP
+CHECK_APACHE2
 CHECK_CLOVER
 CHECK_RUBY([1.8.2])
 # not avail on ruby 1.9, default on fedora 17
@@ -28,6 +29,7 @@ AC_PATH_PROG([WSDL2RUBY], wsd2lruby.rb, $abs_srcdir/meta/wsdl2ruby.rb)
 AC_PATH_PROG([XSLTPROC], xsltproc)
 CHECK_DART_SDK
 CHECK_POSTGRES
+CHECK_FREESWITCH
 CHECK_SERVICEDIR
 AC_SUBST(SIPX_IS_SRC, [true])
 if test "${enable_rpmbuild}" == "yes" ; then

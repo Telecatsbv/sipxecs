@@ -49,6 +49,7 @@ bundle edit_line sipxpage_properties {
       "$(sipx.SIPX_CFDATA)/$(sipx.location_id)/sipxpage.properties.part"
         insert_type => "file";
       "log.file : $(sipx.SIPX_LOGDIR)/sipxpage.log";
+      "hostname : $(sipx.host).$(sipx.net_domain)";
 
   delete_lines:
     any::
@@ -86,5 +87,5 @@ bundle agent sipxpage_running {
     sipxpage.sipxpage_running.(restart_sipxpage|restart_sipxecs)::
       "$(sipx.SIPX_SERVICEDIR)/sipxpage"
         comment => "restart sipxpage",
-        args => "restart";
+        args => "asyncrestart";
 }

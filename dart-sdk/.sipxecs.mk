@@ -4,18 +4,20 @@
 #
 lib_all += dart-sdk
 
-dart-sdk_VER = 0.5.5
-dart-sdk_REL = 22416
+dart-sdk_VER = 0.7.2.1
+dart-sdk_REL = 27267
 dart-sdk_TARBALL = dartsdk-linux-$(DISTRO_ARCH)-$(dart-sdk_VER)-r$(dart-sdk_REL).tar.gz
 dart-sdk_i386_RPM = dart-sdk-$(dart-sdk_VER)-$(dart-sdk_REL).i386.rpm
 dart-sdk_x86_64_RPM = dart-sdk-$(dart-sdk_VER)-$(dart-sdk_REL).x86_64.rpm
 dart-sdk_intermediate_RPM = dart-sdk-$(dart-sdk_VER)-$(dart-sdk_REL).noarch.rpm
 
+dart-sdk.rpm-setup : fpm-setup
+
 dart-sdk.dist dart-sdk.srpm :;
 
 # separate copy step is needed because LHS of rpm target cannot include $(MOCK_RESULTS_DIR)
 # because it's defined AFTER this make file is loaded.
-dart-sdk.rpm_ : $(dart-sdk_$(DISTRO_ARCH)_RPM);
+dart-sdk.rpm : $(dart-sdk_$(DISTRO_ARCH)_RPM);
 	cp -p $< $(MOCK_RESULTS_DIR)
 
 $(dart-sdk_x86_64_RPM) : $(DOWNLOAD_LIB_CACHE)/$(dart-sdk_TARBALL)

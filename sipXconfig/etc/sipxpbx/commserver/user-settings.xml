@@ -57,6 +57,10 @@
         <type refid="enable-disable" />
         <value>ENABLE</value>
       </setting>
+      <setting name="group-music-on-hold">
+        <type refid="enable-disable" />
+        <value>DISABLE</value>
+      </setting>
       <setting name="subscribe-to-presence">
         <type refid="enable-disable" />
         <value>ENABLE</value>
@@ -243,6 +247,17 @@
       </setting>
       <setting name="did">
       <type refid="validPhone" />
+      </setting>
+    </group>
+    <group name="vacation" hidden="yes">
+      <setting name="vmEnabled">
+        <type>
+          <boolean />
+        </type>
+        <value>1</value>
+      </setting>
+      <setting name="transferTo">
+        <type refid="validPhone" />
       </setting>
     </group>
     <group name="mailbox" hidden="yes">
@@ -476,6 +491,9 @@
             <value>PERSONAL_FILES_SRC</value>
           </option>
           <option>
+            <value>GROUP_FILES_SRC</value>
+          </option>
+          <option>
             <value>SOUNDCARD_SRC</value>
           </option>
           <option>
@@ -511,6 +529,14 @@
   </group>
   <group name="hotelling">
     <setting name="enable">
+      <type>
+        <boolean/>
+      </type>
+      <value>0</value>
+    </setting>
+  </group>
+  <group name="phantom" hidden="yes">
+    <setting name="enabled">
       <type>
         <boolean/>
       </type>

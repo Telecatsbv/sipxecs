@@ -33,7 +33,7 @@ public:
     All
   };
   typedef boost::function<void(const std::string&)> OpLogCallBack;
-  MongoOpLog(const MongoDB::ConnectionInfo& info);
+  MongoOpLog(const MongoDB::ConnectionInfo& info, const std::string ns);
   ~MongoOpLog();
   void registerCallback(OpLog type, OpLogCallBack cb);
   void run();
@@ -43,11 +43,12 @@ protected:
   void notifyCallBacks(const std::string& type, const std::string& opLog);
   bool _isRunning;
   boost::thread* _pTailThread;
-  mongo::ScopedDbConnection* _pTailConnection;
+  mongoMod::ScopedDbConnection* _pTailConnection;
   std::vector<OpLogCallBack> _allCb;
   std::vector<OpLogCallBack> _insertCb;
   std::vector<OpLogCallBack> _deleteCb;
   std::vector<OpLogCallBack> _updateCb;
+  std::string _ns;
 
 };
 
