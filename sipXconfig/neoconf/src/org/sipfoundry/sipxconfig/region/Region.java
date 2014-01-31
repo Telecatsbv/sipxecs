@@ -60,12 +60,13 @@ public class Region extends BeanWithId implements NamedObject, DeployConfigOnEdi
         return map;
     }
 
-    public String getName() {
-        return m_name;
-    }
-
+    @JsonIgnore
     public String getConfigFriendlyName() {
         return m_name.replaceAll("\\W+", "_");
+    }
+
+    public String getName() {
+        return m_name;
     }
 
     public void setName(String name) {
