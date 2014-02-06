@@ -690,6 +690,7 @@ public class User {
     
     public boolean hasOperatorInIvr() {
     	return m_operatorInIvr;
+    }
 
     public boolean isDepositVoicemail() {
         return m_depositVoicemail;

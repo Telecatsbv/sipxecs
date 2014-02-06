@@ -31,6 +31,6 @@ rest_PKGS = \
         org.springframework.expression \
         org.springframework.aop \
         org.springframework.asm \
-        spring-data-commons-core \
+        spring-data-commons \
         spring-data-mongodb \
 	axis
