@@ -13,26 +13,26 @@ if test -f ./tarball-revision; then
     cat ./tarball-revision
     exit
 fi
-case $1 in
-  -s )
-    shift
-    sdir=$1
-    shift
-    abs_path=`readlink -f $0`
-    parent=`cd $sdir; $abs_path $@`
-    parent_rev=${parent%.*}
-    ;;
-esac
+
+# projects that are submodules should add to their parent's revision otherwise 
+# if there is a rebuild because a dependency triggered a reinstall then package
+# wouldn't be a new revision number and not trigger reinstall on update
+if test -d ../.git; then
+  abs_path=`readlink -f $0`
+  parent=`cd ..; $abs_path $@`
+  parent_rev=${parent%.*}
+fi
+
 VERSION=$1
-VER_REV=`git describe --abbrev=5 --match="v${VERSION}" HEAD`
+VER_REV=`git describe --abbrev=5 --match="v${VERSION}" HEAD --long`
 if [ "$?" != "0" ]; then
     echo "Could not find tag v$VERSION" 1>&2
     exit 1
 fi
-
-REV=`echo "${VER_REV}" | sed -e 's/^[0-9.]\+-//g' -e 's/-/./g'`
+REV=`echo "${VER_REV}" | sed -e 's/^v[0-9.]\+-//g' -e 's/-g\?/./g'`
+PAR_REV=`echo "${parent_rev}" | sed -e 's/^v[0-9.]\+\.//g' -e 's/-g\?/./g'`
 if [ -n "$parent_rev" ]; then
-  echo $[ ${parent_rev} + ${REV%.*} ].${REV#*.}
+  echo ${parent_rev%.*}.$[ ${parent_rev} + ${REV%.*} ].${REV#*.}
 else
   echo $REV
 fi
