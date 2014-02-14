@@ -64,6 +64,18 @@ Requires: sipxsaa >= %version
 Requires: sipxsupervisor >= %version
 Requires: sipxsqa-server >= %version
 #Requires: sipxunidata >= %version
+Requires: sipxhotprovisioning >= %version
+Requires: sipxhotdesking >= %version
+Requires: sipxaastra >= %version
+Requires: sipxyealink >= %version
+Requires: sipxrandomgroupdial >= %version
+Requires: sipxlang-nl_telecats >= %version
+Requires: sipxchefsec >= %version
+Requires: sipxclick2dial >= %version
+Requires: sipxtcdhcp >= %version
+Requires: sipxtccustomcallerid >= %version
+#Requires: sipxonnetselector
+
 
 Obsoletes: %{name}-doc
 Obsoletes: epel-release
