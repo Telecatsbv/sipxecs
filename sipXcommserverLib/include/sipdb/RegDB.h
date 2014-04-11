@@ -74,13 +74,13 @@ public:
         const std::string& identity,
         const std::string& callId,
         unsigned int cseq,
-        unsigned int timeNow);
+        unsigned long timeNow);
 
     void expireAllBindings(
         const std::string& identity,
         const std::string& callId,
         unsigned int cseq,
-        unsigned int timeNow);
+        unsigned long timeNow);
 
     void removeAllExpired();
 
@@ -91,24 +91,28 @@ public:
 
     bool getUnexpiredContactsUser(
         const std::string& identity,
-        int timeNow,
-        Bindings& bindings) const;
+        unsigned long timeNow,
+        Bindings& bindings,
+        bool preferPrimary = false) const;
 
     bool getUnexpiredContactsUserContaining(
         const std::string& matchIdentity,
-        int timeNow,
-        Bindings& bindings) const;
+        unsigned long timeNow,
+        Bindings& bindings,
+        bool preferPrimary = false) const;
 
     bool getUnexpiredContactsUserInstrument(
         const std::string& identity,
         const std::string& instrument,
-        int timeNow,
-        Bindings& bindings) const;
+        unsigned long timeNow,
+        Bindings& bindings,
+        bool preferPrimary = false) const;
 
     bool getUnexpiredContactsInstrument(
         const std::string& instrument,
-        int timeNow,
-        Bindings& bindings) const;
+        unsigned long timeNow,
+        Bindings& bindings,
+        bool preferPrimary = false) const;
 
     void cleanAndPersist(int currentExpireTime);
 

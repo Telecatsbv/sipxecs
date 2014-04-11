@@ -298,9 +298,10 @@ SipRegistrarServer::applyRegisterToDirectory( const Url& toUrl
                                               //< the instrument identification
                                               // value from the authentication
                                               // user name, if any
-                                             ,const int timeNow
+                                             ,const unsigned long timeNow
                                              ,const SipMessage& registerMessage
-                                             ,RegistrationExpiryIntervals*& pExpiryIntervals
+                                             ,RegistrationExpiryIntervals*& pExpiryIntervals,
+                                              bool& isUnregister
                                              )
 {
 #if 0
@@ -447,6 +448,7 @@ SipRegistrarServer::applyRegisterToDirectory( const Url& toUrl
                       if ( 0 == expires )
                       {
                          // unbind this mapping; ok
+                        isUnregister = true;
                       }
                       else if ( expires < pExpiryIntervals->mMinExpiresTime) // lower bound
                       {
@@ -596,6 +598,7 @@ SipRegistrarServer::applyRegisterToDirectory( const Url& toUrl
             else
             {
                 // Asterisk ('*') requests that we unregister all contacts for the AOR
+                isUnregister = true;
                 removeAll = TRUE;
             }
         } // iteration over Contact entries
@@ -848,12 +851,15 @@ void SipRegistrarServer::handleRegister(SipMessage* pMsg)
           message.getToAddress( &address, &port, &protocol, NULL, NULL, &tag );
 
           // Add new contact values - update or insert.
-          int timeNow = (int) OsDateTime::getSecsSinceEpoch();
+          unsigned long timeNow = OsDateTime::getSecsSinceEpoch();
           RegistrationExpiryIntervals* pExpiryIntervalsUsed = 0;
+          bool isUnregister = false;
           RegisterStatus applyStatus
              = applyRegisterToDirectory( toUri, instrument,
                                          timeNow, message,
-                                         pExpiryIntervalsUsed );
+                                         pExpiryIntervalsUsed,
+                                         isUnregister
+             );
 
           switch (applyStatus)
           {
@@ -863,8 +869,7 @@ void SipRegistrarServer::handleRegister(SipMessage* pMsg)
                   Os::Logger::instance().log( FAC_SIP, PRI_DEBUG, "SipRegistrarServer::handleMessage() - "
                          "contact successfully added");
 
-                  //create response - 200 ok reseponse
-                  finalResponse.setOkResponseData(&message);
+                  
 
                   // get the call-id from the register message for context test below
                   UtlString registerCallId;
@@ -875,8 +880,23 @@ void SipRegistrarServer::handleRegister(SipMessage* pMsg)
                   UtlString identity_;
                   toUri.getIdentity(identity_);
                   RegDB::Bindings registrations;
+
                   SipRegistrar::getInstance(NULL)->getRegDB()->getUnexpiredContactsUser(identity_.str(),
-                      timeNow, registrations);
+                      timeNow, registrations, true);
+                  
+                  if (!isUnregister && applyStatus == REGISTER_SUCCESS && registrations.empty())
+                  {
+                    //
+                    // This should not happen.  Send out a 500 internal server error
+                    //
+                    
+                    finalResponse.setResponseData(&message,SIP_5XX_CLASS_CODE,"Unable To Retrieve Contacts From RegDB");
+                    break;
+                  }
+
+                  //create response - 200 ok reseponse
+                  finalResponse.setOkResponseData(&message);
+
                   bool requestSupportsGruu =
                      message.isInSupportedField("gruu");
 #ifdef GRUU_WORKAROUND
