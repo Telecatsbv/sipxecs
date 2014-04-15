@@ -76,6 +76,16 @@ Requires: sipxtcdhcp >= %version
 Requires: sipxtccustomcallerid >= %version
 #Requires: sipxonnetselector
 
+# Might not be the best place, but Telecats requires additional packages:
+Requires: gdb
+Requires: yum-downloadonly
+Requires: wget
+Requires: vim-enhanced
+Requires: mlocate
+Requires: wireshark-gnome
+Requires: xauth
+Requires: yum-plugin-merge-conf
+
 
 Obsoletes: %{name}-doc
 Obsoletes: epel-release

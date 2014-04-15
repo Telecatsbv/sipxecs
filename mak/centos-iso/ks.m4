@@ -6,7 +6,7 @@ define(`repo_filename',`sipxecs.repo')
 define(`repo_contents',
 [sipXecs]
 name=sipXecs for CentOS - \$basearch
-baseurl=http://download.sipfoundry.org/pub/sipXecs/PACKAGE_VERSION()/CentOS_6/\$basearch
+baseurl=http://secure.telecats.nl/sipX/$releasever/$basearch
 enabled=1
 gpgcheck=0
 )
