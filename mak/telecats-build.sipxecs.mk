@@ -1,4 +1,5 @@
 telecats_build = \
+  sipXacccode \
   sipXimbot \
   sipXrest \
   sipXcallController \
