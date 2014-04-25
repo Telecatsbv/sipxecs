@@ -116,6 +116,10 @@ iso-download-os-% : mak/*-centos-iso.mk
 	rsync -av --delete \
 	  $(addprefix @CENTOS_RSYNC_URL@/centos/$(CENTOS_VER)/os/$(ARCH)/Packages/, $(ISO_ADD_OS)) \
 	  $(ISO_PACKAGES_OS)/
+	rsync -av --delete \
+         $(addprefix @CENTOS_RSYNC_URL@/centos/$(CENTOS_VER)/os/$(ARCH)/Packages/, $(ISO_ADD_TELECATS)) \
+         $(ISO_PACKAGES_OS)/
+
 
 iso-download-epel-% : mak/*-centos-iso.mk
 	rsync -av --delete \
@@ -155,8 +159,8 @@ ISO_RM_LIST = \
   sipxcustomcallerid.* \
   sipxsbc.* \
   sipxtest.* \
-  xemacs-.* \
-  sipxlang.*  # language packs too big to put on cd
+  xemacs-.*
+  #sipxlang.*  # language packs too big to put on cd
 
 # Note, this list controls 32 and 64 bit lists so if 32 bit does not need
 # to download but 64 bit does, it will be in this list and 32 bit download will simply
@@ -654,3 +658,20 @@ ISO_ADD_OS = \
   zip-3* \
   zlib-1.*
 
+# Telecats Packages and their dependencies
+ISO_ADD_TELECATS = \
+  desktop-file-utils-* \
+  gpm-[0-9]* \
+  libsmi-[0-9]* \
+  man-[0-9]* \
+  mlocate-* \
+  startup-notification-[0-9]* \
+  usermode-gtk-* \
+  vim-common-* \
+  vim-enhanced-* \
+  wireshark-[0-9]* \
+  wireshark-gnome-* \
+  xcb-util-[0-9]* \
+  xdg-utils-* \
+  xorg-x11-xauth-* \
+  yum-plugin-merge-conf-*
