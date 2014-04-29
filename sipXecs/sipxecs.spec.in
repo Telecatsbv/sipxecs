@@ -20,7 +20,7 @@ Requires: freeswitch-codec-passthru-amr
 Requires: freeswitch-codec-passthru-g723_1 
 Requires: freeswitch-codec-passthru-g729 
 Requires: sipxaastra >= %version
-#Requires: sipxacccode >= %version
+Requires: sipxacccode >= %version
 #Requires: sipxaudiocodes >= %version
 Requires: sipxbridge >= %version
 Requires: sipxcallcontroller >= %version
@@ -85,6 +85,7 @@ Requires: mlocate
 Requires: wireshark-gnome
 Requires: xauth
 Requires: yum-plugin-merge-conf
+Requires: man
 
 
 Obsoletes: %{name}-doc
