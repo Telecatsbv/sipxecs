@@ -9,6 +9,7 @@ ISO_REV ?= $(PACKAGE_REVISION)
 DIST_DIR = @DIST_DIR@
 SPLASH_FILE ?= $(ISO_SRC)/splash.jpg
 SPLASH_MENU ?= $(ISO_SRC)/isolinux.cfg
+OEM_FILE ?= $(ISO_SRC)/oem.m4
 VOLUME_LABEL ?= "CentOS sipX $(PACKAGE_VERSION)"
 APPLICATION_LABEL ?= "CentOS sipX $(PACKAGE_VERSION)"
 PUBLISHER_ID ?= sipx-dev@list.sipfoundry.org
@@ -79,6 +80,7 @@ iso-update-repo-% : iso-disc-%
 
 # add modifications to disc to make it operate
 iso-update-files-% :
+	[ -f $(OEM_FILE) ] && cp $(OEM_FILE) . || echo "No OEM file"
 	m4 $(ISO_M4_OPTS) $(ISO_SRC)/ks.m4 > $(ISO_DISC)/ks.cfg
 	m4 $(ISO_M4_OPTS) -D manual-partition $(ISO_SRC)/ks.m4 > $(ISO_DISC)/ks-manual-partition.cfg
 	for f in $(ISOLINUX_FILES); do \
