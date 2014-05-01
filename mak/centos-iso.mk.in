@@ -663,7 +663,7 @@ ISO_ADD_OS = \
 # Telecats Packages and their dependencies
 ISO_ADD_TELECATS = \
   desktop-file-utils-* \
-  gpm-[0-9]* \
+  gpm-libs-[0-9]* \
   libsmi-[0-9]* \
   man-[0-9]* \
   mlocate-* \
