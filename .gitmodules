@@ -128,4 +128,4 @@
 [submodule "sipXtcFirewall"]
 	path = sipXtcFirewall
 	url = ssh://git@git.telecats.nl/opt/git/sipXtcFirewall
-	branch = master
+	branch = SIPXECS-1479
