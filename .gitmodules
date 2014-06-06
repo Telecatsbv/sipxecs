@@ -125,3 +125,7 @@
 	path = sipXonnetSelector
 	url = ssh://git@git.telecats.nl/opt/git/sipXonnetSelector
 	branch = nightly-4.6
+[submodule "sipXtcFirewall"]
+	path = sipXtcFirewall
+	url = ssh://git@git.telecats.nl/opt/git/sipXtcFirewall
+	branch = master
