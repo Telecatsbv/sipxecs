@@ -56,6 +56,10 @@ public abstract class SettingsGrid extends BaseComponent {
     public Iterator<Integer> getIndices() {
         return new IndexIterator(getSetting().getSize());
     }
+    
+    public boolean hasLabels() {
+    	return getSetting().hasLabels();
+    }
 
     static class IndexIterator implements Iterator<Integer> {
         private final int m_size;
