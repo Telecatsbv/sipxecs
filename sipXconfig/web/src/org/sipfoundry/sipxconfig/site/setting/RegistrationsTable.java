@@ -55,7 +55,7 @@ public abstract class RegistrationsTable extends BaseComponent {
     }
 
     public String getColumnNames() {
-        StringBuilder columnNames = new StringBuilder("uri,contact,expires,instrument");
+        StringBuilder columnNames = new StringBuilder("uri,contact,expires,instrument,primary");
         return columnNames.toString();
     }
 
@@ -66,5 +66,11 @@ public abstract class RegistrationsTable extends BaseComponent {
             return timeToExpire;
         }
         return getMessages().getMessage("status.expired");
+    }
+
+    public String getPrimary() {
+        RegistrationItem item = getCurrentRow();
+        String primary = item.getPrimary();
+        return primary;
     }
 }
