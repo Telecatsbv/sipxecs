@@ -87,6 +87,7 @@ void RegDB::updateBinding(RegBinding& binding)
           "cseq" << binding.getCseq() <<
           "expirationTime" << static_cast<long long>(binding.getExpirationTime()) <<
           "instrument" << binding.getInstrument() <<
+          "primary" << binding.getPrimary() <<
           "expired" << isExpired );
 
     MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
