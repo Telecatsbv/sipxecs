@@ -198,8 +198,12 @@
 %>
 <% 
 # log and drop everything else 
+  if restrictive
 %>
 -A INPUT -j LOGDROP
+<%
+  end
+%>
 COMMIT
 
 *nat
