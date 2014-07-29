@@ -16,5 +16,14 @@
 	<classpathentry exported="true" kind="var" path="SIPXCONFIG_SRCDIR/lib/tapestry-framework-4.1.6.jar" sourcepath="/LIBSRC/tapestry-framework-4.1.6.jar.src/tapestry-framework/src/java"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/sipXcommons"/>
 	<classpathentry kind="var" path="SIPX_SRC_TOP/build/sipXconfig/web/classes"/>
+	<classpathentry kind="lib" path="/usr/local/sipx/share/java/sipXecs/sipXconfig/agent-bindings.jar"/>
+	<classpathentry kind="lib" path="/usr/local/sipx/share/java/sipXecs/sipXconfig/cdr-bindings.jar"/>
+	<classpathentry kind="lib" path="/usr/local/sipx/share/java/sipXecs/sipXconfig/hivemind-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/usr/local/sipx/share/java/sipXecs/sipXconfig/hivemind-lib-1.1.1.jar"/>
+	<classpathentry kind="lib" path="/usr/local/sipx/share/java/sipXecs/sipXconfig/sipxconfig-neoconf.jar"/>
+	<classpathentry kind="lib" path="/usr/local/sipx/share/java/sipXecs/sipXconfig/sipxconfig-web.jar"/>
+	<classpathentry kind="lib" path="/usr/local/sipx/share/java/sipXecs/sipXconfig/tapestry-annotations-4.1.6.jar"/>
+	<classpathentry kind="lib" path="/usr/local/sipx/share/java/sipXecs/sipXconfig/tapestry-contrib-4.1.6.jar"/>
+	<classpathentry kind="lib" path="/usr/local/sipx/share/java/sipXecs/sipXconfig/tapestry-framework-4.1.6.jar"/>
 	<classpathentry kind="output" path="bin.eclipse"/>
 </classpath>

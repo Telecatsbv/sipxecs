@@ -115,3 +115,6 @@
 [submodule "sipXonnetSelector"]
 	path = sipXonnetSelector
 	url = ssh://git@git.telecats.nl/opt/git/sipXonnetSelector
+[submodule "sipXtcFirewall"]
+	path = sipXtcFirewall
+	url = ssh://git@git.telecats.nl/opt/git/sipXtcFirewall
