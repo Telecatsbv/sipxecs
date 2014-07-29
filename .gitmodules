@@ -115,3 +115,6 @@
 [submodule "sipXtcFirewall"]
 	path = sipXtcFirewall
 	url = ssh://git@git.telecats.nl/opt/git/sipXtcFirewall
+[submodule "sipXhotprovisioning"]
+	path = sipXhotprovisioning
+	url = ssh://git@git.telecats.nl/opt/git/sipXhotprovisioning
