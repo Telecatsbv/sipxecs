@@ -81,40 +81,40 @@
 	url = git://github.com/sipxopenacd/openacd.git
 [submodule "sipXhotdesking"]
 	path = sipXhotdesking
-	url = ssh://git@git.telecats.nl/opt/git/sipXhotdesking
+	url = git@gitlab.telecats.nl:sipxecs/sipxhotdesking.git
 [submodule "sipXyealink"]
 	path = sipXyealink
-	url = ssh://git@git.telecats.nl/opt/git/sipXyealink
+	url = git@gitlab.telecats.nl:sipxecs/sipxyealink.git
 [submodule "sipXtcExample"]
 	path = sipXtcExample
-	url = ssh://git@git.telecats.nl/opt/git/sipXtcExample
+	url = git@gitlab.telecats.nl:sipxecs/sipxtcexample.git
 [submodule "sipXchefsec"]
   	path = sipXchefsec
-  	url = ssh://git@git.telecats.nl/opt/git/sipXchefsec
+  	url = git@gitlab.telecats.nl:sipxecs/sipxchefsec.git
 [submodule "sipXlang-nl_telecats"]
 	path = sipXlang-nl_telecats
-	url = ssh://git@git.telecats.nl/opt/git/sipXlang-nl_TC
+	url = git@gitlab.telecats.nl:sipxecs/sipxlang-nl_telecats.git
 [submodule "sipXrandomGroupDial"]
 	path = sipXrandomGroupDial
-	url = ssh://git@git.telecats.nl/opt/git/sipXrandomGroupDial
+	url = git@gitlab.telecats.nl:sipxecs/sipxrandomgroupdial.git
 [submodule "sipXtcCustomCallerId"]
 	path = sipXtcCustomCallerId
-	url = ssh://git@git.telecats.nl/opt/git/sipXtcCustomCallerId
+	url = git@gitlab.telecats.nl:sipxecs/sipxrandomgroupdial.git
 [submodule "sipXtcDhcp"]
 	path = sipXtcDhcp
-	url = ssh://git@git.telecats.nl/opt/git/sipXtcDhcp
+	url = git@gitlab.telecats.nl:sipxecs/sipxtcdhcp.git
 [submodule "sipXclick2dial"]
 	path = sipXclick2dial
-	url = ssh://git@git.telecats.nl/opt/git/sipXclick2dial
+	url = git@gitlab.telecats.nl:sipxecs/sipxclick2dial.git
 [submodule "sipXcallQueue"]
 	path = sipXcallQueue
 	url = git://github.com/SIPfoundry/sipXcallQueue.git
 [submodule "sipXonnetSelector"]
 	path = sipXonnetSelector
-	url = ssh://git@git.telecats.nl/opt/git/sipXonnetSelector
+	url = git@gitlab.telecats.nl:sipxecs/sipxonnetselector.git
 [submodule "sipXtcFirewall"]
 	path = sipXtcFirewall
-	url = ssh://git@git.telecats.nl/opt/git/sipXtcFirewall
+	url = git@gitlab.telecats.nl:sipxecs/sipxtcfirewall.git
 [submodule "sipXhotprovisioning"]
 	path = sipXhotprovisioning
-	url = ssh://git@git.telecats.nl/opt/git/sipXhotprovisioning
+	url = git@gitlab.telecats.nl:sipxecs/sipxhotprovisioning.git
