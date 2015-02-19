@@ -278,7 +278,7 @@ public abstract class ManageVoicemail extends UserBasePage implements IExternalP
         }
 
         VoicemailSource source = null;
-        List<Voicemail> voicemails = Collections.EMPTY_LIST;
+        List<Voicemail> voicemails = Collections.emptyList();
         Map<Serializable, Voicemail> voicemailMap = new LinkedHashMap<Serializable, Voicemail>();
         try {
             voicemails = mgr.getVoicemail(userId, getFolderId());
@@ -326,7 +326,8 @@ public abstract class ManageVoicemail extends UserBasePage implements IExternalP
         String userAddrSpec = user.getAddrSpec(domain);
         if (fromUri != null) {
             String displayName = "ClickToCall";
-            getSipService().sendRefer(user, userAddrSpec, displayName, fromUri);
+            String callUri = fromUri.substring(0, fromUri.indexOf('@') + 1) + domain;
+            getSipService().sendRefer(user, userAddrSpec, displayName, callUri);
         } else {
             LOG.error("Failed to get URI to call: " + fromUri);
         }

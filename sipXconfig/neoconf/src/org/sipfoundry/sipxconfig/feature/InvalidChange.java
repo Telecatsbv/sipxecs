@@ -15,10 +15,15 @@
  */
 package org.sipfoundry.sipxconfig.feature;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang.StringUtils;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.commserver.Location;
 
 public class InvalidChange {
+    private static final String ERROR_REQUIRED_FEATURE_AT_LOCATION = "&error.requiredFeatureAtLocation.{0}.{1}.{2}";
     private Feature m_feature;
     private Location m_location;
     private InvalidChangeException m_message;
@@ -36,9 +41,20 @@ public class InvalidChange {
     }
 
     public static InvalidChange requires(Feature subject, LocationFeature required, Location where) {
-        InvalidChangeException msg = new InvalidChangeException("&error.requiredFeatureAtLocation.{0}.{1}.{2}",
-                subject, required, where.getHostname());
+        InvalidChangeException msg = new InvalidChangeException(ERROR_REQUIRED_FEATURE_AT_LOCATION,
+            subject, required, where.getHostname());
         return new InvalidChange(required, where, msg);
+    }
+
+    public static InvalidChange requires(Feature subject, LocationFeature required, List<Location> requiredLocations) {
+        List<String> requiredHostnames = new ArrayList<String>();
+        for (Location location : requiredLocations) {
+            requiredHostnames.add(location.getHostname());
+        }
+        String errMessage = StringUtils.join(requiredHostnames.iterator(), ", ");
+        InvalidChangeException msg = new InvalidChangeException(ERROR_REQUIRED_FEATURE_AT_LOCATION,
+            subject, required, errMessage);
+        return new InvalidChange(required, msg);
     }
 
     public static InvalidChange requires(Feature subject, Feature required) {

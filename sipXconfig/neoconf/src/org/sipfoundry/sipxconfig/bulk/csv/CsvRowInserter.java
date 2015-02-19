@@ -187,10 +187,12 @@ public class CsvRowInserter extends RowInserter<String[]> {
 
         Index.PIN.setProperty(user, row);
         String voicemailPin = Index.VOICEMAIL_PIN.get(row);
-        if (isHashed(voicemailPin)) {
-            user.setVoicemailPintoken(voicemailPin);
-        } else {
-            user.setVoicemailPintoken(Md5Encoder.digestEncryptPassword(userName, voicemailPin));
+        if (!StringUtils.isEmpty(voicemailPin)) {
+            if (isHashed(voicemailPin)) {
+                user.setVoicemailPintoken(voicemailPin);
+            } else {
+                user.setVoicemailPintoken(Md5Encoder.digestEncryptPassword(userName, voicemailPin));
+            }
         }
 
         Index.FIRST_NAME.setProperty(user, row);
@@ -239,6 +241,11 @@ public class CsvRowInserter extends RowInserter<String[]> {
         Index.VOICEMAIL_SERVER.setProperty(user, row);
         Index.EXTERNAL_NUMBER.setProperty(user, row);
         Index.ANONYMOUS_CALLER_ALIAS.setProperty(user, row);
+        Index.AUTH_ACCOUNT_NAME.setProperty(user, row);
+        Index.EMAIL_ADDRESS_ALIASES.setProperty(user, row);
+        Index.CUSTOM_1.setProperty(user, row);
+        Index.CUSTOM_2.setProperty(user, row);
+        Index.CUSTOM_3.setProperty(user, row);
 
         return user;
     }

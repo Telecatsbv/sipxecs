@@ -594,11 +594,53 @@ AC_DEFUN([SFAC_LIB_COMMSERVER],
     fi
     SIPXCOMMSERVERLIB=$foundpath
 
-    AC_SUBST(SIPXCOMMSERVER_LIBS,   ["$SIPXCOMMSERVERLIB/libsipXcommserver.la"])
+    POCO_LIBS="-lPocoFoundation -lPocoUtil -lPocoNet -lPocoXML"
+    AC_SUBST(SIPXCOMMSERVER_LIBS,   ["$SIPXCOMMSERVERLIB/libsipXcommserver.la $POCO_LIBS"])
+
     # just assume that the test lib is there too
-    AC_SUBST(SIPXCOMMSERVERTEST_LIBS,   ["$SIPXCOMMSERVERLIB/libsipXcommserverTest.la"])
+    AC_SUBST(SIPXCOMMSERVERTEST_LIBS,   ["$SIPXCOMMSERVERLIB/libsipXcommserverTest.la POCO_LIBS"])
 ]) # SFAC_LIB_COMMSERVER
 
+
+AC_DEFUN([SFAC_LIB_YARD],
+[
+    AC_REQUIRE([SFAC_LIB_COMMSERVER])
+
+    SFAC_ARG_WITH_INCLUDE([sipxyard/YardProcessor.h],
+            [sipxyardinc],
+            [ --with-sipxyardinc=<dir> call processing library include path ],
+            [sipXyard])
+
+    if test x_$foundpath != x_; then
+        AC_MSG_RESULT($foundpath)
+    else
+        AC_MSG_WARN([    assuming it will be in '${prefix}/include'])
+        foundpath=${prefix}/include
+    fi
+    SIPXYARDINC=$foundpath
+    if test "$SIPXYARDINC" != "$SIPXPORTINC"
+    then
+        CFLAGS="-I$SIPXYARDINC $CFLAGS"
+        CXXFLAGS="-I$SIPXYARDINC $CXXFLAGS"
+    fi
+    AC_SUBST(SIPXYARDINC)
+
+    SFAC_ARG_WITH_LIB([libsipXyard.la],
+            [sipxyardlib],
+            [ --with-sipxyardlib=<dir> call processing library path ],
+            [sipXyard])
+
+    if test x_$foundpath != x_; then
+        AC_MSG_RESULT($foundpath)
+    else
+        AC_MSG_WARN([    assuming it will be in '${libdir}'])
+        foundpath=${libdir}
+    fi
+    SIPXYARDLIB=$foundpath
+
+    AC_SUBST(SIPXYARD_LIBS,   ["$SIPXYARDLIB/libsipXyard.la"])
+    AC_SUBST(SIPXYARD_PLUGIN_DIR,   ["$SIPXYARDLIB/yard_plugins"])
+]) # SFAC_LIB_YARD
 
 ##  Generic find of an include
 #   Fed from AC_DEFUN([SFAC_INCLUDE_{module name here}],

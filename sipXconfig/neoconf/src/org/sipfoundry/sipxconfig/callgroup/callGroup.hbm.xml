@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.sipfoundry.sipxconfig.callgroup" default-lazy="false">
   <!--
     - User Ring
@@ -32,8 +32,10 @@
     <property name="did" />
     <property name="description" />
     <property name="fallbackDestination" />
+    <property name="fallbackExpire" />
     <property name="voicemailFallback" />
     <property name="userForward" />
+    <property name="useFwdTimers" />
     <property name="sipPassword" />
     <list name="rings" cascade="all-delete-orphan">
       <key column="call_group_id" not-null="true" />

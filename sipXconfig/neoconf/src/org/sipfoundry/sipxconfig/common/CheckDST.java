@@ -15,6 +15,8 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 
@@ -22,10 +24,12 @@ import org.springframework.context.ApplicationContextAware;
  * Time task that runs once a day and checks if DST will change during next 24 hours. If DST
  * change is going to happen, it schedules notification that regenerates aliases.
  */
-public class CheckDST extends TimerTask implements ApplicationContextAware {
+public class CheckDST implements ApplicationContextAware {
+    private static final Log LOG = LogFactory.getLog(CheckDST.class);
 
     private ApplicationContext m_applicationContext;
 
+    @Override
     public void setApplicationContext(ApplicationContext applicationContext) {
         m_applicationContext = applicationContext;
     }
@@ -34,16 +38,20 @@ public class CheckDST extends TimerTask implements ApplicationContextAware {
         Timer timer = new Timer();
 
         timer.schedule(new TimerTask() {
+            @Override
             public void run() {
+                LOG.info("Triggering DST event...");
                 m_applicationContext.publishEvent(new DSTChangeEvent(this));
             }
         }, dstChangeTime);
     }
 
-    public void run() {
+    public void checkDst() {
+        LOG.info("Checking DST...");
         TimeZone tzLocal = TimeZone.getDefault();
         Date dstChangeTime = findDstChangeTime(tzLocal, new Date());
         if (dstChangeTime != null) {
+            LOG.info("DST change detected at " + dstChangeTime.toString());
             setupNotifyTask(dstChangeTime);
         }
     }

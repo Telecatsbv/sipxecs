@@ -11,12 +11,14 @@ package org.sipfoundry.sipxconfig.common;
 import static org.sipfoundry.commons.mongo.MongoConstants.CONTACT;
 import static org.sipfoundry.commons.mongo.MongoConstants.GROUPS;
 import static org.sipfoundry.commons.mongo.MongoConstants.HOTELING;
+import static org.sipfoundry.commons.mongo.MongoConstants.SHARED;
 import static org.sipfoundry.commons.mongo.MongoConstants.TIMESTAMP;
 import static org.sipfoundry.commons.mongo.MongoConstants.TIMEZONE;
 import static org.sipfoundry.commons.mongo.MongoConstants.UID;
 import static org.sipfoundry.commons.mongo.MongoConstants.VOICEMAIL_ENABLED;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,8 +29,11 @@ import java.util.TimeZone;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sipfoundry.sipxconfig.address.Address;
 import org.sipfoundry.sipxconfig.branch.Branch;
+import org.sipfoundry.sipxconfig.callgroup.AbstractRing;
 import org.sipfoundry.sipxconfig.commserver.imdb.AliasMapping;
 import org.sipfoundry.sipxconfig.commserver.imdb.DataSet;
 import org.sipfoundry.sipxconfig.forwarding.CallSequence;
@@ -36,18 +41,18 @@ import org.sipfoundry.sipxconfig.im.ImAccount;
 import org.sipfoundry.sipxconfig.ivr.Ivr;
 import org.sipfoundry.sipxconfig.permission.PermissionName;
 
-//import static org.sipfoundry.commons.mongo.MongoConstants.TIMEZONE;
-
 /**
  * Can be user that logs in, can be superadmin, can be user for phone line
  */
 public class User extends AbstractUser implements Replicable {
+    private static final Log LOG = LogFactory.getLog(User.class);
     private static final String VM_ENABLED_SETTING_PATH = "voicemail/vacation/vmEnabled";
     private static final String ALIAS_RELATION = "alias";
     private static final String ALIAS_RELATION_FAX = "fax";
     private static final String TZ = "timezone/timezone";
     private static final String E911_SETTING_PATH = "e911/location";
     private static final String PHANTOM_USER = "phantom/enabled";
+    private static final String FORCE_PIN_CHANGE = "voicemail/security/force-pin-change";
     private String m_identity;
     private boolean m_validUser = true;
 
@@ -74,11 +79,7 @@ public class User extends AbstractUser implements Replicable {
 
     @SuppressWarnings("unchecked")
     public Collection<String> getPermissions() {
-        if (isEnabled()) {
-            return getUserPermissionNames();
-        } else {
-            return CollectionUtils.EMPTY_COLLECTION;
-        }
+        return isEnabled() ? getUserPermissionNames() : CollectionUtils.EMPTY_COLLECTION;
     }
 
     public String getContactUri(String domain) {
@@ -97,7 +98,6 @@ public class User extends AbstractUser implements Replicable {
         m_identity = identity;
     }
 
-    @Override
     public boolean isEnabled() {
         return getUserProfile().isEnabled();
     }
@@ -150,6 +150,41 @@ public class User extends AbstractUser implements Replicable {
         return mappings;
     }
 
+    protected CallSequence getCallSequence() {
+        return getForwardingContext().getCallSequenceForUserId(getId());
+    }
+
+    public int getEffectiveExpire() {
+        int expire = 0;
+        CallSequence sequence = getCallSequence();
+        if (sequence != null) {
+            int timeToSum = sequence.getCfwdTime();
+            List<AbstractRing> rings = sequence.getRings();
+
+            // if no ring defined then return only initial expire
+            if (rings.isEmpty()) {
+                return timeToSum;
+            }
+
+            for (AbstractRing ring : rings) {
+                if (AbstractRing.Type.IMMEDIATE == ring.getType()) {
+                    if (ring.getExpiration() > timeToSum) {
+                        timeToSum = ring.getExpiration();
+                    }
+                } else {
+                    // end "at the same time" cycle
+                    expire = expire + timeToSum;
+                    timeToSum = ring.getExpiration();
+                }
+                // if last ring then sum it up
+                if (rings.lastIndexOf(ring) == rings.size() - 1) {
+                    expire = expire + timeToSum;
+                }
+            }
+        }
+        return expire;
+    }
+
     public void setValidUser(boolean vld) {
         m_validUser = vld;
     }
@@ -164,17 +199,30 @@ public class User extends AbstractUser implements Replicable {
         Map<String, Object> props = new HashMap<String, Object>();
         props.put(UID, getUserName());
         props.put(CONTACT, getContactUri(domain));
-        props.put(GROUPS, getGroupsNames().split(" "));
+        props.put(GROUPS, Arrays.asList(getGroupsNames().split(" ")));
         props.put(TIMEZONE, getTimezone().getID());
         props.put(VOICEMAIL_ENABLED, isDepositVoicemail());
         props.put(TIMESTAMP, System.currentTimeMillis());
         props.put(HOTELING, getSettingValue("hotelling/enable"));
+        String sharedAor = StringUtils.EMPTY;
+        if (getIsShared()) {
+            sharedAor = getAddrSpec(domain);
+        }
+        props.put(SHARED, sharedAor);
         return props;
     }
 
     @Override
     public String getEntityName() {
         return getClass().getSimpleName();
+    }
+
+    /**
+     * User entity must be replicated only when UserProfile.m_enabled is set to true
+     */
+    @Override
+    public boolean isReplicationEnabled() {
+        return isEnabled();
     }
 
     /**
@@ -211,6 +259,14 @@ public class User extends AbstractUser implements Replicable {
         getSettings().getSetting(PHANTOM_USER).setTypedValue(phantom);
     }
 
+    public boolean isForcePinChange() {
+        return (Boolean) getSettingTypedValue(FORCE_PIN_CHANGE);
+    }
+
+    public void setForcePinChange(boolean force) {
+        getSettings().getSetting(FORCE_PIN_CHANGE).setTypedValue(force);
+    }
+
     public Integer getE911LocationId() {
         if (getSettingTypedValue(E911_SETTING_PATH) == null) {
             return null;
@@ -220,6 +276,10 @@ public class User extends AbstractUser implements Replicable {
             LOG.error("Database is in bad state, E911 location defined is wrong! Please review!");
         }
         return id;
+    }
+
+    public boolean isImEnabled() {
+        return (Boolean) getSettingTypedValue(IM_ACCOUNT);
     }
 
     public void setE911LocationId(Integer id) {

@@ -7,12 +7,14 @@ nobase_includeHEADERS_INSTALL = $(INSTALL) -D -p -c -m 644
 # of compile dependencies in other sipX projects
 nobase_include_HEADERS =  \
     sipXecsService/SipXecsService.h \
+    sipXecsService/SipXApplication.h \
     sipXecsService/SharedSecret.h \
     sipXecsService/SipNonceDb.h \
     sipXecsService/daemon.h \
     configrpc/ConfigRPC.h \
     sipdb/MongoDB.h \
     sipdb/MongoOpLog.h \
+    sipdb/MongoMod.h \
     sipdb/EntityDB.h \
     sipdb/EntityRecord.h \
     sipdb/RegBinding.h \
@@ -23,7 +25,8 @@ nobase_include_HEADERS =  \
     sipdb/Subscription.h \
     sipdb/ResultSet.h \
     sipdb/DbHelper.h \
-    sipdb/CustomConnPool.h \
+    sipdb/GatewayDestDB.h \
+    sipdb/GatewayDestRecord.h \
     digitmaps/UrlMapping.h \
     digitmaps/FallbackRulesUrlMapping.h \
     digitmaps/AuthRulesUrlMapping.h \

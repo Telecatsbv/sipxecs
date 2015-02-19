@@ -11,8 +11,9 @@ package org.sipfoundry.sipxconfig.common;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -99,9 +100,6 @@ public class CronSchedule extends BeanWithId {
     }
 
     public void setScheduledDay(ScheduledDay scheduledDay) {
-        if (scheduledDay != ScheduledDay.EVERYDAY) {
-            setType(Type.WEEKLY);
-        }
         m_dayOfWeek = scheduledDay.getDayOfWeek();
     }
 
@@ -198,11 +196,10 @@ public class CronSchedule extends BeanWithId {
         return m_type.getDelay();
     }
 
-    public Timer schedule(TimerTask task) {
+    public ScheduledFuture<?> schedule(ScheduledExecutorService executor, Runnable task) {
         if (m_enabled) {
-            Timer timer = new Timer();
-            timer.schedule(task, getFirstDate(), getDelay());
-            return timer;
+            return executor.scheduleAtFixedRate(task, getFirstDate().getTime() - System.currentTimeMillis(),
+                getDelay(), TimeUnit.MILLISECONDS);
         }
         return null;
     }

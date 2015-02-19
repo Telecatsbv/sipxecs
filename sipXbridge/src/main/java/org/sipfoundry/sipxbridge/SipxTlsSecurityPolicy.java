@@ -34,6 +34,7 @@ public class SipxTlsSecurityPolicy implements TlsSecurityPolicy {
      * @param transaction -- the transaction context for the connection
      * @throws SecurityException -- if the connection should be rejected
      */
+    @Override
     public void enforceTlsPolicy(ClientTransactionExt transaction) throws SecurityException
     {
        // accept only certificates that match the intended destination

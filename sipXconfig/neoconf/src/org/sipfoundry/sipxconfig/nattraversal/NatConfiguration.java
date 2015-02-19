@@ -35,6 +35,8 @@ import org.sipfoundry.sipxconfig.commserver.LocationsManager;
 import org.sipfoundry.sipxconfig.proxy.ProxyManager;
 import org.sipfoundry.sipxconfig.sbc.SbcManager;
 import org.sipfoundry.sipxconfig.sbc.SbcRoutes;
+import org.sipfoundry.sipxconfig.setting.Setting;
+import org.sipfoundry.sipxconfig.setting.SettingUtil;
 
 public class NatConfiguration implements ConfigProvider {
     private VelocityEngine m_velocityEngine;
@@ -50,6 +52,7 @@ public class NatConfiguration implements ConfigProvider {
         boolean relayEnabled = manager.getFeatureManager().isFeatureEnabled(NatTraversal.FEATURE);
         Set<Location> locations = request.locations(manager);
         NatSettings settings = m_nat.getSettings();
+        Setting natTraversalSetting = settings.getSettings().getSetting("relay-config");
         Address proxyTcp = manager.getAddressManager().getSingleAddress(ProxyManager.TCP_ADDRESS);
         Address proxyTls = manager.getAddressManager().getSingleAddress(ProxyManager.TLS_ADDRESS);
         SbcRoutes routes = m_sbcManager.getRoutes();
@@ -58,6 +61,11 @@ public class NatConfiguration implements ConfigProvider {
             boolean proxyEnabled = manager.getFeatureManager().isFeatureEnabled(ProxyManager.FEATURE, location);
             boolean enabled = (relayEnabled && proxyEnabled);
             if (enabled) {
+
+                String log4jFileName = "log4j-relay.properties.part";
+                String[] logLevelKeys = {"log4j.logger.org.sipfoundry.sipxrelay"};
+                SettingUtil.writeLog4jSetting(natTraversalSetting, dir, log4jFileName, logLevelKeys);
+
                 Writer writer = new FileWriter(new File(dir, "nattraversalrules.xml"));
                 try {
                     write(writer, settings, location, routes, proxyTcp.getPort(), proxyTls.getPort());

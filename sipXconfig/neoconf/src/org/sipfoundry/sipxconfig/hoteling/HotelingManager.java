@@ -21,10 +21,15 @@ import org.sipfoundry.sipxconfig.setting.Group;
 
 public interface HotelingManager {
 
-    boolean isActive();
-
+    /**
+     * generate the necessary files for the user.
+     * @param user
+     */
     void generate(User user);
-
+    /**
+     * generate the necessary files for the group.
+     * @param user
+     */
     void generate(Group g);
 
 }

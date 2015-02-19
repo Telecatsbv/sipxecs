@@ -9,15 +9,25 @@
  */
 package org.sipfoundry.sipxconfig.setting;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
+import org.sipfoundry.commons.log4j.SipFoundryLayout;
 import org.sipfoundry.sipxconfig.address.Address;
 import org.sipfoundry.sipxconfig.address.AddressType;
+import org.sipfoundry.sipxconfig.cfgmgt.KeyValueConfiguration;
 
 public final class SettingUtil {
+
+    public static final String LOG_LEVEL_SETTING_KEY = "log.level";
+
     private SettingUtil() {
     }
 
@@ -133,5 +143,25 @@ public final class SettingUtil {
         }
 
         return addresses;
+    }
+
+    /**
+     * Writes log4j log level in a specified file with a given key.
+     */
+    public static void writeLog4jSetting(Setting settings, File dir,
+            String fileName, String[] logLevelKeyList) throws IOException {
+        Setting logLevelSettings = settings.getSetting(LOG_LEVEL_SETTING_KEY);
+        File f = new File(dir, fileName);
+        Writer wtr = new FileWriter(f);
+        try {
+            KeyValueConfiguration config = KeyValueConfiguration.equalsSeparated(wtr);
+            String log4jLogLevel = SipFoundryLayout.mapSipFoundry2log4j(logLevelSettings.getValue()).toString();
+            logLevelSettings.setValue(log4jLogLevel);
+            for (String logLevelKey : logLevelKeyList) {
+                config.writeWithKey(logLevelKey, logLevelSettings);
+            }
+        } finally {
+            IOUtils.closeQuietly(wtr);
+        }
     }
 }

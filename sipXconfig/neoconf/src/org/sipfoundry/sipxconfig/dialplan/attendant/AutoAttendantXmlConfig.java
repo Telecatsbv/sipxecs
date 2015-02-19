@@ -18,7 +18,6 @@ package org.sipfoundry.sipxconfig.dialplan.attendant;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -28,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.sipfoundry.commons.util.HolidayPeriod;
 import org.sipfoundry.sipxconfig.common.DialPad;
 import org.sipfoundry.sipxconfig.common.SipUri;
 import org.sipfoundry.sipxconfig.dialplan.AttendantMenu;
@@ -46,7 +46,7 @@ import org.springframework.beans.factory.annotation.Required;
 public class AutoAttendantXmlConfig {
     // please note: US locale always...
     private static final Log LOG = LogFactory.getLog(AutoAttendantXmlConfig.class);
-    private static final SimpleDateFormat HOLIDAY_FORMAT = new SimpleDateFormat("dd-MMM-yyyy", Locale.US);
+    private static final SimpleDateFormat HOLIDAY_FORMAT = new SimpleDateFormat("dd-MMM-yyyy HH:mm", Locale.US);
     private static final String NAMESPACE = "http://www.sipfoundry.org/sipX/schema/xml/autoattendants-00-00";
     private static final String ID = "id";
     private static final String PARAMETER = "parameter";
@@ -78,8 +78,12 @@ public class AutoAttendantXmlConfig {
         Element holidayEl = scheduleEl.addElement("holiday");
         if (holidayAttendant.isEnabled()) {
             addId(holidayEl, holidayAttendant.getAttendant());
-            for (Date date : holidayAttendant.getDates()) {
-                holidayEl.addElement("date").setText(HOLIDAY_FORMAT.format(date));
+            for (HolidayPeriod holidayPeriod : holidayAttendant.getPeriods()) {
+                Element holidayPeriodElement = holidayEl.addElement("period");
+                holidayPeriodElement.addElement("startDate").setText(
+                        HOLIDAY_FORMAT.format(holidayPeriod.getStartDate()));
+                holidayPeriodElement.addElement("endDate").setText(
+                        HOLIDAY_FORMAT.format(holidayPeriod.getEndDate()));
             }
         }
         WorkingTime workingTimeAttendant = attendantRule.getWorkingTimeAttendant();
@@ -112,7 +116,10 @@ public class AutoAttendantXmlConfig {
         }
 
         aaEl.addElement("name").setText(autoAttendant.getName());
+        aaEl.addElement("lang").setText(autoAttendant.getLanguage());
         aaEl.addElement("prompt").setText(autoAttendant.getPromptFile().getPath());
+        aaEl.addElement("allowDial").setText(autoAttendant.getAllowDial());
+        aaEl.addElement("denyDial").setText(autoAttendant.getDenyDial());
 
         Element miEl = aaEl.addElement("menuItems");
         AttendantMenu menu = autoAttendant.getMenu();
@@ -151,6 +158,10 @@ public class AutoAttendantXmlConfig {
                 irEl.addElement("transferPrompt").setText(fullPathTransferPromptFile.getPath());
             }
         }
+
+        Element onTransferEl = aaEl.addElement(AutoAttendant.ON_TRANSFER);
+        Boolean playPrompt = (Boolean) autoAttendant.getSettingTypedValue(AutoAttendant.ON_TRANSFER_PLAY_PROMPT);
+        onTransferEl.addElement(AutoAttendant.PLAY_PROMPT).setText(playPrompt.toString());
     }
 
     /**

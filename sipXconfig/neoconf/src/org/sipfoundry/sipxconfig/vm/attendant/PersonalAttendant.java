@@ -12,8 +12,9 @@ package org.sipfoundry.sipxconfig.vm.attendant;
 import org.sipfoundry.sipxconfig.common.BeanWithId;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.dialplan.AttendantMenu;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
-public class PersonalAttendant extends BeanWithId {
+public class PersonalAttendant extends BeanWithId implements SystemAuditable {
     private User m_user;
 
     private AttendantMenu m_menu = new AttendantMenu();
@@ -56,21 +57,19 @@ public class PersonalAttendant extends BeanWithId {
         return m_menu;
     }
 
-    public static class MenuItem {
-        private final String m_key;
-        private final String m_uri;
+    @Override
+    public String toString() {
+        return "PersonalAttendant [m_menu=" + m_menu + ", m_operator=" + m_operator + ", m_language=" + m_language
+                + ", m_overrideLanguage=" + m_overrideLanguage + "]";
+    }
 
-        public MenuItem(String key, String uri) {
-            m_key = key;
-            m_uri = uri;
-        }
+    @Override
+    public String getEntityIdentifier() {
+        return getUser().getEntityIdentifier();
+    }
 
-        public String getKey() {
-            return m_key;
-        }
-
-        public String getUri() {
-            return m_uri;
-        }
+    @Override
+    public String getConfigChangeType() {
+        return PersonalAttendant.class.getSimpleName();
     }
 }

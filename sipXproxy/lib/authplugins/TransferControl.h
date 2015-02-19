@@ -69,8 +69,46 @@ class TransferControl : public AuthPlugin
 
    virtual void announceAssociatedSipRouter( SipRouter* sipRouter );
    
+   /// Boolean indicator that returns true if the plugin wants to process requests
+   /// that requires no authentication
+   virtual bool willModifyTrustedRequest() const;
+   
+   /// This method is called by the proxy if willModifyRequest() flag is set to true
+   /// giving this plugin the opportunity to modify the request even if it requires
+   /// no authentication
+   virtual void modifyTrustedRequest(
+                                    const Url&  requestUri,  ///< parsed target Uri
+                                    SipMessage& request,     ///< see below regarding modifying this
+                                    bool bSpiralingRequest  ///< true if request is still spiraling through pr
+                                    );
+   
+   /// This method is called by the proxy if willModifyResponse is set to true
+   /// giving the plugin to modify responses before they get relayed
+   virtual void modifyFinalResponse(
+     SipTransaction* pTransaction, 
+     const SipMessage& request, 
+     SipMessage& finalResponse);
+   
+   /// Boolean indicator that returns true if the plugin wants to process final responses
+   virtual bool willModifyFinalResponse() const;
+   
   protected:
    friend class TransferControlTest;
+
+   /// Add in the REFER request's Refer-To header a X-SipX-Location-Info header containing user location and gateway line-id
+   void addLocationInfo(
+       const UtlString& id, ///< The authenticated identity of the request originator, expected to not be null
+       Url& target          ///< Refer-To url where to add location info
+       );
+   /**<
+    * This methods will construct the X-SipX-Location-Info header and adds it to Refer-To url.
+    * the X-SipX-Location-Info header can contain two parameters:
+    * - location of the refer originator. In case the user has no location then this parameter
+    * will not be added;
+    * - line-id of the initial gateway used as destination for call from the referror to the transfer target.
+    * In case support for multiple gateways per location is NOT enabled this parameter will not be added.
+    * @note In case the parameters above are not available then the header will not be added at all
+    */
    
    static const char* RecognizerConfigKey1;
    static const char* RecognizerConfigKey2;

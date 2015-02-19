@@ -9,22 +9,25 @@
  */
 package org.sipfoundry.sipxconfig.phone;
 
+import static org.sipfoundry.sipxconfig.common.SipUri.DEFAULT_SIP_PORT;
+import static org.sipfoundry.sipxconfig.common.SipUri.formatIgnoreDefaultPort;
+import static org.sipfoundry.sipxconfig.common.SipUri.parsePort;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
+import org.sipfoundry.sipxconfig.common.NamedObject;
+import org.sipfoundry.sipxconfig.common.SpecialUser.SpecialUserType;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.setting.BeanWithGroups;
 import org.sipfoundry.sipxconfig.setting.BeanWithGroupsModel;
 import org.sipfoundry.sipxconfig.setting.Setting;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
-import static org.sipfoundry.sipxconfig.common.SipUri.DEFAULT_SIP_PORT;
-import static org.sipfoundry.sipxconfig.common.SipUri.formatIgnoreDefaultPort;
-import static org.sipfoundry.sipxconfig.common.SipUri.parsePort;
-
-public class Line extends BeanWithGroups {
+public class Line extends BeanWithGroups implements NamedObject, SystemAuditable {
     private static final String COMMA = ",";
     private static final String EQUALS = "=";
 
@@ -33,7 +36,6 @@ public class Line extends BeanWithGroups {
     private User m_user;
 
     private boolean m_initialized;
-
 
     private List<String> m_paths = new ArrayList<String>();
 
@@ -189,4 +191,33 @@ public class Line extends BeanWithGroups {
             model.setGroups(m_phone.getGroups());
         }
     }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getUri();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return Line.class.getSimpleName();
+    }
+
+    public boolean isNotSpecialPhoneProvisionUserLine() {
+        boolean notProv = true;
+        if (getUser() != null && SpecialUserType.PHONE_PROVISION.getUserName().equals(getUser().getUserName())) {
+            notProv = false;
+        }
+        return notProv;
+    }
+
+    @Override
+    public String getName() {
+        return getUri();
+    }
+
+    @Override
+    public void setName(String name) {
+        // Do Nothing
+    }
+
 }

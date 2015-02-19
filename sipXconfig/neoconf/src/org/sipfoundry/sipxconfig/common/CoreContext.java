@@ -108,6 +108,10 @@ public interface CoreContext extends DataObjectSource<User>, AliasOwner, Replica
 
     User loadUserByUserNameOrAlias(String userNameOrAlias);
 
+    List<User> loadUsersByAuthAccountName(String authAccountName);
+
+    List<User> loadUsersByEmail(String email);
+
     List<User> getSharedUsers();
 
     /**
@@ -121,7 +125,7 @@ public interface CoreContext extends DataObjectSource<User>, AliasOwner, Replica
      * @param user user to test
      * @return name that collides
      */
-    String checkForDuplicateNameOrAlias(User user);
+    DuplicateEntity checkForDuplicateNameOrAlias(User user);
 
     /**
      * Determines whether or not the application is running in debug mode.
@@ -191,7 +195,6 @@ public interface CoreContext extends DataObjectSource<User>, AliasOwner, Replica
 
     void checkForValidExtensions(Collection<String> aliases, PermissionName permission);
 
-    boolean isImIdUnique(User user);
     List<Group> getAvailableGroups(User user);
     Collection<User> getUsersForBranch(Branch b);
 

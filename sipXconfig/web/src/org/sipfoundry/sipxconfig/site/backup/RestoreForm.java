@@ -16,7 +16,7 @@ package org.sipfoundry.sipxconfig.site.backup;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import org.apache.tapestry.BaseComponent;
 import org.apache.tapestry.IPage;
@@ -32,6 +32,7 @@ import org.sipfoundry.sipxconfig.components.SelectMap;
 import org.sipfoundry.sipxconfig.components.SipxValidationDelegate;
 
 public abstract class RestoreForm extends BaseComponent implements PageBeginRenderListener {
+    private static final String CANNOT_RESTORE_KEY = "&cannot.restore";
 
     @Parameter(required = true)
     public abstract void setBackupPlan(BackupPlan plan);
@@ -48,10 +49,17 @@ public abstract class RestoreForm extends BaseComponent implements PageBeginRend
     @Bean
     public abstract SipxValidationDelegate getValidator();
 
+    @Parameter(required = true)
+    public abstract boolean isCanRestore();
+
     @Override
     public void pageBeginRender(PageEvent event) {
         if (getSelections() == null) {
             setSelections(new SelectMap());
+        }
+        //on first page display, show informal message about whether restore could be possible
+        if (!isCanRestore()) {
+            getValidator().record(new UserException(CANNOT_RESTORE_KEY), getMessages());
         }
     }
 
@@ -62,11 +70,16 @@ public abstract class RestoreForm extends BaseComponent implements PageBeginRend
             getValidator().record(new UserException("Missing selection"), getMessages());
             return null;
         }
+        //make sure restore won't be initiated if validation do not pass
+        if (!isCanRestore()) {
+            getValidator().record(new UserException(CANNOT_RESTORE_KEY), getMessages());
+            return null;
+        }
 
         RestoreFinalize page = getFinalizePage();
         page.setBackupType(getBackupPlan().getType());
         page.setSelections(restoreFrom);
-        List<String> none = Collections.emptyList();
+        Set<String> none = Collections.emptySet();
         page.setUploadedIds(none);
         page.setCallback(new PageCallback(getPage()));
         return page;

@@ -23,6 +23,8 @@ sipxconfig_neoconf_PKGS = \
 	gdata-contacts \
 	guessencoding \
 	hibernate \
+	hibernate-commons-annotations \
+	hibernate-jpa \
 	jackson-core-asl \
 	jackson-mapper-asl \
 	jain-sip-sdp \
@@ -30,7 +32,7 @@ sipxconfig_neoconf_PKGS = \
 	jasper-runtime \
 	jasperreports \
 	javamail \
-	javax.servlet \
+	javax.servlet-api \
 	jaxen \
 	jaxrpc \
 	jettison \
@@ -44,18 +46,17 @@ sipxconfig_neoconf_PKGS = \
 	org.restlet \
 	org.restlet.ext.json \
 	org.restlet.ext.spring \
-	org.springframework.aop \
-	org.springframework.asm \
-	org.springframework.beans \
-	org.springframework.context \
-	org.springframework.context.support \
-	org.springframework.core \
-	org.springframework.expression \
+	spring-aop \
+	spring-beans \
+	spring-context \
+	spring-context-support \
+	spring-core \
+	spring-expression \
 	org.springframework.jdbc \
 	org.springframework.orm \
 	org.springframework.transaction \
-	org.springframework.web \
-	org.springframework.web.servlet \
+	spring-web \
+	spring-webmvc \
 	postgresql \
 	saxpath \
 	serializer \
@@ -81,7 +82,32 @@ sipxconfig_neoconf_PKGS = \
         spring-security-web \
 	jradius-core \
 	jradius-dictionary \
-	gnu-crypto
+	gnu-crypto \
+	smack \
+	FastInfoset \
+	cxf-core \
+	cxf-rt-rs-service-description \
+	cxf-rt-transports-http \
+	cxf-rt-frontend-jaxrs \
+	cxf-rt-rs-extension-providers \
+	cxf-tools-wadlto-jaxrs \
+	javax.ws.rs-api \
+	neethi \
+	xmlschema-core \
+	wsdl4j \
+	jackson-jaxrs \
+	woodstox-core-asl \
+	jaxb-api \
+	jaxb-core \
+	jaxb-impl \
+	stax2-api \
+	jcl-over-slf4j \
+	spring-messaging \
+	jaudiotagger \
+    spring-websocket \
+    hazelcast-all \
+    reflections \
+    guava
 
 sipxconfig_web_PKGS = \
 	$(sipxconfig_neoconf_PKGS) \
@@ -92,12 +118,29 @@ sipxconfig_web_PKGS = \
 	cglib-nodep \
 	commons-fileupload \
 	commons-pool \
+	ez-vcard \
 	hivemind \
 	hivemind-lib \
 	jasper-compiler \
 	javassist \
 	jdom \
-	jetty \
+	jetty-server \
+	jetty-util \
+	jetty-http \
+	jetty-xml \
+	jetty-servlet \
+	jetty-servlets \
+	jetty-security \
+	jetty-deploy \
+	jetty-io \
+	jetty-webapp \
+	websocket-api \
+	websocket-client \
+	websocket-common \
+	websocket-server \
+	websocket-servlet \
+	javax.servlet-api \
+	javax.servlet.jsp-api \
 	jta \
 	not-yet-commons-ssl \
 	ognl \
@@ -105,5 +148,7 @@ sipxconfig_web_PKGS = \
 	tapestry-annotations \
 	tapestry-contrib \
 	tapestry-framework \
-	xpp3
-
+	xpp3 \
+	jackson-core \
+	jackson-databind \
+	jackson-annotations

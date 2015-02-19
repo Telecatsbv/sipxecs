@@ -32,6 +32,8 @@ public class DataSet extends Enum {
     public static final DataSet OPENACD = new DataSet("openacd");
     public static final DataSet E911 = new DataSet("e911");
 
+    private String m_fieldName;
+
     public DataSet(String dataSet) {
         super(dataSet);
     }
@@ -57,5 +59,9 @@ public class DataSet extends Enum {
 
     public static Iterator iterator() {
         return iterator(DataSet.class);
+    }
+
+    public String getFieldName() {
+        return m_fieldName;
     }
 }

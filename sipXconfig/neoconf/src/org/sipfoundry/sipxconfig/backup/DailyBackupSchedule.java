@@ -17,11 +17,15 @@ import java.util.TimeZone;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
 import org.sipfoundry.sipxconfig.common.BeanWithId;
 import org.sipfoundry.sipxconfig.common.CronSchedule;
+import org.sipfoundry.sipxconfig.common.CronSchedule.Type;
 import org.sipfoundry.sipxconfig.common.ScheduledDay;
 import org.sipfoundry.sipxconfig.common.TimeOfDay;
 
+@JsonPropertyOrder(alphabetic = true)
 public class DailyBackupSchedule extends BeanWithId {
 
     public static final DateFormat GMT_TIME_OF_DAY_FORMAT = DateFormat
@@ -57,6 +61,7 @@ public class DailyBackupSchedule extends BeanWithId {
         GMT_TIME_OF_DAY_FORMAT.setTimeZone(GMT);
     }
 
+    @JsonIgnore
     public BackupPlan getBackupPlan() {
         return m_backupPlan;
     }
@@ -67,7 +72,13 @@ public class DailyBackupSchedule extends BeanWithId {
 
     public String toCronString() {
         CronSchedule cron = new CronSchedule();
-        cron.setScheduledDay(getScheduledDay());
+        ScheduledDay scheduledDay = getScheduledDay();
+        cron.setScheduledDay(scheduledDay);
+        //By default 'cron' type is Type.DAILY.
+        //But if you don't want this everyday, then they type should be changed to WEEKLY
+        if (scheduledDay != ScheduledDay.EVERYDAY) {
+            cron.setType(Type.WEEKLY);
+        }
         cron.setTimeOfDay(getTimeOfDay());
         return cron.getUnixCronString();
     }
@@ -92,6 +103,7 @@ public class DailyBackupSchedule extends BeanWithId {
         return new TimeOfDay(getTime(), GMT);
     }
 
+    @JsonIgnore
     public Date getTime() {
         return m_time;
     }

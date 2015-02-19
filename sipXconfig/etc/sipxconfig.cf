@@ -18,22 +18,30 @@ bundle agent sipxconfig {
   methods:
     primary::
       "any" usebundle => "sipxconfig_running";
+      "any" usebundle => "system_audit_cleanup";
     primary.apache::
       "any" usebundle => "sipxconfig_apache";
     sipxlogwatcher::
       "any" usebundle => "sipxconfig_logwatcher";
     any::
       "any" usebundle => "sipxconfig_services";
+      "any" usebundle => allow_ssh_command("sipx-dns-validator-regions");
 }
 
 bundle agent sipxconfig_logwatcher {
   files:
+    "$(sipx.SIPX_CONFDIR)/sipxlogwatcher.d/sipxconfig.tmp"
+      comment => "sipxconfig log watcher",
+      create => "true",
+      perms => m(644),
+      transformer => "$(sipx.SIPX_LIBEXECDIR)/sipxlogwatcher-maker --in $(sipx.SIPX_CFDATA)/$(sipx.location_id)/alarms.yaml --template $(sipx.SIPX_CONFDIR)/sipxconfig/sipxconfig.sec.erb --out $(this.promiser)";      
+      
     "$(sipx.SIPX_CONFDIR)/sipxlogwatcher.d/sipxconfig.sec"
       comment => "sipxconfig log watcher",
       create => "true",
       perms => m(644),
-      transformer => "$(sipx.SIPX_LIBEXECDIR)/sipxlogwatcher-maker --in $(sipx.SIPX_CFDATA)/$(sipx.location_id)/alarms.yaml --template $(sipx.SIPX_CONFDIR)/sipxconfig/sipxconfig.sec.erb --out $(this.promiser)",
-      classes => if_repaired("reload_sipxlogwatcher");
+      copy_from => local_cp_by_digest("$(sipx.SIPX_CONFDIR)/sipxlogwatcher.d/sipxconfig.tmp"),
+      classes => if_repaired("reload_sipxlogwatcher");      
       
 }
 
@@ -46,7 +54,7 @@ bundle agent sipxconfig_running {
     any::
       "any" usebundle => find_sipxservice_by_command_regex("$(service_command)","sipxconfig_running");
     !src.primary::
-      "any" usebundle => rh_chkconfig_status("sipxconfig on");
+      "any" usebundle => rh_chkconfig_status("sipxconfig off");
     !src.!primary::
       "any" usebundle => rh_chkconfig_status("sipxconfig off");
 
@@ -65,6 +73,13 @@ bundle agent sipxconfig_running {
       "$(sipx.SIPX_SERVICEDIR)/sipxconfig"
         comment => "stop sipxconfig",
         args => "stop";
+        
+  files:
+    "$(sipx.SIPX_CONFDIR)/log4j.properties"
+      comment => "configure log4j $(this.promiser)",
+      create => "true",
+      perms => m("644"),
+      edit_line => sipx_log4j_properties_contents;
 }
 
 bundle agent sipxconfig_apache {
@@ -84,4 +99,49 @@ bundle agent sipxconfig_services {
       create => "true",
       perms => m("644"),
       copy_from => copy_from_cfdata("$(sipx.location_id)/sipxecs-services.ini");
+}
+
+bundle edit_line sipx_log4j_properties_contents {
+  insert_lines:
+    any::
+      "$(sipx.SIPX_CFDATA)/$(sipx.location_id)/log4j.properties.part"
+        insert_type => "file";
+      "log4j.appender.file=org.sipfoundry.commons.log4j.SipFoundryAppender";
+	  "log4j.appender.file.File=${jetty.log.dir}/sipxconfig.log";
+	  "log4j.appender.file.layout=org.sipfoundry.commons.log4j.SipFoundryLayout";
+	  "log4j.additivity.org.apache.cxf.interceptor=true";
+	  "# legal values (highest to lowest): debug info warn error fatal";
+	  "log4j.rootLogger=warn, file";
+	  "# LDAP log";
+	  "log4j.logger.ldap_logger=debug,ldap";
+	  "log4j.additivity.ldap_logger=false";
+	  "log4j.appender.ldap=org.sipfoundry.commons.log4j.SipFoundryAppender";
+	  "log4j.appender.ldap.File=${jetty.log.dir}/sipxconfig-ldap.log";
+	  "log4j.appender.ldap.layout=org.apache.log4j.PatternLayout";
+	  "log4j.appender.ldap.layout.ConversionPattern=\"%d\":%5p:%c{1}:%L:%m%n";	  
+	  "# Audit log";
+	  "log4j.appender.auditlog=org.sipfoundry.commons.log4j.SipFoundryAppender";
+	  "log4j.appender.auditlog.File=${jetty.log.dir}/sipxconfig-audit.log";
+	  "log4j.appender.auditlog.layout=org.sipfoundry.commons.log4j.SipFoundryLayout";
+	  "log4j.appender.auditlog.layout.ConversionPattern=\"%d\":%X{username}:%X{eventType}:\"%m\"%n";
+   	  "log4j.logger.org.sipfoundry.sipxconfig.auditlog=info, auditlog";
+	  "log4j.category.javax.sip=warn";
+  delete_lines:
+    any::
+      ".*";
+}
+
+# Install system_audit cleanup
+bundle agent system_audit_cleanup {
+  vars:
+	# execute it every day after midnight
+	"cron" string => "20 0 * * * $(sipx.SIPX_BINDIR)/system-audit-cleanup &>> $(sipx.SIPX_LOGDIR)/system-audit-cleanup.log";
+	"cron_id" string => ".*/system-audit-cleanup .*"; #regex
+
+  methods:
+	primary::
+	  "any" usebundle => add_crontab("$(cron_id)", "$(sipx.SIPXPBXUSER)", "$(cron)");
+
+	!primary::
+	  "any" usebundle => remove_crontab("$(cron_id)", "$(sipx.SIPXPBXUSER)");
 }

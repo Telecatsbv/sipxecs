@@ -21,20 +21,31 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.classextension.EasyMock.createMock;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import junit.framework.TestCase;
 
 import org.apache.commons.io.IOUtils;
 import org.restlet.data.ChallengeResponse;
 import org.restlet.data.MediaType;
+import org.restlet.data.Reference;
 import org.restlet.data.Request;
 import org.restlet.resource.Representation;
 import org.restlet.resource.Variant;
 import org.sipfoundry.sipxconfig.bulk.ldap.LdapManager;
 import org.sipfoundry.sipxconfig.bulk.ldap.LdapSystemSettings;
+import org.sipfoundry.sipxconfig.cfgmgt.ConfigManager;
 import org.sipfoundry.sipxconfig.common.CoreContext;
 import org.sipfoundry.sipxconfig.common.User;
-import org.sipfoundry.sipxconfig.security.TestAuthenticationToken;
+import org.sipfoundry.sipxconfig.commserver.Location;
+import org.sipfoundry.sipxconfig.commserver.LocationsManager;
+import org.sipfoundry.sipxconfig.feature.FeatureManager;
+import org.sipfoundry.sipxconfig.gateway.GatewayContext;
+import org.sipfoundry.sipxconfig.gateway.WebRtcGateway;
+import org.sipfoundry.sipxconfig.im.ImManager;
+import org.sipfoundry.sipxconfig.permission.PermissionManager;
+import org.sipfoundry.sipxconfig.test.TestHelper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -43,6 +54,10 @@ public class LoginDetailsResourceTest extends TestCase {
     private User m_user;
     private CoreContext m_coreContext;
     private LdapManager m_ldapManager;
+    private ConfigManager m_configManager;
+    private LocationsManager m_locationsManager;
+    private FeatureManager m_featureManager;
+    private GatewayContext m_gatewayContext;
 
     @Override
     protected void setUp() throws Exception {
@@ -53,19 +68,56 @@ public class LoginDetailsResourceTest extends TestCase {
         m_user.setLastName("Doe");
         m_user.setImId("JohnIM");
         m_user.setSipPassword("12345678");
+        m_user.setPin("userpin");
+        PermissionManager pManager = createMock(PermissionManager.class);
+        pManager.getPermissionModel();
+        expectLastCall().andReturn(TestHelper.loadSettings("commserver/user-settings.xml")).anyTimes();
+        replay(pManager);
+        m_user.setPermissionManager(pManager);
 
-        Authentication token = new TestAuthenticationToken(m_user, false, false).authenticateToken();
+        Authentication token = new TestAuthenticationTokenWithCredentials(m_user, false, false).authenticateToken();
         SecurityContextHolder.getContext().setAuthentication(token);
 
         m_coreContext = createMock(CoreContext.class);
         m_coreContext.loadUser(m_user.getId());
-        expectLastCall().andReturn(m_user);
+        expectLastCall().andReturn(m_user).times(2);
         m_ldapManager = createMock(LdapManager.class);
         LdapSystemSettings settings = new LdapSystemSettings();
         settings.setEnableOpenfireConfiguration(false);
         m_ldapManager.getSystemSettings();
-        expectLastCall().andReturn(settings).once();
-        replay(m_coreContext, m_ldapManager);
+        expectLastCall().andReturn(settings).times(2);
+        m_configManager = createMock(ConfigManager.class);
+        m_locationsManager = createMock(LocationsManager.class);
+        m_featureManager = createMock(FeatureManager.class);
+        m_gatewayContext = createMock(GatewayContext.class);
+        Location location1 = new Location();
+        location1.setFqdn("location1.example.com");
+        Location location2 = new Location();
+        location2.setFqdn("location2.example.com");
+        Location location3 = new Location();
+        location3.setFqdn("location3.example.com");
+        List<Location> locations = new ArrayList<Location>();
+        locations.add(location2);
+        m_configManager.getFeatureManager();
+        expectLastCall().andReturn(m_featureManager).times(1);
+        m_featureManager.getLocationsForEnabledFeature(ImManager.FEATURE);
+        expectLastCall().andReturn(locations).times(1);
+
+        List<WebRtcGateway> wrtcList = new ArrayList<WebRtcGateway>();
+
+        WebRtcGateway gateway = createMock(WebRtcGateway.class);
+        gateway.getAddress();
+        expectLastCall().andReturn("1.5.4.6").times(1);
+        gateway.getWsPort();
+        expectLastCall().andReturn("5064").times(1);
+
+        replay(gateway);
+
+        wrtcList.add(gateway);
+        m_gatewayContext.getGatewayByType(WebRtcGateway.class);
+        expectLastCall().andReturn(wrtcList).times(1);
+
+        replay(m_coreContext, m_ldapManager, m_locationsManager, m_configManager, m_featureManager, m_gatewayContext);
     }
 
     @Override
@@ -77,18 +129,33 @@ public class LoginDetailsResourceTest extends TestCase {
         LoginDetailsResource resource = new LoginDetailsResource();
         setContexts(resource);
         assertEqualsXML(resource, "logindetails.rest.test.xml");
+
+        LoginDetailsResourceWithPin resourceWithPin = new LoginDetailsResourceWithPin();
+        resourceWithPin.setConfigManager(m_configManager);
+        resourceWithPin.setGatewayContext(m_gatewayContext);
+        setContexts(resourceWithPin);
+        assertEqualsXML(resourceWithPin, "logindetailswithpin.rest.test.xml");
     }
 
     public void testRepresentJson() throws Exception {
         LoginDetailsResource resource = new LoginDetailsResource();
         setContexts(resource);
         assertEqualsJSON(resource, "logindetails.rest.test.json");
+
+        LoginDetailsResourceWithPin resourceWithPin = new LoginDetailsResourceWithPin();
+        resourceWithPin.setConfigManager(m_configManager);
+        resourceWithPin.setGatewayContext(m_gatewayContext);
+        setContexts(resourceWithPin);
+        assertEqualsJSON(resourceWithPin, "logindetailswithpin.rest.test.json");
     }
 
     protected void assertEqualsXML(LoginDetailsResource resource, String fileName) throws Exception {
         ChallengeResponse challengeResponse = new ChallengeResponse(null, "200", new char[0]);
+        Reference resourceRef = new Reference();
+        resourceRef.setIdentifier("http://example.com/sipxconfig/rest/my/logindetails");
         Request request = new Request();
         request.setChallengeResponse(challengeResponse);
+        request.setResourceRef(resourceRef);
         resource.init(null, request, null);
 
         Representation representation = resource.represent(new Variant(MediaType.TEXT_XML));
@@ -101,8 +168,11 @@ public class LoginDetailsResourceTest extends TestCase {
 
     protected void assertEqualsJSON(LoginDetailsResource resource, String fileName) throws Exception {
         ChallengeResponse challengeResponse = new ChallengeResponse(null, "200", new char[0]);
+        Reference resourceRef = new Reference();
+        resourceRef.setIdentifier("http://example.com/sipxconfig/rest/my/logindetails");
         Request request = new Request();
         request.setChallengeResponse(challengeResponse);
+        request.setResourceRef(resourceRef);
         resource.init(null, request, null);
 
         Representation representation = resource.represent(new Variant(MediaType.APPLICATION_JSON));

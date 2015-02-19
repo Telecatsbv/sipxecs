@@ -31,6 +31,7 @@ import static org.sipfoundry.commons.mongo.MongoConstants.DIALPAD;
 import static org.sipfoundry.commons.mongo.MongoConstants.DISPLAY_NAME;
 import static org.sipfoundry.commons.mongo.MongoConstants.DISTRIB_LISTS;
 import static org.sipfoundry.commons.mongo.MongoConstants.EMAIL;
+import static org.sipfoundry.commons.mongo.MongoConstants.FORCE_PIN_CHANGE;
 import static org.sipfoundry.commons.mongo.MongoConstants.HASHED_PASSTOKEN;
 import static org.sipfoundry.commons.mongo.MongoConstants.HOST;
 import static org.sipfoundry.commons.mongo.MongoConstants.IM_ADVERTISE_ON_CALL_STATUS;
@@ -53,6 +54,7 @@ import static org.sipfoundry.commons.mongo.MongoConstants.PLAY_DEFAULT_VM;
 import static org.sipfoundry.commons.mongo.MongoConstants.PORT;
 import static org.sipfoundry.commons.mongo.MongoConstants.SYNC;
 import static org.sipfoundry.commons.mongo.MongoConstants.TLS;
+import static org.sipfoundry.commons.mongo.MongoConstants.UNIFIED_MESSAGING_LANGUAGE;
 import static org.sipfoundry.commons.mongo.MongoConstants.USERBUSYPROMPT;
 import static org.sipfoundry.commons.mongo.MongoConstants.VMONDND;
 import static org.sipfoundry.commons.mongo.MongoConstants.VOICEMAILTUI;
@@ -86,9 +88,9 @@ public class Mailstore extends AbstractDataSetGenerator {
     private MusicOnHoldManager m_mohManager;
 
     @Override
-    public boolean generate(Replicable entity, DBObject top) {
+    public void generate(Replicable entity, DBObject top) {
         if (!(entity instanceof User)) {
-            return false;
+            return;
         }
         User user = (User) entity;
         // The following settings used to be in validusers.xml
@@ -120,6 +122,7 @@ public class Mailstore extends AbstractDataSetGenerator {
             removeField(top, ATTACH_AUDIO);
         }
 
+        top.put(FORCE_PIN_CHANGE, user.getSettingValue("voicemail/security/force-pin-change"));
         String alternateEmailAddress = mp.getAlternateEmailAddress();
         boolean enableAltNotification = StringUtils.isNotBlank(alternateEmailAddress)
                 && mp.isEmailNotificationAlternateEnabled();
@@ -205,6 +208,8 @@ public class Mailstore extends AbstractDataSetGenerator {
             top.put(PERSONAL_ATT, pao);
         }
         putOnlyIfNotNull(top, ACTIVEGREETING, user.getSettingValue(MailboxPreferences.ACTIVE_GREETING));
+        putOnlyIfNotNull(top, UNIFIED_MESSAGING_LANGUAGE,
+                user.getSettingValue(MailboxPreferences.UNIFIED_MESSAGING_LANGUAGE));
         // DL
         List<DBObject> dLists = new ArrayList<DBObject>();
         for (int i = 1; i < DistributionList.MAX_SIZE; i++) {
@@ -222,7 +227,6 @@ public class Mailstore extends AbstractDataSetGenerator {
         } else {
             removeField(top, DISTRIB_LISTS);
         }
-        return true;
     }
 
     @Override

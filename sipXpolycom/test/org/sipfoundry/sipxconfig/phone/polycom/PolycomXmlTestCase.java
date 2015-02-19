@@ -36,11 +36,15 @@ import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.XPath;
 import org.dom4j.io.DOMReader;
-import org.sipfoundry.sipxconfig.device.DeviceVersion;
+import org.easymock.EasyMock;
 import org.sipfoundry.sipxconfig.device.ModelSource;
 import org.sipfoundry.sipxconfig.device.VelocityProfileGenerator;
+import org.sipfoundry.sipxconfig.feature.FeatureManager;
+import org.sipfoundry.sipxconfig.moh.MusicOnHoldManager;
+import org.sipfoundry.sipxconfig.mwi.Mwi;
 import org.sipfoundry.sipxconfig.phone.PhoneModel;
 import org.sipfoundry.sipxconfig.phone.PhoneTestDriver;
+import org.sipfoundry.sipxconfig.rls.Rls;
 import org.sipfoundry.sipxconfig.test.MemoryProfileLocation;
 import org.sipfoundry.sipxconfig.test.TestHelper;
 import org.sipfoundry.sipxconfig.test.XmlUnitHelper;
@@ -51,6 +55,11 @@ public abstract class PolycomXmlTestCase extends XMLTestCase {
     static protected PolycomPhone phone40;
     static protected PolycomPhone phone41;
     static protected PolycomPhone phone50;
+    static protected PolycomPhone phone501;
+    static protected PolycomPhone phone502;
+    static protected PolycomPhone phone416;
+    static protected PolycomPhone phone418;
+    static protected PolycomPhone phone520;
     static protected MemoryProfileLocation location;
     static protected VelocityProfileGenerator m_pg;
 
@@ -63,11 +72,27 @@ public abstract class PolycomXmlTestCase extends XMLTestCase {
         XMLUnit.setIgnoreWhitespace(true);
     }
 
-    protected void setUp404150Tests() throws Exception {
+    /*
+     * Tests using this method will generally have no lines configured, so it matters less if the services
+     * are enabled or not.
+     * For tests that use phones with lines, we have to test that the uris are not generated when the services are disabled
+     */
+    protected void setUp404150TestsMwiMohRlsEnabled() throws Exception {
         XMLUnit.setIgnoreWhitespace(true);
 
         PolycomModel model = phoneModelBuilder("polycomVVX500", getClass());
         ModelSource<PhoneModel> phoneModelSource = createMock(ModelSource.class);
+
+        FeatureManager featureManagerMock = createMock(FeatureManager.class);
+        featureManagerMock.isFeatureEnabled(Mwi.FEATURE);
+        EasyMock.expectLastCall().andReturn(true).anyTimes();
+
+        featureManagerMock.isFeatureEnabled(MusicOnHoldManager.FEATURE);
+        EasyMock.expectLastCall().andReturn(true).anyTimes();
+
+        featureManagerMock.isFeatureEnabled(Rls.FEATURE);
+        EasyMock.expectLastCall().andReturn(true).anyTimes();
+
 
         phone41 = new PolycomPhone();
         phone41.setModelId("polycomVVX500");
@@ -75,6 +100,7 @@ public abstract class PolycomXmlTestCase extends XMLTestCase {
         phone41.setBeanId("polycomVVX500");
         phone41.setModel(model);
         phone41.setDeviceVersion(PolycomModel.VER_4_1_X);
+        phone41.setFeatureManager(featureManagerMock);
         PhoneTestDriver.supplyTestData(phone41);
 
         phone40 = new PolycomPhone();
@@ -84,6 +110,7 @@ public abstract class PolycomXmlTestCase extends XMLTestCase {
         phone40.setPhoneModelSource(phoneModelSource);
         phone40.setModel(model);
         phone40.setDeviceVersion(PolycomModel.VER_4_0_X);
+        phone40.setFeatureManager(featureManagerMock);
         PhoneTestDriver.supplyTestData(phone40);
 
         phone50 = new PolycomPhone();
@@ -93,13 +120,66 @@ public abstract class PolycomXmlTestCase extends XMLTestCase {
         phone50.setPhoneModelSource(phoneModelSource);
         phone50.setModel(model);
         phone50.setDeviceVersion(PolycomModel.VER_5_0_0);
+        phone50.setFeatureManager(featureManagerMock);
         PhoneTestDriver.supplyTestData(phone50);
-        
+
+        phone501 = new PolycomPhone();
+
+        phone501.setModelId("polycomVVX500");
+        phone501.setBeanId("polycomVVX500");
+        phone501.setPhoneModelSource(phoneModelSource);
+        phone501.setModel(model);
+        phone501.setDeviceVersion(PolycomModel.VER_5_0_1);
+        phone501.setFeatureManager(featureManagerMock);
+        PhoneTestDriver.supplyTestData(phone501);
+
+        phone502 = new PolycomPhone();
+
+        phone502.setModelId("polycomVVX500");
+        phone502.setBeanId("polycomVVX500");
+        phone502.setPhoneModelSource(phoneModelSource);
+        phone502.setModel(model);
+        phone502.setDeviceVersion(PolycomModel.VER_5_0_2);
+        phone502.setFeatureManager(featureManagerMock);
+        PhoneTestDriver.supplyTestData(phone502);
+
+        phone416 = new PolycomPhone();
+
+        phone416.setModelId("polycomVVX500");
+        phone416.setBeanId("polycomVVX500");
+        phone416.setPhoneModelSource(phoneModelSource);
+        phone416.setModel(model);
+        phone416.setDeviceVersion(PolycomModel.VER_4_1_6);
+        phone416.setFeatureManager(featureManagerMock);
+        PhoneTestDriver.supplyTestData(phone416);
+
+        phone418 = new PolycomPhone();
+
+        phone418.setModelId("polycomVVX500");
+        phone418.setBeanId("polycomVVX500");
+        phone418.setPhoneModelSource(phoneModelSource);
+        phone418.setModel(model);
+        phone418.setDeviceVersion(PolycomModel.VER_4_1_8);
+        phone418.setFeatureManager(featureManagerMock);
+        PhoneTestDriver.supplyTestData(phone418);
+
+        phone520 = new PolycomPhone();
+
+        phone520.setModelId("polycomVVX500");
+        phone520.setBeanId("polycomVVX500");
+        phone520.setPhoneModelSource(phoneModelSource);
+        phone520.setModel(model);
+        phone520.setDeviceVersion(PolycomModel.VER_5_2_0);
+        phone520.setFeatureManager(featureManagerMock);
+        PhoneTestDriver.supplyTestData(phone520);
+
         location = new MemoryProfileLocation();
 
         VelocityProfileGenerator pg = new VelocityProfileGenerator();
         pg.setVelocityEngine(TestHelper.getVelocityEngine());
         m_pg = pg;
+
+        EasyMock.replay(featureManagerMock);
     }
 
     static Set<String> supportedVVX500 = new HashSet<String>(Arrays.asList(new String[] {
@@ -195,11 +275,11 @@ public abstract class PolycomXmlTestCase extends XMLTestCase {
 
     /**
      * Builds a PolycomModel bean for the specified Model ID.
-     * 
+     *
      * This method is not specific to Codec Options testing. It could be used generally for other
      * PolycomPhone testing. (Though are definitely some bean properties that are not being
      * populated.)
-     * 
+     *
      * @throws DocumentException
      */
     public static PolycomModel phoneModelBuilder(String phoneModelId, Class klass) throws Exception {

@@ -8,7 +8,6 @@ package org.sipfoundry.commons.siprouter;
 
 
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Collection;
@@ -30,17 +29,17 @@ import org.xbill.DNS.Type;
 
 /**
  * Finds SIP Servers using algorithms from RFC-3263
- * 
+ *
  * Specifically uses NAPTR records to find SRV records, And SRV records to find
  * A records.
- * 
+ *
  * Uses DNSJava to do DNS lookups.
- * 
+ *
  * Doesn't do any weighting or priority, possibly DNSJava already does that.
- * 
+ *
  */
 public class FindSipServer {
-
+    private static final String ALARM_DNS_LOOKUP = "ALARM_DNS_LOOKUP_FAILED Dns lookup failed. %s.";
 	/**
 	 * Helper class to hold name/transport pair
 	 */
@@ -55,14 +54,18 @@ public class FindSipServer {
 	}
 
 	Logger LOG;
+	private Logger alarm_logger;
 
 	public FindSipServer(Logger log) {
 		LOG = log;
+		alarm_logger = Logger.getLogger("alarms");
+		//if a sip component does not have an alarm logger defined, still log alarms in the component main logger
+		alarm_logger = alarm_logger != null ? alarm_logger : LOG;
 	}
 
 	/**
 	 * Lookup A records for name in DNS using JavaDNS
-	 * 
+	 *
 	 * @param name
 	 * @return The first InetAddress that was found, or null it none can be
 	 *         found.
@@ -72,15 +75,16 @@ public class FindSipServer {
 			InetAddress addr = Address.getByName(name);
 			return addr;
 		} catch (UnknownHostException e) {
-			LOG.debug("FindSipServer::getByName Cannot resolve A record for "
-					+ name);
+		    //we need to log the process name that propagated DNS LOOKUP alarm. We retrieve it from the generic logger passed
+		    alarm_logger.error(LOG.getName() + String.format(ALARM_DNS_LOOKUP, "FindSipServer: getByName Cannot resolve A record for "
+					+ name));
 			return null;
 		}
 	}
 
 	/**
 	 * Lookup NAPTR records for name in DNS using JavaDNS
-	 * 
+	 *
 	 * @param name
 	 * @return An array of NAPTR records, or null if none found or understood.
 	 */
@@ -90,9 +94,9 @@ public class FindSipServer {
 		try {
 			records = new Lookup(name, Type.NAPTR).run();
 		} catch (TextParseException e) {
-			LOG
-					.warn("FindSipServer::getNaptrRecords Error parsing NAPTR record for "
-							+ name);
+		    alarm_logger
+					.error(LOG.getName() + String.format(ALARM_DNS_LOOKUP, "FindSipServer: getNaptrRecords Error parsing NAPTR record for "
+							+ name));
 			return null;
 		}
 		return records;
@@ -100,7 +104,7 @@ public class FindSipServer {
 
 	/**
 	 * Lookup SRV records for name using JavaDNS
-	 * 
+	 *
 	 * @param name
 	 * @return An array of SRV records, or null if none found or understood.
 	 */
@@ -110,9 +114,9 @@ public class FindSipServer {
 		try {
 			records = new Lookup(name, Type.SRV).run();
 		} catch (TextParseException e) {
-			LOG
-					.warn("FindSipServer::getSrvRecords Error parsing SRV record for "
-							+ name);
+		    alarm_logger
+					.error(LOG.getName() + String.format(ALARM_DNS_LOOKUP, "FindSipServer: getSrvRecords Error parsing SRV record for "
+							+ name));
 			return null;
 		}
 		return records;
@@ -120,7 +124,7 @@ public class FindSipServer {
 
 	/**
 	 * Select a transport to use for a given SIP URI
-	 * 
+	 *
 	 * @param uri
 	 * @return The string "TCP" or "UDP"
 	 */
@@ -138,14 +142,14 @@ public class FindSipServer {
 
 	/**
 	 * Select the default port (5060 for udp/tcp, 5061 for TLS)
-	 * 
+	 *
 	 * @param uri
 	 * @return the port
 	 */
 	int pickPort(SipURI uri) {
 		int port = uri.getPort();
 		if (port == -1) {
-			if (uri.isSecure() || 
+			if (uri.isSecure() ||
 			   (uri.getTransportParam() != null && uri.getTransportParam().equals("tls"))) {
 				port = 5061;
 			} else {
@@ -157,14 +161,14 @@ public class FindSipServer {
 
 	/**
 	 * Return the next hop if the URI's host is a numeric IP address
-	 * 
+	 *
 	 * @param uri
 	 * @return The Hop with IP addr, port, and transport
 	 */
 	Hop numericIP(SipURI uri) {
 		/*
 		 * RFC-3263
-		 * 
+		 *
 		 * if no transport protocol is specified, but the TARGET is a numeric IP
 		 * address, the client SHOULD use UDP for a SIP URI, and TCP for a SIPS
 		 * URI.
@@ -176,7 +180,7 @@ public class FindSipServer {
 
 	/**
 	 * Return the next hop if the URI's port is specified
-	 * 
+	 *
 	 * @param uri
 	 * @return The Hop with IP Addr, port and transport. Null if it cannot be
 	 *         determined.
@@ -184,7 +188,7 @@ public class FindSipServer {
 	Hop hasPort(SipURI uri) {
 		/*
 		 * RFC-3263
-		 * 
+		 *
 		 * if no transport protocol is specified, and the TARGET is not numeric,
 		 * but an explicit port is provided, the client SHOULD use UDP for a SIP
 		 * URI, and TCP for a SIPS URI.
@@ -204,7 +208,7 @@ public class FindSipServer {
 
 	/**
 	 * Return the next hop for a URI using the rules of RFC-3263
-	 * 
+	 *
 	 * @param uri
 	 * @return The Hop with IP addr, port and transport. Null if it cannot be
 	 *         determined.
@@ -238,7 +242,7 @@ public class FindSipServer {
 
 		/*
 		 * RFC-3263
-		 * 
+		 *
 		 * Otherwise, if no transport protocol or port is specified, and the
 		 * target is not a numeric IP address, the client SHOULD perform a NAPTR
 		 * query for the domain in the URI.
@@ -371,8 +375,6 @@ public class FindSipServer {
 							+ uri.getHost());
 			addr = getByName(uri.getHost());
 			if (addr == null) {
-				LOG.warn("FindSipServer::findServer Unable to resolve by A "
-						+ uri.getHost());
 				return null;
 			}
 
@@ -393,7 +395,7 @@ public class FindSipServer {
 	 * Find the collection of SIP servers corresponding to the r-URI. A client
 	 * that wishes to do its own lookup can use this method and set the maddr
 	 * parameter in the R-URI.
-	 * 
+	 *
 	 * @param uri
 	 * @return
 	 */
@@ -432,7 +434,7 @@ public class FindSipServer {
 
 		/*
 		 * RFC-3263
-		 * 
+		 *
 		 * Otherwise, if no transport protocol or port is specified, and the
 		 * target is not a numeric IP address, the client SHOULD perform a NAPTR
 		 * query for the domain in the URI.
@@ -541,7 +543,7 @@ public class FindSipServer {
 						LOG.debug("FindSipServer::findServer Looking up A "
 								+ srvRecord.getTarget());
 						addr = getByName(srvRecord.getTarget().toString());
-						
+
 						if (addr != null) {
 							port = srvRecord.getPort();
 							transport = tup.transport;
@@ -567,8 +569,6 @@ public class FindSipServer {
 		LOG.debug("FindSipServer::findServer Looking up A " + uri.getHost());
 		addr = getByName(uri.getHost());
 		if (addr == null) {
-			LOG.warn("FindSipServer::findServer Unable to resolve by A "
-					+ uri.getHost());
 			return null;
 		}
 
@@ -584,7 +584,7 @@ public class FindSipServer {
 		return retval;
 
 	}
-	
+
 	/**
      * Get the proxy addresses.
      */
@@ -603,8 +603,8 @@ public class FindSipServer {
                     + proxyUri, ex);
         }
     }
-    
-    
+
+
 
 
 	/*
@@ -615,24 +615,24 @@ public class FindSipServer {
 	 * "Hello<sip:woof@interop.pingtel.com:5000;transport=udp>"); Hop h =
 	 * f.findServer((SipURI)addr.getURI());
 	 * System.out.println("Hop is "+h.toString()); System.out.println();
-	 * 
+	 *
 	 * addr =
 	 * addressFactory.createAddress("sip:1@47.16.90.233:5160;Alert-info=sipXpage"
 	 * ); h = f.findServer((SipURI)addr.getURI());
 	 * System.out.println("Hop is "+h.toString()); System.out.println();
-	 * 
+	 *
 	 * addr = addressFactory.createAddress("sip:woof@interop.pingtel.com"); h =
 	 * f.findServer((SipURI)addr.getURI());
 	 * System.out.println("Hop is "+h.toString()); System.out.println();
-	 * 
+	 *
 	 * addr = addressFactory.createAddress("sip:woof@nortel.com"); h =
 	 * f.findServer((SipURI)addr.getURI());
 	 * System.out.println("Hop is "+h.toString()); System.out.println();
-	 * 
+	 *
 	 * } catch (ParseException e) { // TODO Auto-generated catch block
 	 * e.printStackTrace(); } catch (PeerUnavailableException e) { // TODO
 	 * Auto-generated catch block e.printStackTrace(); }
-	 * 
+	 *
 	 * }
 	 */
 

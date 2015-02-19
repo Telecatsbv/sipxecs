@@ -283,6 +283,16 @@ SipRegistrarServer::initialize(
                                            ,RegisterPlugin::Prefix
                                            );
     mpSipRegisterPlugins->readConfig(*pOsConfigDb);
+    
+    //
+    // Set the grace period for expirations
+    //
+    
+    int gracePeriod = 0;
+    if ( OS_SUCCESS == pOsConfigDb->get("SIP_REGISTRAR_EXPIRE_GRACE_PERIOD", gracePeriod));
+    {
+      SipRegistrar::getInstance(NULL)->getRegDB()->setExpireGracePeriod(gracePeriod * 60);
+    }
 
     _expireThread.run(SipRegistrar::getInstance(NULL)->getRegDB());
 }
@@ -303,7 +313,7 @@ SipRegistrarServer::applyRegisterToDirectory( const Url& toUrl
                                              ,const unsigned long timeNow
                                              ,const SipMessage& registerMessage
                                              ,RegistrationExpiryIntervals*& pExpiryIntervals,
-                                              bool& isUnregister
+                                              bool& isUnregister, std::vector<RegBinding::Ptr>& registrations
                                              )
 {
 #if 0
@@ -367,8 +377,6 @@ SipRegistrarServer::applyRegisterToDirectory( const Url& toUrl
         // We act on the stored registrations only if all checks pass, in
         // a second iteration over the ResultSet below.
         // ****************************************************************
-
-        std::vector<RegBinding::Ptr> registrations;
 
         int contactIndexCount;
         UtlString registerContactStr;
@@ -783,6 +791,59 @@ SipRegistrarServer::applyRegisterToDirectory( const Url& toUrl
     return returnStatus;
 }
 
+void SipRegistrarServer::validateUnregisteredBindings(const SipMessage& registerMessage, const RegDB::Bindings& unexpiredBindings, RegDB::Bindings& mergedResult)
+{
+  if (unexpiredBindings.empty())
+    return; // merge result will be empty
+  
+  UtlString registerContactStr;
+  registerMessage.getContactEntry (0, &registerContactStr);
+  if (registerContactStr.compareTo("*") != 0)
+    return; // unregister all.  merge result will be empty
+  
+  //
+  // Loop through the reg bindings and remove the current registerContactStr from the vector
+  //
+  for (RegDB::Bindings::const_iterator iter = unexpiredBindings.begin(); iter != unexpiredBindings.end(); iter++)
+  {
+    if (iter->getContact().find(registerContactStr.data()) == std::string::npos)
+      mergedResult.push_back(*iter);
+  }
+
+}
+
+
+void SipRegistrarServer::mergeNewBindings(const RegDB::Bindings& unexpiredRegs, const std::vector<RegBinding::Ptr>& newBindings, RegDB::Bindings& mergedResult)
+{
+  mergedResult = unexpiredRegs;
+  //
+  // Make sure that the new bindings are also in unexpired registrations
+  //
+  for (std::vector<RegBinding::Ptr>::const_iterator iter = newBindings.begin(); iter != newBindings.end(); iter++)
+  {
+    const RegBinding::Ptr& rec = *iter;
+    const std::string& contact = rec->getContact();
+    const std::string& callId = rec->getCallId();
+    bool found = false;
+    for (RegDB::Bindings::const_iterator regIter = unexpiredRegs.begin(); regIter != unexpiredRegs.end(); regIter++)
+    {
+      //
+      // Note:  We also need to compare the call-id since an old registration with the same
+      // contact belonging to a different session can linger if it was not unregistered
+      // prior to creating a new register session.  Typically happens during phone reboot.
+      //
+      const RegBinding& binding = *regIter;
+      if (contact == binding.getContact() && callId == binding.getCallId())
+      {
+        found = true;
+        break;
+      }
+    }
+    
+    if (!found)
+      mergedResult.push_back(*(rec.get()));
+  }
+}
 
 void SipRegistrarServer::handleRegister(SipMessage* pMsg)
 {
@@ -857,11 +918,12 @@ void SipRegistrarServer::handleRegister(SipMessage* pMsg)
           unsigned long timeNow = OsDateTime::getSecsSinceEpoch();
           RegistrationExpiryIntervals* pExpiryIntervalsUsed = 0;
           bool isUnregister = false;
+          std::vector<RegBinding::Ptr> newBindings;
           RegisterStatus applyStatus
              = applyRegisterToDirectory( toUri, instrument,
                                          timeNow, message,
                                          pExpiryIntervalsUsed,
-                                         isUnregister
+                                         isUnregister, newBindings
              );
 
           switch (applyStatus)
@@ -872,8 +934,6 @@ void SipRegistrarServer::handleRegister(SipMessage* pMsg)
                   Os::Logger::instance().log( FAC_SIP, PRI_DEBUG, "SipRegistrarServer::handleMessage() - "
                          "contact successfully added");
 
-                  
-
                   // get the call-id from the register message for context test below
                   UtlString registerCallId;
                   message.getCallIdField(&registerCallId);
@@ -882,11 +942,19 @@ void SipRegistrarServer::handleRegister(SipMessage* pMsg)
 
                   UtlString identity_;
                   toUri.getIdentity(identity_);
-                  RegDB::Bindings registrations;
-
-                  SipRegistrar::getInstance(NULL)->getRegDB()->getUnexpiredContactsUser(identity_.str(),
-                      timeNow, registrations, true);
                   
+                  RegDB::Bindings unexpiredRegs;
+                  SipRegistrar::getInstance(NULL)->getRegDB()->getUnexpiredContactsUser(identity_.str(),
+                      timeNow, unexpiredRegs);
+                  
+                  
+                  RegDB::Bindings registrations;
+                  
+                  if (!isUnregister)
+                    mergeNewBindings(unexpiredRegs, newBindings, registrations);
+                  else
+                    validateUnregisteredBindings(message, unexpiredRegs, registrations);
+                           
                   if (!isUnregister && applyStatus == REGISTER_SUCCESS && registrations.empty())
                   {
                     //
@@ -994,6 +1062,16 @@ void SipRegistrarServer::handleRegister(SipMessage* pMsg)
 
                          contactUri.setFieldParameter("+sip.instance", record.getInstanceId().c_str());
 
+                         UtlString tparam;
+                         contactUri.getUrlParameter("transport", tparam);
+                         if (!tparam.isNull())
+                         {
+                            if (tparam.compareTo("ws", UtlString::ignoreCase) == 0 || tparam.compareTo("wss", UtlString::ignoreCase) == 0)
+                            {
+                              OS_LOG_INFO(FAC_SIP, "SipRegistrarServer::handleMessage - Disabling GRUU for webrtc registration")
+                              requestSupportsGruu = false;
+                            }
+                         }
 
                          // Only add the "gruu" parameter if the GRUU is
                          // non-null and the request includes "Supported:

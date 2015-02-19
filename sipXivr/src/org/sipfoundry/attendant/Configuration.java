@@ -132,8 +132,16 @@ public class Configuration {
                             parseMenuItems(next, c) ;
                         } else if (name.equals(prop = "dtmf")) {
                             parseDtmf(next, c) ;
-                        }  else if (name.equals(prop = "invalidResponse")) {
+                        } else if (name.equals(prop = "invalidResponse")) {
                             parseInvalidResponse(next, c) ;
+                        } else if (name.equals(prop = "onTransfer")) {
+                            parseOnTransfer(next, c) ;
+                        } else if (name.equals(prop = "lang")) {
+                            c.setLang(next.getTextContent().trim());
+                        } else if (name.equals(prop = "denyDial")) {
+                            c.setDenyDial(next.getTextContent().trim());
+                        } else if (name.equals(prop = "allowDial")) {
+                            c.setAllowDial(next.getTextContent().trim());
                         }
                     }
                 }
@@ -239,7 +247,15 @@ public class Configuration {
         }
         c.addMenuItem(new AttendantMenuItem(dialPad, Actions.valueOf(action), parameter, extension));
     }
-    
- 
 
+    void parseOnTransfer(Node menuItemNode, AttendantConfig c) {
+        for (Node next = menuItemNode.getFirstChild(); next != null; next = next.getNextSibling()) {
+            if (next.getNodeType() == Node.ELEMENT_NODE) {
+                String name = next.getNodeName();
+                if (name.equals("play-prompt")) {
+                    c.setPlayPrompt(Boolean.parseBoolean(next.getTextContent().trim()));
+                }
+            }
+        }
+    }
 }

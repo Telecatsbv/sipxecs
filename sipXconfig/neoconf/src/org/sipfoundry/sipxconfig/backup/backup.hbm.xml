@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.sipfoundry.sipxconfig.backup" default-lazy="false">
 
   <!--
@@ -14,6 +14,7 @@
     </id>
     <property column="backup_type" name="encodedType" not-null="true"/>
     <property column="def" name="encodedDefinitionString" not-null="true"/> 
+    <property column="include_device_files" name="includeDeviceFiles" not-null="true"/>
     <property name="limitedCount" />    
     <bag name="schedules" inverse="true" table="daily_backup_schedule" cascade="all">
       <key column="backup_plan_id" />

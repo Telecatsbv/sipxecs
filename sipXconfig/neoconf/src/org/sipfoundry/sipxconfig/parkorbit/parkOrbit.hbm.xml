@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.sipfoundry.sipxconfig.parkorbit" default-lazy="false">
   <!--
     - Default background music
@@ -40,10 +40,19 @@
       <key column="park_orbit_id" />
       <many-to-many column="group_id" class="org.sipfoundry.sipxconfig.setting.Group" />
     </set>
+    <many-to-one name="location" class="org.sipfoundry.sipxconfig.commserver.Location" column="location_id" />
   </class>
 
   <query name="parkOrbitIdsWithAlias">
     <![CDATA[select orbit.id from ParkOrbit orbit where orbit.name = :value or orbit.extension = :value]]>
+  </query>
+
+    <query name="parkOrbitByName">
+    <![CDATA[select orbit from ParkOrbit orbit where orbit.name = :value]]>
+  </query>
+
+  <query name="parkOrbitsByServer">
+    <![CDATA[from ParkOrbit orbit where orbit.location.id = :locationId]]>
   </query>
 
 </hibernate-mapping>

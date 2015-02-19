@@ -63,6 +63,7 @@
       <ref local="phoneRestartManagerImpl" />
     </property>
     <property name="jobContext" ref="jobContext" />
+    <property name="systemAuditManager" ref="systemAuditManager" />
   </bean>
 
   <bean id="phoneProfileManager" class="org.springframework.aop.framework.ProxyFactoryBean" parent="abstractDao">
@@ -87,6 +88,7 @@
     <property name="profileDir">
       <value>${sysdir.phone}/profile/tftproot</value>
     </property>
+    <property name="featureManager" ref="featureManager" />
   </bean>
 
   <bean id="abstractPhoneModel" abstract="true" class="org.sipfoundry.sipxconfig.phone.PhoneModel">

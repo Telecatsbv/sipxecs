@@ -11,21 +11,14 @@ package org.sipfoundry.sipxconfig.parkorbit;
 
 import java.util.Collection;
 
-import org.sipfoundry.sipxconfig.address.AddressType;
 import org.sipfoundry.sipxconfig.alias.AliasOwner;
+import org.sipfoundry.sipxconfig.common.ReplicableProvider;
 import org.sipfoundry.sipxconfig.feature.LocationFeature;
 
-public interface ParkOrbitContext extends AliasOwner {
+public interface ParkOrbitContext extends AliasOwner, ReplicableProvider {
     public static final String PARK_ORBIT_GROUP_ID = "park_orbit";
     public static final String CONTEXT_BEAN_NAME = "parkOrbitContext";
     public static LocationFeature FEATURE = new LocationFeature("park");
-    public static AddressType SIP_TCP_PORT = AddressType.sipTcp("parkTcp");
-    public static AddressType SIP_UDP_PORT = AddressType.sipUdp("parkUdp");
-    public static AddressType SIP_RTP_PORT = new AddressType("parkRtp");
-
-    ParkSettings getSettings();
-
-    void saveSettings(ParkSettings settings);
 
     ParkOrbit loadParkOrbit(Integer id);
 
@@ -37,9 +30,13 @@ public interface ParkOrbitContext extends AliasOwner {
 
     Collection<ParkOrbit> getParkOrbits();
 
+    Collection<ParkOrbit> getParkOrbits(Integer locationid);
+
     String getDefaultMusicOnHold();
 
     void setDefaultMusicOnHold(String newMusic);
 
     void clear();
+
+    ParkOrbit loadParkOrbitByName(String name);
 }

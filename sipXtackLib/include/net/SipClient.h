@@ -97,6 +97,10 @@ public:
 /* ============================ INQUIRY =================================== */
 
     UtlBoolean isOk(void);
+    
+    bool isWritable();
+    // This function will send keep-alive CRLF/CRLF to check if socket is writable
+    //
 
    // Used to identify if the socket associated with SIP Client is bound to the specified
    // local IP and suitable for sending to the supplied destination host and port.
@@ -126,9 +130,13 @@ protected:
     /** Do preliminary processing of a message read from the socket:
      *  log it, clean up its data, and extract any needed source address.
      */
-    void preprocessMessage(SipMessage& msg,
+    bool preprocessMessage(SipMessage& msg,
                            const UtlString& msgText,
                            int msgLength);
+    
+    bool preprocessRequestLine(SipMessage& msg);
+    
+    bool preprocessUriHeader(SipMessage& msg, const char* headerName);
 
     /// Test whether the socket is ready to read.  (Does not block.)
     UtlBoolean isReadyToRead();
@@ -238,7 +246,7 @@ public:
    SipClientSendMsg(const SipClientSendMsg& rOsMsg);
      //:Copy constructor
 
-   ~SipClientSendMsg();
+   virtual ~SipClientSendMsg();
      //:Destructor
 
    virtual OsMsg* createCopy(void) const;

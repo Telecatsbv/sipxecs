@@ -22,6 +22,7 @@
 #include <vector>
 #include "sipdb/RegBinding.h"
 #include "sipdb/MongoDB.h"
+#include "net/Url.h"
 
 #ifndef GRUU_PREFIX
 #define GRUU_PREFIX "~~gr~"
@@ -38,19 +39,19 @@ public:
     typedef std::vector<RegBinding> Bindings;
 
  RegDB(const MongoDB::ConnectionInfo& info) :
-    BaseDB(info), _local(NULL), _ns(NS)
+    BaseDB(info, NS), _local(NULL), _expireGracePeriod(0)
 	{
 	}
 	;
 
  RegDB(const MongoDB::ConnectionInfo& info, RegDB* local) :
-    BaseDB(info), _local(local), _ns(NS)
+     BaseDB(info, NS), _local(local), _expireGracePeriod(0)
 	{
 	}
 	;
 
  RegDB(const MongoDB::ConnectionInfo& info, RegDB* local, const std::string& ns) :
-    BaseDB(info), _local(local), _ns(ns)
+    BaseDB(info, ns), _local(local), _expireGracePeriod(0)
 	{
 	}
 	;
@@ -100,6 +101,13 @@ public:
         unsigned long timeNow,
         Bindings& bindings,
         bool preferPrimary = false) const;
+    
+    bool getUnexpiredContactsUserWithAddress(
+      const std::string& identity,
+      const std::string& address,
+      unsigned long timeNow,
+      Bindings& bindings,
+      bool preferPrimary = false) const;
 
     bool getUnexpiredContactsUserInstrument(
         const std::string& identity,
@@ -113,6 +121,10 @@ public:
         unsigned long timeNow,
         Bindings& bindings,
         bool preferPrimary = false) const;
+    
+    bool isRegisteredBinding(
+      const Url& binding,
+      bool preferPrimary = false);
 
     void cleanAndPersist(int currentExpireTime);
 
@@ -127,14 +139,35 @@ public:
 		return _ns;
 	}
 	;
+  
+  //
+  // Set the additional time a registration record can linger after it expires.
+  // This is expressed in seconds
+  //
+  void setExpireGracePeriod(unsigned long expireGracePeriod /* (seconds) */);
+  unsigned long getExpireGracePeriod() const;
 
 protected:
 
 private:
     std::string _localAddress;
     RegDB* _local;
-    std::string _ns;
+    unsigned long _expireGracePeriod;
 };
+
+//
+// Inlines
+//
+
+inline void RegDB::setExpireGracePeriod(unsigned long expireGracePeriod /* (seconds) */)
+{
+  _expireGracePeriod = expireGracePeriod;
+}
+
+inline unsigned long RegDB::getExpireGracePeriod() const
+{
+  return _expireGracePeriod;
+}
 
 #endif	/* RegDB_H */
 

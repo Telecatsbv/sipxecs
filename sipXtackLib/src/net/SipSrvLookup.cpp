@@ -247,6 +247,9 @@ int SipSrvLookup::options[OptionCodeLast+1] = {
 /// Sets the hostname of a host to be given preference among alternatives selected by weight
 UtlString SipSrvLookup::mOwnHostname;
 
+// sets local domain name
+UtlString SipSrvLookup::mDomainName;
+
 /// Sets the timeout parameter for DNS SRV queries. Default is 3
 int SipSrvLookup::mTimeout = 3;
 
@@ -411,6 +414,10 @@ server_t* SipSrvLookup::servers(const char* domain,
       // produce any addresses.  This includes if an explicit port was given.)
       if (*(srvLookupArgs.list_length_used) < 1)
       {
+         // XX-11366: DNS_LOOKUP_FAILED alarm is thrown by the proxy when looking for VM records on udp (false negative)
+         // Raise an alarm if no DNS/SRV records are found for the specified domain
+         raiseDnsQueryAlarm(domain, T_SRV);
+
          // No SRV query results. Discard the SRV Lookup lists, continue with
          // and  return the A Record list back to the caller.
          delete[] srvLookupArgs.list;
@@ -826,6 +833,71 @@ void lookup_A(server_t*& list,
    }
 }
 
+const char* SipSrvLookup::getRecordTypeStr(int type)
+{
+   switch (type)
+   {
+      case T_CNAME:
+         return "CNAME";
+      case T_SRV:
+         return "SRV";
+      case T_A:
+         return "A";
+      case T_NAPTR:
+         return "NAPTR";
+      default:
+         return "unknown";
+   }
+}
+
+void SipSrvLookup::setDomainName(const char* domainName)
+{
+  // Seize the lock, to ensure atomic effect.
+  OsLock lock(sMutex);
+
+  mDomainName = domainName;
+}
+
+void SipSrvLookup::raiseDnsQueryAlarm(const char* domain,
+                                      int queryType)
+{
+  // for A record type we get false positives so we don't raise alarms
+  if (T_A == queryType)
+  {
+    return;
+  }
+
+  if (mDomainName.isNull())
+  {
+    Os::Logger::instance().log(FAC_SIP, PRI_CRIT,
+                  "ALARM_DNS_DOMAIN_NAME_NOT_SET "
+                  "SipSrvLookup::raiseDnsQueryAlarm domain name was not set");
+    return;
+  }
+
+  Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
+                "SipSrvLookup::raiseDnsQueryAlarm domain name: %s", mDomainName.data());
+
+  // don't raise alarms for queries that don't have local domain name string in them
+  const char* pos = strstr(domain, mDomainName.data());
+  if (NULL == pos)
+  {
+    return;
+  }
+
+  // don't raise alarms for queries that don't ends with local domain name
+  if (strlen(pos) != mDomainName.length())
+  {
+    return;
+  }
+
+  Os::Logger::instance().log(FAC_SIP, PRI_CRIT,
+                "ALARM_DNS_LOOKUP_FAILED "
+                "DNS lookup failed for '%s'. No valid '%s' records found",
+                domain,
+                getRecordTypeStr(queryType));
+}
+
 // Perform a DNS query and parse the results.  Follows CNAME records.
 void SipSrvLookup::res_query_and_parse(const char* in_name,
                                        int type,
@@ -838,11 +910,7 @@ void SipSrvLookup::res_query_and_parse(const char* in_name,
                  "SipSrvLookup::res_query_and_parse in_name = '%s', "
                  "type = %d (%s)",
                  in_name,type,
-                 type == T_CNAME ? "CNAME" :
-                 type == T_SRV ? "SRV" :
-                 type == T_A ? "A" :
-                 type == T_NAPTR ? "NAPTR" :
-                 "unknown");
+                 getRecordTypeStr(type));
 
    // The number of CNAMEs we have followed.
    int cname_count = 0;
@@ -948,11 +1016,7 @@ void SipSrvLookup::res_query_and_parse(const char* in_name,
                        "DNS query for name '%s', "
                        "type = %d (%s): returned error",
                        name, type,
-                       type == T_CNAME ? "CNAME" :
-                       type == T_SRV ? "SRV" :
-                       type == T_A ? "A" :
-                       type == T_NAPTR ? "NAPTR" :
-                       "unknown");
+                       getRecordTypeStr(type));
          break;
       }
 
@@ -964,11 +1028,7 @@ void SipSrvLookup::res_query_and_parse(const char* in_name,
                        "DNS query for name '%s', "
                        "type = %d (%s): response could not be parsed",
                        name, type,
-                       type == T_CNAME ? "CNAME" :
-                       type == T_SRV ? "SRV" :
-                       type == T_A ? "A" :
-                       type == T_NAPTR ? "NAPTR" :
-                       "unknown");
+                       getRecordTypeStr(type));
          break;
       }
       // If requested for testing purposes, sort the query and print it.
@@ -992,7 +1052,6 @@ void SipSrvLookup::res_query_and_parse(const char* in_name,
    Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
                  "SipSrvLookup::res_query_and_parse out_name = '%s', out_response = %p",
                  out_name, out_response);
-
 }
 
 /// Set the nameserver address to a specific nameserver.
@@ -1341,7 +1400,7 @@ static int rr_compare(const void* a, const void* b)
       // Compare on address.
       return memcmp((const void*) &a_rr->rdata.address,
                     (const void*) &b_rr->rdata.address,
-                    sizeof (struct sockaddr));
+                    sizeof (struct in_addr));
 
    default:
       return 0;

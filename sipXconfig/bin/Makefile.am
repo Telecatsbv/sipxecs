@@ -4,8 +4,7 @@ include $(top_srcdir)/common.am
 
 EXTRA_DIST = \
 	$(bin_SCRIPTS:=.in) \
-	$(initd_SCRIPTS:=.in) \
-	tunnel.in \
+	$(initd_SCRIPTS:=.in) \	
 	$(libexec_SCRIPTS:=.in) \
 	mongo-test-data
 
@@ -18,18 +17,16 @@ initd_SCRIPTS = \
 	mongo-local-arbiter \
 	mongodb-sync
 
-tunnel_daemondir = @SIPX_SERVICEDIR@
-tunnel_daemon_SCRIPTS = \
-	tunnel-server \
-	tunnel-client
-
 bin_SCRIPTS = \
 	sipxconfig-archive \
 	sipxconfig_archive.rb \
 	mongodb-status \
 	mongodb-analyzer \
 	mongodb-admin \
-	sipxtrap
+	sipxtrap \
+	system-audit-cleanup \
+	system-audit-cleanup.rb \
+	sipx-dns-validator-regions
 
 libexecdir = $(SIPX_LIBEXECDIR)
 libexec_SCRIPTS = \

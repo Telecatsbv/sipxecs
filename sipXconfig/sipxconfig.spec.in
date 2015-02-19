@@ -13,7 +13,7 @@ Packager: SIPfoundry <sipx-dev@list.sipfoundry.org>
 Url:      http://www.sipfoundry.org/
 
 BuildRequires: automake
-BuildRequires: java-devel >= 1.6
+BuildRequires: java-1.7.0-openjdk-devel
 
 %if %{_vendor} == redhat
 BuildRequires: shadow-utils
@@ -98,6 +98,14 @@ Obsoletes: sipx-freeswitch-codec-passthru-amr
 Obsoletes: sipx-freeswitch-codec-passthru-g729
 Obsoletes: sipxopenacd
 Obsoletes: sipxacdstatistics
+Obsoletes: sipxacdstatistics-client
+Obsoletes: openacd
+Obsoletes: erlang-oacd_dialplan
+Obsoletes: erlang-oacd_freeswitch
+Obsoletes: erlang-oacd_ouc
+Obsoletes: erlang-oacd_spx
+Obsoletes: erlang-oacd_web
+Obsoletes: erlang-openacd
 
 # 4.6 packages that turned out to not be useful as separate pkgs so
 # projects merged into sipxconfig
@@ -112,6 +120,10 @@ Obsoletes: sipxhttpd
 # UC-1846 - sipXsbc is not supported, might be enabled later
 Obsoletes: sipxsbc
 Obsoletes: sipxsbc-config
+Obsoletes: sipxpark
+
+# XX-11486 - obsolete sipxevent (event notifier) service should be removed
+Obsoletes: sipxevent
 
 %if %{_vendor} == suse
 Requires: apache2-prefork
@@ -219,9 +231,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,sipx,sipx) %{_datadir}/java/sipXecs/sipXconfig/*.war
 %attr(755,sipx,sipx) %{_datadir}/java/sipXecs/sipXconfig/plugins
 %dir %attr(775,sipx,sipx) %{phonedir}
+%dir %attr(775,sipx,sipx) %{phonedir}/acd/audio
 %dir %attr(775,sipx,sipx) %{phonedir}/profile
 %dir %attr(775,sipx,sipx) %{phonedir}/profile/docroot
 %dir %attr(775,sipx,sipx) %{phonedir}/profile/tftproot
+%dir %attr(775,sipx,sipx) %{_localstatedir}/sipxdata/unitelite
 %dir %{_localstatedir}
 
 # Install configserver config files, directory only is created by pbx
@@ -247,7 +261,6 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{sipxpbxconf}/freeswitch/*
 %config(noreplace) %{sipxpbxconf}/ftp/*
 %config(noreplace) %{sipxpbxconf}/itspTemplates/*
-%config(noreplace) %{sipxpbxconf}/log4j.properties
 %config(noreplace) %{sipxpbxconf}/mailbox/*
 %config(noreplace) %{sipxpbxconf}/moh/*
 %config(noreplace) %{sipxpbxconf}/mongo/*
@@ -260,6 +273,7 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{sipxpbxconf}/sipxcallresolver/*
 %config(noreplace) %{sipxpbxconf}/sipxconference/*
 %config(noreplace) %{sipxpbxconf}/sipxconfig-jetty.xml
+%config(noreplace) %{sipxpbxconf}/hz-config.vm
 %config(noreplace) %{sipxpbxconf}/sipxconfig/*
 %config(noreplace) %{sipxpbxconf}/sipxdns/*
 %config(noreplace) %{sipxpbxconf}/sipximbot/*
@@ -279,9 +293,10 @@ rm -rf $RPM_BUILD_ROOT
 %config(noreplace) %{sipxpbxconf}/sipxwebsocket/*
 %config(noreplace) %{sipxpbxconf}/snmp/*
 %config(noreplace) %{sipxpbxconf}/test.d/*
-%config(noreplace) %{sipxpbxconf}/tunnel/*
 %config(noreplace) %{sipxpbxconf}/unmanaged/*
 %config(noreplace) %{sipxpbxconf}/unmanagedPhone/*
+%config(noreplace) %{sipxpbxconf}/unite/unitelite.conf
+%config(noreplace) %attr(755,sipx,sipx) %{_localstatedir}/sipxdata/parkserver/music
 
 %dir %attr(755,sipx,sipx) %{_localstatedir}/sipxdata/cfdata
 %{_localstatedir}/sipxdata/cfdata/defaults/*.cfdat
@@ -292,7 +307,7 @@ rm -rf $RPM_BUILD_ROOT
 %dir %attr(775,sipx,sipx) %{_localstatedir}/sipxdata/configserver/web-cert
 %dir %attr(775,sipx,sipx) %{devicefilesdir}
 %{_datadir}/snmp/mibs/SIPXECS-ALARM-NOTIFICATION-MIB.txt
-
+%{_localstatedir}/sipxdata/unitelite/*
 %post
 if test -e %{_sysconfdir}/logrotate.d/freeswitch; then rm -f %{_sysconfdir}/logrotate.d/freeswitch; fi
 
@@ -300,7 +315,8 @@ if test -e %{_sysconfdir}/logrotate.d/freeswitch; then rm -f %{_sysconfdir}/logr
 # automatically, but others did not so we do it here. This was to fix systems
 # that installed 4.6 update 9 or below but harmless for any other machines.
 if grep -q :on <<<`/sbin/chkconfig sipxconfig --list 2>&1`; then
-    /sbin/chkconfig sipxconfig reset
+    /sbin/chkconfig --del sipxconfig
+    /sbin/chkconfig sipxconfig off
 fi
 
 %triggerin -- freeswitch

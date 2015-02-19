@@ -11,14 +11,22 @@
 #define _SipRouter_h_
 
 // SYSTEM INCLUDES
-#include "sipdb/EntityDB.h"
 
 // APPLICATION INCLUDES
 #include <os/OsServerTask.h>
+#include "os/OsThreadPool.h"
+#include <os/OsTime.h>
 #include <sipXecsService/SipNonceDb.h>
 #include <utl/PluginHooks.h>
 #include <sipxproxy/AuthPlugin.h>
 #include <net/SipBidirectionalProcessorPlugin.h>
+#include <sipdb/RegDB.h>
+#include "sipdb/EntityDB.h"
+#include "sipdb/SubscribeDB.h"
+#include <Poco/Semaphore.h>
+#include <boost/thread.hpp>
+#include <boost/circular_buffer.hpp>
+#include <vector>
 
 // MACROS
 // EXTERNAL FUNCTIONS
@@ -72,6 +80,24 @@ class SipRouter : public OsServerTask
 {
 /* //////////////////////////// PUBLIC //////////////////////////////////// */
   public:
+    
+  typedef boost::mutex mutex_critic_sec;
+  typedef boost::lock_guard<mutex_critic_sec> mutex_critic_sec_lock;
+  typedef std::vector<AuthPlugin*> TrustedRequestModifiers;
+  typedef std::vector<AuthPlugin*> FinalResponseModifiers;
+
+  class DispatchTimer
+  {
+  public:
+    DispatchTimer(SipRouter& router);
+    ~DispatchTimer();
+
+  protected:
+    Int64 _start;
+    Int64 _end;
+    SipRouter& _router;
+    friend class SipRouter;  
+  };
 
    /// Default constructor
    SipRouter(SipUserAgent& sipUserAgent, 
@@ -100,6 +126,16 @@ class SipRouter : public OsServerTask
                             );
    /**< the caller must pass either request or response
     *   to SipUserAgent::send as directed by the return code
+    */
+
+   /// Adds to the request URI one or more parameters w/ or w/o values
+   void addRuriParams(SipMessage& sipRequest, const UtlString& ruriParam);
+   /**<
+    * @param sipRequest The SIP request to be modified
+    * @param ruriParam A string containing parameters to be added. The string must have the following format:
+    *   "paramName1=paramValue1;...;paramNameN=paramValueN"
+    * @note parameters with no value are accepted, like:
+    *   "paramName1"
     */
 
    /// @returns true iff the domain of url is a valid form of the domain name for this proxy.
@@ -152,11 +188,41 @@ class SipRouter : public OsServerTask
      * @returns true if user has a location, false otherwise
      */
 
+    /// Check if the feature is enabled
+    bool supportMultipleGatewaysPerLocation() const;
+    /**<
+     * This is a recommended feature in case there are multiple gateways bound to the same
+     * location. This will make use of custom sipx headers to ensure that transfered calls
+     * use the same gateway as the call to the transfer target.
+     * @sa UC-1382 Consultative transfer must point to the exact gateway that accepted the initial INVITE
+     */
+
 
    /// If the fromUrl uses domain alias, change to original domain as identities are stored in credential database using mDomainName.
    void ensureCanonicalDomain(Url& url) const;
 
    UtlBoolean isRelayAllowed() const;
+
+   SipUserAgent* getUserAgent() const;
+   
+   static EntityDB* getEntityDBInstance();
+   
+   static RegDB* getRegDBInstance();
+   
+   static SubscribeDB* getSubscribeDBInstance();
+   
+   UtlBoolean trustSbcRegisteredCalls() const;
+   
+   //
+   // Returns true if the identity is registered to the binding
+   //
+   bool isRegisteredAddress(const std::string& identity, const std::string& sourceAddress);
+   
+   //
+   // Call plugins that signified intent to modify final responses
+   //
+   void modifyFinalResponse(SipTransaction* pTransaction, const SipMessage& request, SipMessage& finalResponse);
+
    
 /* //////////////////////////// PROTECTED ///////////////////////////////// */
   protected:
@@ -185,7 +251,7 @@ class SipRouter : public OsServerTask
     *  for this proxy.
     *  @returns true iff sipRequest was modified.
     */
-   bool addPathHeaderIfNATRegisterRequest( SipMessage& sipRequest ) const;
+   bool addPathHeaderIfNATOrTlsRegisterRequest( SipMessage& sipRequest ) const;
 
    bool addNatMappingInfoToContacts( SipMessage& sipRequest ) const;
    
@@ -201,6 +267,16 @@ class SipRouter : public OsServerTask
                                 );
    
 
+   void handleRequest(SipMessage* pMsg);
+   
+   bool preDispatch(SipMessage* pMsg);
+   
+   void registerDispatchTimer(DispatchTimer& dispatchTimer);
+   
+   Int64 getLastDispatchSpeed() const;
+   
+   Int64 getAverageDispatchSpeed() const;
+   
    SipUserAgent* mpSipUserAgent;         ///< SIP stack interface
    bool          mAuthenticationEnabled; ///< based on SIPX_PROXY_AUTHENTICATE_ALGORITHM
    UtlString     mRealm;                 ///< realm for challenges - common to replicatants
@@ -220,6 +296,13 @@ class SipRouter : public OsServerTask
    /// OPTIONS, NOTIFY, and SUBSCRIBE
    bool isPAIdentityApplicable(const SipMessage& sipRequest);
 
+   //
+   // This method will be call if a SIP message will no longer be spiraling through 
+   // the authentication rules and is about to be sent out to the final destination.
+   // This is normally the place where the code will evaluate extra rules
+   // such as privacy.
+   //
+   void performPreRoutingChecks(SipMessage& sipRequest);
    // @cond INCLUDENOCOPY
 
    // There is no copy constructor.
@@ -233,6 +316,24 @@ class SipRouter : public OsServerTask
 	 friend class SipBridgeRouter;
 
    EntityDB* mpEntityDb;
+   RegDB* mpRegDb;
+   OsThreadPool<SipMessage*> _threadPool;
+   Poco::Semaphore* _pThreadPoolSem;
+   int _maxConcurrentThreads;
+   mutex_critic_sec _outboundMutex;
+   UtlBoolean _rejectOnFilledQueue;
+   int _rejectOnFilledQueuePercent;
+   long _lastFilledQueueAlarmLog;
+   int _maxTransactionCount;
+   boost::circular_buffer<Int64> _dispatchSamples;
+   mutable mutex_critic_sec _dispatchSamplesMutex;
+   mutable mutex_critic_sec _preDispatchMutex; 
+   Int64 _lastDispatchSpeed;
+   long _lastDispatchYieldTime;
+   bool _isDispatchYielding;
+   UtlBoolean _trustSbcRegisteredCalls;
+   TrustedRequestModifiers _trustedRequestModifiers;
+   FinalResponseModifiers _finalResponseModifiers;
 };
 
 /* ============================ INLINE METHODS ============================ */
@@ -240,6 +341,16 @@ class SipRouter : public OsServerTask
 inline UtlBoolean SipRouter::isRelayAllowed() const
 {
   return mRelayAllowed;
+}
+
+inline SipUserAgent* SipRouter::getUserAgent() const
+{
+  return mpSipUserAgent;
+}
+
+inline UtlBoolean SipRouter::trustSbcRegisteredCalls() const
+{
+  return _trustSbcRegisteredCalls;
 }
 
 

@@ -15,6 +15,8 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hibernate.Hibernate;
 import org.hibernate.Query;
 import org.sipfoundry.sipxconfig.common.CoreContext;
@@ -25,6 +27,7 @@ import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.common.event.DaoEventListener;
 import org.sipfoundry.sipxconfig.commserver.SipxReplicationContext;
 import org.sipfoundry.sipxconfig.commserver.imdb.DataSet;
+import org.sipfoundry.sipxconfig.dialplan.AttendantRule;
 import org.sipfoundry.sipxconfig.dialplan.DialingRule;
 import org.sipfoundry.sipxconfig.setting.Group;
 import org.springframework.context.ApplicationEvent;
@@ -38,10 +41,11 @@ import org.springframework.orm.hibernate3.HibernateTemplate;
  */
 public class ForwardingContextImpl extends SipxHibernateDaoSupport implements ForwardingContext,
         ApplicationListener, DaoEventListener {
-
+    private static final Log LOG = LogFactory.getLog(ForwardingContextImpl.class);
     private static final String PARAM_SCHEDULE_ID = "scheduleId";
     private static final String PARAM_USER_ID = "userId";
     private static final String PARAM_USER_GROUP_ID = "userGroupId";
+    private static final String PARAM_FEATURE_ID = "featureId";
     private static final String PARAM_NAME = "name";
     private static final String SQL_CALLSEQUENCE_IDS = "select distinct u.user_id from users u";
     private CoreContext m_coreContext;
@@ -59,6 +63,7 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
      *
      * @param user for which CallSequence object is retrieved
      */
+    @Override
     public CallSequence getCallSequenceForUser(User user) {
         return getCallSequenceForUserId(user.getId());
     }
@@ -71,14 +76,16 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
         }
     }
 
+    @Override
     public void saveCallSequence(CallSequence callSequence) {
         getHibernateTemplate().update(callSequence);
         m_coreContext.saveUser(callSequence.getUser());
     }
 
+    @Override
     public CallSequence getCallSequenceForUserId(Integer userId) {
         HibernateTemplate hibernate = getHibernateTemplate();
-        return (CallSequence) hibernate.get(CallSequence.class, userId);
+        return hibernate.get(CallSequence.class, userId);
     }
 
     private void removeCallSequenceForUserId(Integer userId) {
@@ -94,9 +101,10 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
         getHibernateTemplate().deleteAll(schedules);
     }
 
+    @Override
     public Ring getRing(Integer id) {
         HibernateTemplate hibernate = getHibernateTemplate();
-        return (Ring) hibernate.load(Ring.class, id);
+        return hibernate.load(Ring.class, id);
     }
 
     /**
@@ -130,6 +138,7 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
         return ids;
     }
 
+    @Override
     public List<Schedule> getPersonalSchedulesForUserId(Integer userId) {
         HibernateTemplate hibernate = getHibernateTemplate();
 
@@ -148,30 +157,34 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
         return hibernate.findByNamedQueryAndNamedParam("dialingRulesForScheduleId", PARAM_SCHEDULE_ID, scheduleId);
     }
 
+    @Override
     public Schedule getScheduleById(Integer scheduleId) {
-        return (Schedule) getHibernateTemplate().load(Schedule.class, scheduleId);
+        return getHibernateTemplate().load(Schedule.class, scheduleId);
     }
 
+    @Override
     public void saveSchedule(Schedule schedule) {
         if (schedule.isNew()) {
             // check if new object
             checkForDuplicateNames(schedule);
+            getHibernateTemplate().save(schedule);
         } else {
             // on edit action - check if the name for this schedule was modified
             // if the name was changed then perform duplicate name checking
             if (isNameChanged(schedule)) {
                 checkForDuplicateNames(schedule);
             }
-        }
-        getHibernateTemplate().saveOrUpdate(schedule);
-        List<Ring> rings = getRingsForScheduleId(schedule.getId());
-        Collection<CallSequence> css = new HashSet<CallSequence>();
-        if (rings != null) {
-            for (Ring ring : rings) {
-                css.add(ring.getCallSequence());
+            getHibernateTemplate().merge(schedule);
+            List<Ring> rings = getRingsForScheduleId(schedule.getId());
+            Collection<CallSequence> css = new HashSet<CallSequence>();
+            if (rings != null) {
+                for (Ring ring : rings) {
+                    css.add(ring.getCallSequence());
+                }
             }
+            notifyCommserver(css);
+            getDaoEventPublisher().publishSave(schedule);
         }
-        notifyCommserver(css);
     }
 
     private void checkForDuplicateNames(Schedule schedule) {
@@ -199,6 +212,9 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
         } else if (schedule instanceof GeneralSchedule) {
             count = getHibernateTemplate().findByNamedQueryAndNamedParam("anotherGeneralScheduleWithTheSameName",
                     PARAM_NAME, schedule.getName());
+        } else if (schedule instanceof FeatureSchedule) {
+            count = getHibernateTemplate().findByNamedQueryAndNamedParam("anotherFeatureScheduleWithTheSameName",
+                PARAM_NAME, schedule.getName());
         }
 
         return DataAccessUtils.intResult(count) > 0;
@@ -214,6 +230,7 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
         return DataAccessUtils.intResult(count) == 0;
     }
 
+    @Override
     public void deleteSchedulesById(Collection<Integer> scheduleIds) {
         Collection<Schedule> schedules = new ArrayList<Schedule>(scheduleIds.size());
         for (Integer id : scheduleIds) {
@@ -224,10 +241,12 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
         getHibernateTemplate().deleteAll(schedules);
     }
 
+    @Override
     public List<UserGroupSchedule> getAllUserGroupSchedules() {
         return getHibernateTemplate().loadAll(UserGroupSchedule.class);
     }
 
+    @Override
     public List<Schedule> getAllAvailableSchedulesForUser(User user) {
         List<Schedule> schedulesForUser = new ArrayList<Schedule>();
         schedulesForUser.addAll(getPersonalSchedulesForUserId(user.getId()));
@@ -238,6 +257,7 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
         return schedulesForUser;
     }
 
+    @Override
     public List<UserGroupSchedule> getSchedulesForUserGroupId(Integer userGroupId) {
         HibernateTemplate hibernate = getHibernateTemplate();
 
@@ -245,12 +265,26 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
                 userGroupId);
     }
 
+    @Override
     public List<GeneralSchedule> getAllGeneralSchedules() {
         return getHibernateTemplate().loadAll(GeneralSchedule.class);
     }
 
+    @Override
+    public List<FeatureSchedule> getAllFeatureSchedules() {
+        return getHibernateTemplate().loadAll(FeatureSchedule.class);
+    }
+
+    @Override
+    public List<FeatureSchedule> getSchedulesForFeatureId(String featureId) {
+        return getHibernateTemplate().findByNamedQueryAndNamedParam("schedulesForFeatureId", PARAM_FEATURE_ID,
+            featureId);
+    }
+
+    @Override
     public void onApplicationEvent(ApplicationEvent event) {
         if (event instanceof DSTChangeEvent) {
+            LOG.info("DST change event caught. Triggering alias generation.");
             m_sipxReplicationContext.generateAll(DataSet.ALIAS);
         }
     }
@@ -258,6 +292,7 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
     /**
      * Only used from WEB UI test code
      */
+    @Override
     public void clear() {
         Collection<CallSequence> sequences = loadAllCallSequences();
         for (CallSequence sequence : sequences) {
@@ -266,6 +301,7 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
         }
     }
 
+    @Override
     public void clearSchedules() {
         Collection<Schedule> schedules = getHibernateTemplate().loadAll(Schedule.class);
         getHibernateTemplate().deleteAll(schedules);
@@ -297,8 +333,16 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
                         rule.setSchedule(null);
                     }
                     getHibernateTemplate().saveOrUpdateAll(rules);
+                    for (DialingRule rule : rules) {
+                        if (rule instanceof AttendantRule) {
+                            AttendantRule aaRule = (AttendantRule) rule;
+                            m_sipxReplicationContext.generate(aaRule);
+                        } else {
+                            getDaoEventPublisher().publishSave(rule);
+                        }
+                    }
                 }
-            } else {
+            } else if (schedule instanceof UserSchedule || schedule instanceof UserGroupSchedule) {
                 Collection<CallSequence> css = new HashSet<CallSequence>();
                 // get all rings and set schedule to Always
                 List<Ring> rings = getRingsForScheduleId(schedule.getId());
@@ -320,5 +364,24 @@ public class ForwardingContextImpl extends SipxHibernateDaoSupport implements Fo
 
     @Override
     public void onSave(Object entity) {
+        if (entity instanceof CallSequence) {
+            CallSequence seq = (CallSequence) entity;
+            m_sipxReplicationContext.generate(seq.getUser());
+        } else if (entity instanceof Schedule) {
+            Schedule schedule = (Schedule) entity;
+            if (schedule instanceof GeneralSchedule) {
+                List<DialingRule> rules = getDialingRulesForScheduleId(schedule.getId());
+                if (rules != null) {
+                    for (DialingRule rule : rules) {
+                        if (rule instanceof AttendantRule) {
+                            AttendantRule aaRule = (AttendantRule) rule;
+                            m_sipxReplicationContext.generate(aaRule);
+                        } else {
+                            getDaoEventPublisher().publishSave(rule);
+                        }
+                    }
+                }
+            }
+        }
     }
 }

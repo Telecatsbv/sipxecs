@@ -35,8 +35,6 @@ public interface BackupManager {
 
     Collection<BackupPlan> getBackupPlans();
 
-    String getBackupLink(BackupPlan plan);
-
     void saveBackupPlan(BackupPlan plan);
 
     File getRestoreStagingDirectory();
@@ -47,9 +45,13 @@ public interface BackupManager {
 
     Collection<String> getArchiveDefinitionIds();
 
-    Collection<ArchiveDefinition> getArchiveDefinitions(Location location, BackupSettings manual);
-
-    String getBackupScript();
+    Collection<ArchiveDefinition> getArchiveDefinitions(Location location, BackupPlan plan, BackupSettings manual);
 
     File getPlanFile(BackupPlan plan);
+
+    //This file will keep the last user selection of backup
+    File getTmpBackupFile(BackupPlan plan);
+
+    //This file will keep the last user selection of restore
+    File getTmpRestoreFile(BackupPlan plan);
 }

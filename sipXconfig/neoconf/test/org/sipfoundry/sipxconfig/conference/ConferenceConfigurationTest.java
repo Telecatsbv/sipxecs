@@ -21,10 +21,12 @@ import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.domain.Domain;
 import org.sipfoundry.sipxconfig.domain.DomainManager;
 import org.sipfoundry.sipxconfig.test.TestHelper;
+import org.springframework.beans.factory.ListableBeanFactory;
 
 public class ConferenceConfigurationTest extends TestCase {
 
     private DomainManager m_domainManager;
+    private ListableBeanFactory m_beanFactory;
     private final Location m_location = new Location();
     private final Domain m_domain = new Domain("example.com");
     private final ConferenceConfiguration m_config = new ConferenceConfiguration();
@@ -36,6 +38,11 @@ public class ConferenceConfigurationTest extends TestCase {
         m_config.setVelocityEngine(TestHelper.getVelocityEngine());
         m_config.setMohLocalStreamUrl("local_stream://moh");
         m_config.setPortAudioUrl("portaudio_stream://");
+
+        m_beanFactory = EasyMock.createNiceMock(ListableBeanFactory.class);
+        m_beanFactory.getBeansOfType(ConferenceProfileProvider.class);
+        EasyMock.expectLastCall().andReturn(null);
+        m_config.setBeanFactory(m_beanFactory);
     }
 
     public void testGenerate() throws Exception {
@@ -91,7 +98,12 @@ public class ConferenceConfigurationTest extends TestCase {
     private void testConference(Bridge bridge, String file) throws Exception {
         User owner = new User();
 
-        Conference conf = new Conference();
+        Conference conf = new Conference(){
+            @Override
+            public String getAudioDirectory() {
+                return "/audioDirectory";
+            }
+        };
         conf.setModelFilesContext(TestHelper.getModelFilesContext());
         conf.initialize();
         conf.getSettings();
@@ -100,7 +112,12 @@ public class ConferenceConfigurationTest extends TestCase {
         conf.setUniqueId();
         bridge.addConference(conf);
 
-        conf = new Conference();
+        conf = new Conference(){
+            @Override
+            public String getAudioDirectory() {
+                return "/audioDirectory";
+            }
+        };
         conf.setModelFilesContext(TestHelper.getModelFilesContext());
         conf.initialize();
         conf.setOwner(owner);
@@ -110,7 +127,12 @@ public class ConferenceConfigurationTest extends TestCase {
         conf.setAutorecorded(true);
         bridge.addConference(conf);
 
-        conf = new Conference();
+        conf = new Conference(){
+            @Override
+            public String getAudioDirectory() {
+                return "/audioDirectory";
+            }
+        };
         conf.setModelFilesContext(TestHelper.getModelFilesContext());
         conf.initialize();
         conf.setOwner(owner);
@@ -123,7 +145,12 @@ public class ConferenceConfigurationTest extends TestCase {
         conf.setSettingValue(Conference.MOH, "NONE");
         bridge.addConference(conf);
 
-        conf = new Conference();
+        conf = new Conference(){
+            @Override
+            public String getAudioDirectory() {
+                return "/audioDirectory";
+            }
+        };
         conf.setModelFilesContext(TestHelper.getModelFilesContext());
         conf.initialize();
         conf.setOwner(owner);

@@ -46,6 +46,7 @@ import org.sipfoundry.sipxconfig.address.AddressType;
 import org.sipfoundry.sipxconfig.backup.ArchiveDefinition;
 import org.sipfoundry.sipxconfig.backup.ArchiveProvider;
 import org.sipfoundry.sipxconfig.backup.BackupManager;
+import org.sipfoundry.sipxconfig.backup.BackupPlan;
 import org.sipfoundry.sipxconfig.backup.BackupSettings;
 import org.sipfoundry.sipxconfig.cdr.Cdr.Termination;
 import org.sipfoundry.sipxconfig.common.User;
@@ -68,6 +69,7 @@ import org.sipfoundry.sipxconfig.snmp.ProcessDefinition;
 import org.sipfoundry.sipxconfig.snmp.ProcessProvider;
 import org.sipfoundry.sipxconfig.snmp.SnmpManager;
 import org.sipfoundry.sipxconfig.time.NtpManager;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.support.DataAccessUtils;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -133,9 +135,14 @@ public class CdrManagerImpl extends JdbcDaoSupport implements CdrManager, Featur
         CdrsStatementCreator psc = new SelectAll(from, to, search, user, (user != null) ? (user.getTimezone())
                 : m_tz, limit, offset);
         CdrsResultReader resultReader = new CdrsResultReader((user != null) ? (user.getTimezone())
-                : (TimeZone.getTimeZone(m_ntpManager.getSystemTimezone())));
+                : (getTimeZone()));
         getJdbcTemplate().query(psc, resultReader);
         return resultReader.getResults();
+    }
+
+    private TimeZone getTimeZone() {
+        String systemTimezone = m_ntpManager.getSystemTimezone();
+        return systemTimezone == null ? TimeZone.getDefault() : TimeZone.getTimeZone(systemTimezone);
     }
 
     @Override
@@ -625,16 +632,17 @@ public class CdrManagerImpl extends JdbcDaoSupport implements CdrManager, Featur
 
     @Override
     public Collection<ArchiveDefinition> getArchiveDefinitions(BackupManager manager, Location location,
-            BackupSettings manualSettings) {
+            BackupPlan plan, BackupSettings manualSettings) {
         if (!manager.getFeatureManager().isFeatureEnabled(FEATURE, location)) {
             return null;
         }
 
-        ArchiveDefinition def = new ArchiveDefinition(ARCHIVE, "$(sipx.SIPX_BINDIR)/sipxcdr-archive --backup %s",
-                "$(sipx.SIPX_BINDIR)/sipxcdr-archive --restore %s");
+        ArchiveDefinition def = new ArchiveDefinition(ARCHIVE, "sipxcdr-archive --backup %s",
+                "sipxcdr-archive --restore %s");
         return Collections.singleton(def);
     }
 
+    @Required
     public void setNtpManager(NtpManager ntpManager) {
         m_ntpManager = ntpManager;
     }

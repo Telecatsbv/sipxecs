@@ -10,13 +10,14 @@
 package org.sipfoundry.sipxconfig.commserver.imdb;
 
 import static org.sipfoundry.commons.mongo.MongoConstants.ENTITY_NAME;
+import static org.sipfoundry.commons.mongo.MongoConstants.GROUPS;
 import static org.sipfoundry.commons.mongo.MongoConstants.ID;
 import static org.sipfoundry.commons.mongo.MongoConstants.IDENTITY;
 import static org.sipfoundry.commons.mongo.MongoConstants.VALID_USER;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -28,7 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sipfoundry.commons.mongo.MongoConstants;
@@ -50,6 +51,8 @@ import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.commserver.LocationsManager;
 import org.sipfoundry.sipxconfig.logging.AuditLogContext;
 import org.sipfoundry.sipxconfig.permission.Permission;
+import org.sipfoundry.sipxconfig.phone.Phone;
+import org.sipfoundry.sipxconfig.phone.PhoneContext;
 import org.sipfoundry.sipxconfig.setting.Group;
 import org.sipfoundry.sipxconfig.setup.SetupListener;
 import org.sipfoundry.sipxconfig.setup.SetupManager;
@@ -67,11 +70,12 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
+import com.mongodb.QueryBuilder;
 
 /**
  * This class manages all effective replications.The replication is triggered by
- * {@link ReplicationTrigger} or {@link SipxReplicationContext}, but the ReplicationManager takes
- * care of all the work load needed to replicate {@link Replicable}s in Mongo and
+ * {@link ReplicationTrigger} or SipxReplicationContext, but the ReplicationManager takes care of
+ * all the work load needed to replicate {@link Replicable}s in Mongo and
  * {@link ConfigurationFile}s on different locations.
  */
 public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements ReplicationManager, BeanFactoryAware,
@@ -90,7 +94,10 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
     private static final String MS = " ms ";
     private static final DataSet[] GROUP_DATASETS = {
         DataSet.ATTENDANT, DataSet.PERMISSION, DataSet.CALLER_ALIAS, DataSet.SPEED_DIAL, DataSet.USER_FORWARD,
-        DataSet.USER_LOCATION, DataSet.USER_STATIC, DataSet.MAILSTORE
+        DataSet.USER_LOCATION, DataSet.USER_STATIC, DataSet.MAILSTORE, DataSet.E911
+    };
+    private static final DataSet[] PHONE_GROUP_DATASETS = {
+        DataSet.E911
     };
     private static final DataSet[] BRANCH_DATASETS = {
         DataSet.USER_LOCATION
@@ -107,6 +114,7 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
     private boolean m_useDynamicPageSize;
     private DataSet m_dataSet;
     private ApplicationContext m_applicationContext;
+    private PhoneContext m_phoneContext;
 
     private final Closure<User> m_userClosure = new Closure<User>() {
         @Override
@@ -136,21 +144,18 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
         }
     };
 
-    // the difference between the user and the group closures is that for group members
-    // we need to replicate only some datasets and not all.
-    // also, callsequences need not be replicated (there are no callsequnces for groups)
-    private final Closure<User> m_userSpeedDialGroupClosure = new Closure<User>() {
-        @Override
-        public void execute(User user) {
-            replicateEntity(user, DataSet.SPEED_DIAL);
-            getHibernateTemplate().clear(); // clear the H session (see XX-9741)
-        }
-    };
-
     private final Closure<User> m_branchClosure = new Closure<User>() {
         @Override
         public void execute(User user) {
             replicateEntity(user, BRANCH_DATASETS);
+            getHibernateTemplate().clear(); // clear the H session (see XX-9741)
+        }
+    };
+
+    private final Closure<Phone> m_phoneClosure = new Closure<Phone>() {
+        @Override
+        public void execute(Phone phone) {
+            replicateEntity(phone);
             getHibernateTemplate().clear(); // clear the H session (see XX-9741)
         }
     };
@@ -177,7 +182,7 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
     private class ReplicationWorker implements Callable<Void> {
         private final int m_startIndex;
         private final int m_page;
-        private Closure<User> m_closure = m_userClosure;
+        private final Closure<User> m_closure = m_userClosure;
 
         public ReplicationWorker(int index, int pageSize, Object arg) {
             m_startIndex = index;
@@ -212,6 +217,19 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
         }
     }
 
+    private class ReplicationWorkerPhone extends ReplicationWorker {
+
+        public ReplicationWorkerPhone(int index, int pageSize, Object arg) {
+            super(index, pageSize, arg);
+        }
+
+        @Override
+        public Void call() {
+            DaoUtils.forAllPhonesDo(m_phoneContext, m_phoneClosure, getStartIndex(), getPage());
+            return null;
+        }
+    }
+
     /*
      * Callable used for the replication of members in a group
      */
@@ -230,21 +248,17 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
         }
     }
 
-    /*
-     * Callable used for the replication of members in a group
-     */
-    private class AllGroupSpeedDialMembersReplicationWorker extends ReplicationWorker {
+    private class AllPhoneGroupMembersReplicationWorker extends ReplicationWorker {
         private final Group m_group;
 
-        public AllGroupSpeedDialMembersReplicationWorker(int i, int pageSize, Group group) {
+        public AllPhoneGroupMembersReplicationWorker(int i, int pageSize, Group group) {
             super(i, pageSize, null);
             m_group = group;
         }
 
         @Override
         public Void call() {
-            DaoUtils.forAllGroupMembersDo(m_coreContext, m_group, m_userSpeedDialGroupClosure, getStartIndex(),
-                    getPage());
+            DaoUtils.forAllPhoneGroupMembersDo(m_phoneContext, m_group, m_phoneClosure, getStartIndex(), getPage());
             return null;
         }
     }
@@ -287,11 +301,15 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
             dropDatasetDb();
             int membersCount = m_coreContext.getAllUsersCount();
             doParallelReplication(membersCount, ReplicationWorker.class, null);
+            int phonesCount = m_phoneContext.getPhonesCount();
+            doParallelReplication(phonesCount, ReplicationWorkerPhone.class, null);
             // get the rest of Replicables and replicate them
             Map<String, ReplicableProvider> beanMap = m_beanFactory.getBeansOfType(ReplicableProvider.class);
             for (ReplicableProvider provider : beanMap.values()) {
-                for (Replicable entity : provider.getReplicables()) {
-                    replicateEntity(entity);
+                if (provider instanceof Proxy) {
+                    for (Replicable entity : provider.getReplicables()) {
+                        replicateEntity(entity);
+                    }
                 }
             }
             // Replicate the external aliases
@@ -311,31 +329,20 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
      */
     @Override
     public void replicateEntity(Replicable entity) {
-        if (!entity.isEnabled()) {
+        if (!entity.isReplicationEnabled()) {
             removeEntity(entity);
             return;
         }
         String name = (entity.getName() != null) ? entity.getName() : entity.toString();
         try {
-            Long start = System.currentTimeMillis();
-            DBObject top = findOrCreate(entity);
             Set<DataSet> dataSets = entity.getDataSets();
             if (dataSets != null && !dataSets.isEmpty()) {
-                boolean shouldSave = false;
-                for (DataSet dataSet : dataSets) {
-                    if (shouldSave) {
-                        replicateEntity(entity, dataSet, top);
-                    } else {
-                        shouldSave = replicateEntity(entity, dataSet, top);
-                    }
-                }
-                if (shouldSave) {
-                    getDbCollection().save(top);
-                    Long end = System.currentTimeMillis();
-                    LOG.debug(REPLICATION_INS_UPD + name + IN + (end - start) + MS);
-                }
+                replicateEntity(entity, dataSets.toArray(new DataSet[dataSets.size()]));
             } else {
-                getDbCollection().save(top);
+                DBObject top = new BasicDBObject();
+                DBObject cleanCopy = new BasicDBObject();
+                boolean isNew = findOrCreate(entity, top, cleanCopy);
+                replicate(top, cleanCopy, name, isNew);
             }
         } catch (Exception e) {
             LOG.error(REPLICATION_FAILED + name, e);
@@ -348,47 +355,75 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
      */
     @Override
     public void replicateEntity(Replicable entity, DataSet... dataSets) {
-        if (!entity.isEnabled()) {
+        if (!entity.isReplicationEnabled()) {
             removeEntity(entity);
             return;
         }
         String name = (entity.getName() != null) ? entity.getName() : entity.toString();
         try {
             Long start = System.currentTimeMillis();
-            DBObject top = findOrCreate(entity);
-            boolean shouldSave = false;
+            DBObject top = new BasicDBObject();
+            DBObject cleanCopy = new BasicDBObject();
+            boolean isNew = findOrCreate(entity, top, cleanCopy);
             for (DataSet dataSet : dataSets) {
-                if (shouldSave) {
-                    replicateEntity(entity, dataSet, top);
-                } else {
-                    shouldSave = replicateEntity(entity, dataSet, top);
-                }
+                replicateEntity(entity, dataSet, top);
             }
-            if (shouldSave) {
-                getDbCollection().save(top);
-                Long end = System.currentTimeMillis();
-                LOG.debug(REPLICATION_INS_UPD + name + IN + (end - start) + MS);
-            }
+            replicate(top, cleanCopy, name, isNew);
+            Long end = System.currentTimeMillis();
+            LOG.debug(REPLICATION_INS_UPD + name + IN + (end - start) + MS);
         } catch (Exception e) {
             LOG.error(REPLICATION_FAILED + name, e);
             throw new UserException(REPLICATION_FAILED + entity.getName(), e);
         }
     }
 
-    private boolean replicateEntity(Replicable entity, DataSet dataSet, DBObject top) {
-        if (!entity.isEnabled()) {
-            return false;
+    private void replicate(DBObject top, DBObject cleanCopy, String name, boolean isNew) {
+        if (isNew) {
+            getDbCollection().save(top);
+        } else {
+            DBObject toUpdate = new BasicDBObject();
+            toUpdate.put(ID, top.get(ID));
+            DBObject updateQ = new BasicDBObject();
+            DBObject removeQ = new BasicDBObject();
+            for (String field : cleanCopy.keySet()) {
+                Object oldValue = cleanCopy.get(field);
+                Object newValue = top.get(field);
+                LOG.debug(String.format("field: %s;old: %s; new: %s", field, oldValue, newValue));
+                if (oldValue == null || !oldValue.equals(newValue)) {
+                    if (newValue == null) {
+                        removeQ.put(field, StringUtils.EMPTY);
+                    } else {
+                        updateQ.put(field, newValue);
+                    }
+                }
+            }
+            for (String field : top.keySet()) {
+                Object oldValue = cleanCopy.get(field);
+                Object newValue = top.get(field);
+
+                if (newValue != null && (oldValue == null || !oldValue.equals(newValue))) {
+                    updateQ.put(field, newValue);
+                }
+            }
+            LOG.debug(String.format("Update query: %s: ", updateQ));
+            LOG.debug(String.format("Remove query: %s: ", removeQ));
+            DBObject set = new BasicDBObject("$set", updateQ).append("$unset", removeQ);
+            getDbCollection().update(toUpdate, set);
         }
+
+    }
+
+    private void replicateEntity(Replicable entity, DataSet dataSet, DBObject top) {
         String beanName = dataSet.getBeanName();
         try {
             final AbstractDataSetGenerator generator = m_beanFactory.getBean(beanName,
                     AbstractDataSetGenerator.class);
-            return generator.generate(entity, top);
+            generator.generate(entity, top);
         } catch (NoSuchBeanDefinitionException e) {
             // This will happen always for datasets defined in plugins.
             // Logging will only litter the logs.
             // LOG.debug("No such bean: " + beanName);
-            return true;
+            return;
         }
     }
 
@@ -398,25 +433,27 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
     @Override
     public void replicateAllData(final DataSet ds) {
         try {
-            Long start = System.currentTimeMillis();
+            long start = System.currentTimeMillis();
             Map<String, ReplicableProvider> beanMap = m_beanFactory.getBeansOfType(ReplicableProvider.class);
             for (ReplicableProvider provider : beanMap.values()) {
                 for (Replicable entity : provider.getReplicables()) {
                     if (entity != null) {
-                        if (!entity.getDataSets().contains(ds)) {
+                        if (!entity.getDataSets().contains(ds)) { /*
+                                                                   * Callable used for the
+                                                                   * replication of members in a
+                                                                   * group
+                                                                   */
+
                             continue;
                         }
-                        DBObject top = findOrCreate(entity);
-                        if (replicateEntity(entity, ds, top)) {
-                            getDbCollection().save(top);
-                        }
+                        replicateEntity(entity);
                     }
                 }
             }
             int membersCount = m_coreContext.getAllUsersCount();
             m_dataSet = ds;
             doParallelReplication(membersCount, ReplicationWorkerDataSet.class, null);
-            Long end = System.currentTimeMillis();
+            long end = System.currentTimeMillis();
             LOG.info(REGENERATION_OF + ds.getName() + " completed in " + (end - start) / 1000 + SECONDS
                     + (end - start) / 1000 / 60 + MINUTES);
 
@@ -427,18 +464,23 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
     }
 
     @Override
+    /*
+     * Callable used for the replication of members in a group
+     */
     public void replicateGroup(Group group) {
-        replicateGroupWithWorker(group, AllGroupMembersReplicationWorker.class);
+        int membersCount = m_coreContext.getGroupMembersCount(group.getId());
+        LOG.debug("Replicate user group " + group.getName() + " with " + membersCount + " members");
+        replicateGroupWithWorker(group, AllGroupMembersReplicationWorker.class, membersCount);
     }
 
     @Override
-    public void replicateSpeedDialGroup(Group group) {
-        replicateGroupWithWorker(group, AllGroupSpeedDialMembersReplicationWorker.class);
+    public void replicatePhoneGroup(Group group) {
+        int membersCount = m_phoneContext.getPhonesInGroupCount(group.getId());
+        replicateGroupWithWorker(group, AllPhoneGroupMembersReplicationWorker.class, membersCount);
     }
 
-    private void replicateGroupWithWorker(Group group, Class< ? extends ReplicationWorker> worker) {
+    private void replicateGroupWithWorker(Group group, Class< ? extends ReplicationWorker> worker, int membersCount) {
         try {
-            int membersCount = m_coreContext.getGroupMembersCount(group.getId());
             doParallelReplication(membersCount, worker, group);
             LOG.info("Regeneration of group complete");
         } catch (Exception e) {
@@ -463,9 +505,9 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
 
     @Override
     public void deleteBranch(Branch branch) {
+        LOG.info("Starting regeneration of branch members.");
+        DBCursor users = m_validUsers.getUsersInBranch(branch.getName());
         try {
-            LOG.info("Starting regeneration of branch members.");
-            DBCursor users = m_validUsers.getUsersInBranch(branch.getName());
             for (DBObject user : users) {
                 String uid = user.get(MongoConstants.UID).toString();
                 User u = m_coreContext.loadUserByUserName(uid);
@@ -476,25 +518,49 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
         } catch (Exception e) {
             LOG.error(ERROR_PERMISSION, e);
             throw new UserException(ERROR_PERMISSION, e);
+        } finally {
+            users.close();
         }
     }
 
     @Override
     public void deleteGroup(Group group) {
-        try {
-            LOG.info("Starting regeneration of group members.");
+        LOG.info("Starting regeneration of group members.");
+        if (User.GROUP_RESOURCE_ID.equals(group.getResource())) {
             DBCursor users = m_validUsers.getUsersInGroup(group.getName());
-            for (DBObject user : users) {
-                String uid = user.get(MongoConstants.UID).toString();
-                User u = m_coreContext.loadUserByUserName(uid);
-                replicateEntity(u, GROUP_DATASETS);
-                getHibernateTemplate().clear(); // clear the H session (see XX-9741)
+            try {
+                for (DBObject user : users) {
+                    String uid = user.get(MongoConstants.UID).toString();
+                    User u = m_coreContext.loadUserByUserName(uid);
+                    replicateEntity(u, GROUP_DATASETS);
+                    getHibernateTemplate().clear(); // clear the H session (see XX-9741)
+                }
+                LOG.info("End of regeneration of group members.");
+            } catch (Exception e) {
+                LOG.error(ERROR_PERMISSION, e);
+                throw new UserException(ERROR_PERMISSION, e);
+            } finally {
+                users.close();
             }
-            LOG.info("End of regeneration of group members.");
-        } catch (Exception e) {
-            LOG.error(ERROR_PERMISSION, e);
-            throw new UserException(ERROR_PERMISSION, e);
+
+        } else if (Phone.GROUP_RESOURCE_ID.equals(group.getResource())) {
+            DBObject query = QueryBuilder.start(ENTITY_NAME).is("phone").and(GROUPS).is(group.getName()).get();
+            DBCursor phones = getEntityCollection().find(query);
+            try {
+                for (DBObject phone : phones) {
+                    String serialNumber = phone.get(MongoConstants.SERIAL_NUMBER).toString();
+                    Phone p = m_phoneContext.getPhoneBySerialNumber(serialNumber);
+                    replicateEntity(p, PHONE_GROUP_DATASETS);
+                    getHibernateTemplate().clear(); // clear the H session (see XX-9741)
+                }
+            } catch (Exception e) {
+                LOG.error(e);
+                throw new UserException(e);
+            } finally {
+                phones.close();
+            }
         }
+
     }
 
     /*
@@ -578,30 +644,14 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
     }
 
     /**
-     * Encodes payload using Base64 and returns encoded data as string
-     *
-     * @param payload
-     * @return string representing encoded data
-     */
-    private String encodeBase64(byte[] payload) {
-        try {
-            // Base64 encoded content is always limited to US-ASCII charset
-            byte[] encodedPayload = Base64.encodeBase64(payload);
-            return new String(encodedPayload, "US-ASCII");
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
      * Adds the specified Permission to all entities supporting permissions. Used only when a new
      * permission with default "checked" is added. Much faster than using
      * replicateAllData(DataSet.PERMISSION)
      */
     @Override
     public void addPermission(Permission permission) {
+        DBCursor users = m_validUsers.getEntitiesWithPermissions();
         try {
-            DBCursor users = m_validUsers.getEntitiesWithPermissions();
             for (DBObject user : users) {
                 Collection<String> prms = (Collection<String>) user.get(MongoConstants.PERMISSIONS);
                 prms.add(permission.getName());
@@ -611,6 +661,8 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
         } catch (Exception e) {
             LOG.error(ERROR_PERMISSION, e);
             throw new UserException(ERROR_PERMISSION, e);
+        } finally {
+            users.close();
         }
     }
 
@@ -619,8 +671,8 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
      */
     @Override
     public void removePermission(Permission permission) {
+        DBCursor users = m_validUsers.getEntitiesWithPermission(permission.getName());
         try {
-            DBCursor users = m_validUsers.getEntitiesWithPermission(permission.getName());
             for (DBObject user : users) {
                 Collection<String> prms = (Collection<String>) user.get(MongoConstants.PERMISSIONS);
                 prms.remove(permission.getName());
@@ -630,35 +682,52 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
         } catch (Exception e) {
             LOG.error(ERROR_PERMISSION, e);
             throw new UserException(ERROR_PERMISSION, e);
+        } finally {
+            users.close();
         }
     }
 
-    protected DBObject findOrCreate(Replicable entity) {
+    /**
+     * This method searches for an entity in Mongo. If it cannot find it creates one with
+     * necessary properties. It receives the Replicable entity as a parameter and a new
+     * BasicDbObject. It returns a boolean value if the entity was created (true) or found
+     * (false).
+     *
+     * @param entity
+     * @param obj
+     * @return
+     */
+    protected boolean findOrCreate(Replicable entity, DBObject obj, DBObject cleanCopy) {
         DBCollection collection = getDbCollection();
         String id = getEntityId(entity);
-
+        boolean isNew = false;
         DBObject search = new BasicDBObject();
         search.put(ID, id);
         DBObject top = collection.findOne(search);
         if (top == null) {
+            isNew = true;
             top = new BasicDBObject();
             top.put(ID, id);
         }
+        cleanCopy.putAll(top.toMap());
         String sipDomain = m_coreContext.getDomainName();
         if (entity.getIdentity(sipDomain) != null) {
             top.put(IDENTITY, entity.getIdentity(sipDomain));
         }
-        for (String key : entity.getMongoProperties(sipDomain).keySet()) {
-            top.put(key, entity.getMongoProperties(sipDomain).get(key));
+        Map<String, Object> mongoProps = entity.getMongoProperties(sipDomain);
+
+        for (Map.Entry<String, Object> property : mongoProps.entrySet()) {
+            top.put(property.getKey(), property.getValue());
         }
         if (entity.isValidUser()) {
             top.put(VALID_USER, true);
         }
         top.put(ENTITY_NAME, entity.getEntityName().toLowerCase());
-        return top;
+        obj.putAll(top.toMap());
+        return isNew;
     }
 
-    private String getEntityId(Replicable entity) {
+    private static String getEntityId(Replicable entity) {
         String id = "";
         if (entity instanceof BeanWithId) {
             id = entity.getEntityName() + ((BeanWithId) entity).getId();
@@ -775,5 +844,9 @@ public class ReplicationManagerImpl extends SipxHibernateDaoSupport implements R
             manager.setTrue(id);
         }
         return true;
+    }
+
+    public void setPhoneContext(PhoneContext phoneContext) {
+        m_phoneContext = phoneContext;
     }
 }

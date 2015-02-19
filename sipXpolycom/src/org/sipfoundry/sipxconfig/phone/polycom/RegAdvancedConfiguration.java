@@ -21,6 +21,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import org.sipfoundry.commons.util.ShortHash;
+import org.sipfoundry.sipxconfig.common.SpecialUser.SpecialUserType;
 import org.sipfoundry.sipxconfig.device.ProfileContext;
 import org.sipfoundry.sipxconfig.phone.Line;
 import org.sipfoundry.sipxconfig.setting.Setting;
@@ -29,19 +31,24 @@ import org.sipfoundry.sipxconfig.setting.Setting;
  * Responsible for generating ipmid.cfg
  */
 public class RegAdvancedConfiguration extends ProfileContext<PolycomPhone> {
+    private static final String PROVISION_AOR = "%s~%s";
 
     public RegAdvancedConfiguration(PolycomPhone device) {
         super(device, device.getTemplateDir() + "/reg-advanced.cfg.vm");
     }
 
     public Collection<Setting> getLines() {
-        PolycomPhone phone = (PolycomPhone) getDevice();
+        PolycomPhone phone = getDevice();
         List<Line> lines = phone.getLines();
 
         // Phones with no configured lines will register under the sipXprovision special user.
         if (lines.isEmpty()) {
             Line line = phone.createSpecialPhoneProvisionUserLine();
             line.setSettingValue("reg/label", line.getUser().getDisplayName());
+            line.setSettingValue(
+                    "reg/address",
+                    String.format(PROVISION_AOR, SpecialUserType.PHONE_PROVISION.getUserName(),
+                            ShortHash.get(phone.getSerialNumber())));
             lines.add(line);
         }
 
@@ -61,7 +68,6 @@ public class RegAdvancedConfiguration extends ProfileContext<PolycomPhone> {
         Map<String, Object> context = super.getContext();
         getDevice().getSettings();
         context.put("lines", getLines());
-        context.put("ver5", PolycomModel.VER_5_0_0);
         return context;
     }
 }

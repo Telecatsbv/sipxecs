@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.HibernateException;
+import org.hibernate.Session;
 import org.sipfoundry.sipxconfig.common.CoreContextImpl;
 import org.sipfoundry.sipxconfig.common.DaoUtils;
 import org.sipfoundry.sipxconfig.common.DataCollectionUtil;
@@ -24,6 +26,7 @@ import org.sipfoundry.sipxconfig.common.SipxHibernateDaoSupport;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.orm.hibernate3.HibernateCallback;
 
 /**
  * Use hibernate to perform database operations
@@ -45,14 +48,13 @@ public class SettingDaoImpl extends SipxHibernateDaoSupport implements SettingDa
     }
 
     /*
-     * (non-Javadoc)
-     * Use plain sql for increased efficiency when deleting user groups.
-     * A thing to note is that this method breaks the convention established by DaoEventDispatcher,
-     * namely publish delete event first, then proceed with the actual delete. It will actually
-     * manually delete from DB the group associations and the group and then the delete event is published.
-     * In the case of groups now, only ReplicationTrigger will trigger the delete sequence, all other
-     * event listeners that listened to group deletes were removed, and control moved in this method.
-     * This was the price to pay for increased efficiency in saving large groups.
+     * (non-Javadoc) Use plain sql for increased efficiency when deleting user groups. A thing to
+     * note is that this method breaks the convention established by DaoEventDispatcher, namely
+     * publish delete event first, then proceed with the actual delete. It will actually manually
+     * delete from DB the group associations and the group and then the delete event is published.
+     * In the case of groups now, only ReplicationTrigger will trigger the delete sequence, all
+     * other event listeners that listened to group deletes were removed, and control moved in
+     * this method. This was the price to pay for increased efficiency in saving large groups.
      */
     @Override
     public boolean deleteGroups(Collection<Integer> groupIds) {
@@ -66,15 +68,15 @@ public class SettingDaoImpl extends SipxHibernateDaoSupport implements SettingDa
                 groups.add(group);
                 sqlUpdates.add("DELETE FROM user_group where group_id=" + group.getId() + SEMICOLON);
                 sqlUpdates.add("DELETE FROM supervisor where group_id=" + group.getId() + SEMICOLON);
-                sqlUpdates.add("update ring set schedule_id=null where schedule_id=(select schedule_id from schedule "
-                        + WHERE_CLAUSE + group.getId() + CLOSED_BRACKET + SEMICOLON);
+                sqlUpdates
+                        .add("update ring set schedule_id=null where schedule_id=(select schedule_id from schedule "
+                                + WHERE_CLAUSE + group.getId() + CLOSED_BRACKET + SEMICOLON);
                 sqlUpdates.add("delete from schedule_hours where schedule_id = (select schedule_id from schedule "
                         + WHERE_CLAUSE + group.getId() + CLOSED_BRACKET + SEMICOLON);
-                sqlUpdates.add("delete from schedule where schedule.group_id= " + group.getId()
-                        + SEMICOLON);
+                sqlUpdates.add("delete from schedule where schedule.group_id= " + group.getId() + SEMICOLON);
                 sqlUpdates.add("delete from speeddial_group_button where speeddial_id=(select speeddial_id from "
-                        + "speeddial_group where speeddial_group.group_id="
-                        + group.getId() + CLOSED_BRACKET + SEMICOLON);
+                        + "speeddial_group where speeddial_group.group_id=" + group.getId() + CLOSED_BRACKET
+                        + SEMICOLON);
                 sqlUpdates.add("delete from speeddial_group where group_id=" + group.getId() + SEMICOLON);
                 sqlUpdates.add("DELETE FROM intercom_phone_group where group_id=" + group.getId() + SEMICOLON);
                 sqlUpdates.add("delete from phone_group where group_id=" + group.getId() + SEMICOLON);
@@ -94,7 +96,11 @@ public class SettingDaoImpl extends SipxHibernateDaoSupport implements SettingDa
 
     @Override
     public void storeValueStorage(ValueStorage storage) {
-        getHibernateTemplate().saveOrUpdate(storage);
+        if (storage.isNew()) {
+            getHibernateTemplate().save(storage);
+        } else {
+            getHibernateTemplate().merge(storage);
+        }
     }
 
     @Override
@@ -113,17 +119,32 @@ public class SettingDaoImpl extends SipxHibernateDaoSupport implements SettingDa
                 throw new UserException("&msg.error.renameAdminGroup");
             }
         }
-        getHibernateTemplate().saveOrUpdate(group);
+        if (group.isNew()) {
+            getHibernateTemplate().save(group);
+        } else {
+            getHibernateTemplate().merge(group);
+        }
     }
 
     @Override
-    public void moveGroups(List<Group> groups, Collection<Integer> groupIds, int step) {
+    public void moveGroups(final List<Group> groups, Collection<Integer> groupIds, int step) {
         DataCollectionUtil.moveByPrimaryKey(groups, groupIds.toArray(), step);
         for (int i = 0; i < groups.size(); i++) {
             // weight is position + 1 - for compatibility with old code
             groups.get(i).setWeight(i + 1);
         }
-        getHibernateTemplate().saveOrUpdateAll(groups);
+        getHibernateTemplate().executeWithNativeSession(new HibernateCallback<Object>() {
+            public Object doInHibernate(Session session) throws HibernateException {
+                for (Group group : groups) {
+                    if (group.isNew()) {
+                        session.save(group);
+                    } else {
+                        session.merge(group);
+                    }
+                }
+                return null;
+            }
+        });
         getDaoEventPublisher().publishSave(groups);
     }
 
@@ -155,8 +176,7 @@ public class SettingDaoImpl extends SipxHibernateDaoSupport implements SettingDa
         Object[] values = new Object[] {
             group.getId(), group.getBranch()
         };
-        List objs = getHibernateTemplate().findByNamedQueryAndNamedParam("selectedBranchValid", params,
-                values);
+        List objs = getHibernateTemplate().findByNamedQueryAndNamedParam("selectedBranchValid", params, values);
         if (objs.size() > 0) {
             throw new UserException("&branch.validity.error", group.getBranch().getName());
         }
@@ -239,7 +259,7 @@ public class SettingDaoImpl extends SipxHibernateDaoSupport implements SettingDa
     @Override
     public Map<Integer, Long> getGroupBranchMemberCountIndexedByBranchId(Class branchOwner) {
         String query = "select g.branch.id, count(*) from " + branchOwner.getName() + " o join "
-            + "o.groups g where o.branch = null group by g.branch.id";
+                + "o.groups g where o.branch = null group by g.branch.id";
         List<Object[]> l = getHibernateTemplate().find(query);
         Map<Integer, Long> members = asMap(l);
 

@@ -37,7 +37,8 @@ public enum CallTag {
     AUTH("Authorization Code", "AUTH"), // Authorization Code
     UNK("Unknown", "UNK"), // unknown
     HTD("Hotdesking", "HTD"), // Hotdesking
-    FAX("Fax", "FAX"); //Fax extension
+    FAX("Fax", "FAX"), //Fax extension
+    AAM("Aut Attendant Management", "AAM"); //auto-attendant management
 
     private String m_name;
     private String m_shortname;

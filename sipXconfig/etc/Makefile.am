@@ -16,6 +16,7 @@ emptydirs = \
 	$(DESTDIR)@SIPX_CONFDIR@/database/plugin.d/v12 \
 	$(DESTDIR)@SIPX_VARDIR@/mrtg/thresh \
 	$(DESTDIR)@SIPX_VARDIR@/configserver/web-cert \
+	$(DESTDIR)@SIPX_VARDIR@/configserver/phone/acd/audio \
 	$(DESTDIR)@SIPX_VARDIR@/configserver/phone/profile/tftproot \
 	$(DESTDIR)@SIPX_VARDIR@/configserver/phone/profile/docroot \
 	$(DESTDIR)@SIPX_LOGDIR@ \
@@ -35,7 +36,6 @@ dist_cfinputs_DATA = \
 	snmp.cf \
 	snmptrap.cf \
 	tftp.cf \
-	tunnel.cf \
 	zz_apache.cf
 
 cfdefaultsdir = $(SIPX_CFDATA)/defaults
@@ -43,6 +43,10 @@ cfdefaults_DATA = \
 	sipxfreeswitch.cfdat \
 	apache.cfdat \
 	postgres.cfdat
+
+audiodir = @SIPX_VARDIR@/parkserver/music
+dist_audio_DATA = \
+	audio/default.wav
 
 fsvars = \
 	$(filter FREESWITCH%,$(.VARIABLES))

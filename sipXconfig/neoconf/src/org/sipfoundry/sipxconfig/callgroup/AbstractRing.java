@@ -11,17 +11,19 @@ package org.sipfoundry.sipxconfig.callgroup;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.enums.Enum;
-import org.sipfoundry.sipxconfig.dialplan.ForkQueueValue;
 import org.sipfoundry.sipxconfig.common.BeanWithId;
 import org.sipfoundry.sipxconfig.common.EnumUserType;
+import org.sipfoundry.sipxconfig.dialplan.ForkQueueValue;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
-public abstract class AbstractRing extends BeanWithId {
+public abstract class AbstractRing extends BeanWithId implements SystemAuditable {
     public static final String TYPE_PROP = "type";
 
-    private static final int DEFAULT_EXPIRATION = 30;
+    public static final int DEFAULT_EXPIRATION = 30;
     private static final String FORMAT = "<sip:%s%s%s?expires=%s>;%s";
     private static final String IGNORE_VOICEMAIL_FIELD_PARAM = "sipx-noroute=Voicemail";
     private static final String DISABLE_USERFORWARD_FIELD_PARAM = "sipx-userforward=false";
+    private static final String CALLGROUP_FORMAT_FIELD_PARAM = "callgroup=%s";
     private static final String PARAM_DELIMITER = ";";
 
     private int m_expiration = DEFAULT_EXPIRATION;
@@ -90,11 +92,12 @@ public abstract class AbstractRing extends BeanWithId {
      * Calculates contact for line or alias. See FORMAT field.
      *
      * @param domain contact domain
+     * @param callgroupName if non-null, specifies the callgroup name for the given user
      * @param q contact q value
      * @return String representing the contact
      */
-    public final String calculateContact(String domain, ForkQueueValue q, boolean appendIgnoreVoicemail,
-            boolean userforward, String prefix) {
+    public final String calculateContact(String domain, String callgroupExtension, ForkQueueValue q,
+            boolean appendIgnoreVoicemail, boolean userforward, String prefix) {
 
         StringBuilder userPart = new StringBuilder(StringUtils.defaultString(prefix));
         userPart.append(getUserPart().toString());
@@ -106,6 +109,13 @@ public abstract class AbstractRing extends BeanWithId {
         }
 
         StringBuilder fieldParams = new StringBuilder();
+
+        // XX-11404 sipXconfig should add hunt group extension as a param to all its contact
+        // (callgroup=<callgroupid>)
+        if (!StringUtils.isEmpty(callgroupExtension)) {
+            fieldParams.append(PARAM_DELIMITER);
+            fieldParams.append(String.format(CALLGROUP_FORMAT_FIELD_PARAM, callgroupExtension));
+        }
         if (!userforward) {
             fieldParams.append(PARAM_DELIMITER);
             fieldParams.append(DISABLE_USERFORWARD_FIELD_PARAM);
@@ -118,10 +128,15 @@ public abstract class AbstractRing extends BeanWithId {
         StringBuilder urlParams = new StringBuilder(q.getValue(m_type));
         addUrlParams(urlParams);
 
-        return String.format(FORMAT, userPart, domainPart, fieldParams.toString(), m_expiration, urlParams
-                .toString());
+        return String.format(FORMAT, userPart, domainPart, fieldParams.toString(), m_expiration,
+                urlParams.toString());
     }
 
     protected void addUrlParams(@SuppressWarnings("unused") StringBuilder params) {
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return AbstractRing.class.getSimpleName();
     }
 }

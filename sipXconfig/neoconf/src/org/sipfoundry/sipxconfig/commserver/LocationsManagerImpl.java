@@ -65,6 +65,7 @@ public class LocationsManagerImpl extends SipxHibernateDaoSupport<Location> impl
         return locationArray;
     }
 
+    @Override
     public List<Location> getLocationsList() {
         List<Location> locations = getHibernateTemplate().loadAll(Location.class);
         Collections.sort(locations);
@@ -121,7 +122,7 @@ public class LocationsManagerImpl extends SipxHibernateDaoSupport<Location> impl
             if (location.hasFqdnOrIpChangedOnSave() && isFqdnOrIpInUseExceptThis(location)) {
                 throw new UserException(DUPLICATE_FQDN_OR_IP, location.getFqdn(), location.getAddress());
             }
-            getHibernateTemplate().update(location);
+            getHibernateTemplate().merge(location);
         }
     }
 
@@ -189,7 +190,7 @@ public class LocationsManagerImpl extends SipxHibernateDaoSupport<Location> impl
                 // profiles finishes
                 continue;
             }
-            getHibernateTemplate().update(location);
+            getHibernateTemplate().merge(location);
         }
     }
 
@@ -222,7 +223,7 @@ public class LocationsManagerImpl extends SipxHibernateDaoSupport<Location> impl
     private void changePrimaryIp(String ip) {
         // Ran into problems exec-ing a stored proc, this gave error about
         // response when none was expected
-        //    m_jdbc.update(...
+        // m_jdbc.update(...
         //
         m_jdbc.execute(format("select change_primary_ip_on_restore('%s')", ip));
     }

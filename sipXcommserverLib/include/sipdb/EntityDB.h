@@ -18,8 +18,12 @@
 
 #include <set>
 #include "sipdb/EntityRecord.h"
+#include "sipdb/MongoMod.h"
 #include "utl/UtlString.h"
 #include "net/Url.h"
+#include <Poco/ExpireCache.h>
+
+#define ENTITYDB_CACHE_EXPIRE 30
 
 class EntityDB: public MongoDB::BaseDB
 {
@@ -29,21 +33,23 @@ public:
 	typedef std::map<std::string, EntityRecord> EntitiesByIdentity;
 	typedef std::vector<EntityRecord::Alias> Aliases;
 	typedef std::set<std::string> Permissions;
+  typedef Poco::ExpireCache<std::string, EntityRecord> ExpireCache;
+  typedef Poco::SharedPtr<EntityRecord> ExpireCacheable;
 
 	void init()
 	{
-	    _lastTailId = mongo::minKey.firstElement();
+	    _lastTailId = mongoMod::minKey.firstElement();
 	}
 
 	EntityDB(const MongoDB::ConnectionInfo& info) :
-		BaseDB(info), _ns(NS)
+		BaseDB(info, NS), _cache(1000 * ENTITYDB_CACHE_EXPIRE)
 	{
 		init();
 	}
-	;
+
 
 	EntityDB(const MongoDB::ConnectionInfo& info, const std::string& ns) :
-		BaseDB(info), _ns(ns)
+		BaseDB(info, ns), _cache(1000 * ENTITYDB_CACHE_EXPIRE)
 	{
 		init();
 	}
@@ -81,7 +87,7 @@ public:
 
 private:
   mongo::BSONElement _lastTailId;
-  std::string _ns;
+  ExpireCache _cache;
 };
 
 #endif	/* ENTITYDB_H */

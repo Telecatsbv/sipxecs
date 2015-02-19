@@ -49,8 +49,9 @@ public class LoginDetailsResource extends UserResource {
     public Representation represent(Variant variant) throws ResourceException {
         User user = getUser();
         boolean ldapAuth = m_ldapManager.getSystemSettings().isEnableOpenfireConfiguration();
-        return new LoginDetails(variant.getMediaType(), new Representable(user.getUserName(),
-                user.getImId(), ldapAuth, user.getSipPassword()));
+
+        return new LoginDetails(variant.getMediaType(), new Representable(user.getUserName(), user.getImId(),
+            ldapAuth, user.getSipPassword()));
     }
 
     @Required
@@ -58,16 +59,13 @@ public class LoginDetailsResource extends UserResource {
         m_ldapManager = ldapManager;
     }
 
-    @SuppressWarnings("serial")
-    static class Representable implements Serializable {
-        @SuppressWarnings("unused")
-        private String m_userName;
-        @SuppressWarnings("unused")
-        private String m_imId;
-        @SuppressWarnings("unused")
-        private boolean m_ldapImAuth;
-        @SuppressWarnings("unused")
-        private String m_sipPassword;
+    protected static class Representable implements Serializable {
+        private static final long serialVersionUID = 1L;
+
+        private final String m_userName;
+        private final String m_imId;
+        private final boolean m_ldapImAuth;
+        private final String m_sipPassword;
 
         public Representable(String userName, String imId, boolean ldapAuth, String sipPassword) {
             m_userName = userName;
@@ -93,9 +91,8 @@ public class LoginDetailsResource extends UserResource {
         }
     }
 
-    static class LoginDetails extends XStreamRepresentation<Representable> {
-        @SuppressWarnings("rawtypes")
-        private Class m_representableClass;
+    protected static class LoginDetails extends XStreamRepresentation<Representable> {
+        private Class< ? > m_representableClass;
 
         public LoginDetails(MediaType mediaType, Representable object) {
             super(mediaType, object);

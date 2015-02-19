@@ -54,10 +54,10 @@ extern "C" AuthPlugin* getAuthPlugin(const UtlString& pluginName)
 /// constructor
 CallerAlias::CallerAlias(const UtlString& pluginName ///< the name for this instance
 ) :
-	AuthPlugin(pluginName)
+	AuthPlugin(pluginName),
+  mpSipRouter(0)
 {
-        MongoDB::ConnectionInfo info = MongoDB::ConnectionInfo::globalInfo();
-	mpEntityDb = new EntityDB(info);
+	mpEntityDb = SipRouter::getEntityDBInstance();
 }
 ;
 
@@ -227,6 +227,13 @@ CallerAlias::authorizeAndModify(const UtlString& id,    /**< The authenticated i
                {
                   newFromUrl.setFieldParameter("tag", originalFromTag.data());
                }
+
+               /// Get the URL user identity if present
+               UtlString originalFromUserId;
+               fromUrl.getUserId(originalFromUserId);
+               // set this as a uri parameter in the new From
+               newFromUrl.setUrlParameter(SIP_SIPX_FROM, originalFromUserId.data());
+
                UtlString newFromFieldValue;
                newFromUrl.toString(newFromFieldValue);
                    
@@ -340,10 +347,6 @@ void CallerAlias::announceAssociatedSipRouter( SipRouter* sipRouter )
 /// destructor
 CallerAlias::~CallerAlias()
 {
-   if (mpEntityDb != NULL) {
-	   delete mpEntityDb;
-	   mpEntityDb = 0;
-   }
 }
 
 static std::string string_right(const std::string& str, size_t size)

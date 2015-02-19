@@ -20,7 +20,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include "sipdb/MongoDB.h"
-
+#include "sipdb/MongoMod.h"
 
 class RegBinding
 {
@@ -37,6 +37,7 @@ public:
     const std::string& getUri() const;
     const std::string& getCallId() const;
     const std::string& getContact() const;
+    const std::string& getBinding() const;
     const std::string& getQvalue() const;
     const std::string& getInstanceId() const;
     const std::string& getGruu() const;
@@ -54,6 +55,7 @@ public:
     void setUri(const std::string& uri);
     void setCallId(const std::string& callId);
     void setContact(const std::string& contact);
+    void setBinding(const std::string& binding);
     void setQvalue(const std::string& qvalue);
     void setInstanceId(const std::string& instanceId);
     void setGruu(const std::string& gruu);
@@ -71,6 +73,7 @@ public:
     static const char* uri_fld();
     static const char* callId_fld();
     static const char* contact_fld();
+    static const char* binding_fld();
     static const char* qvalue_fld();
     static const char* instanceId_fld();
     static const char* gruu_fld();
@@ -89,6 +92,7 @@ private:
     std::string _uri;
     std::string _callId;
     std::string _contact;
+    std::string _binding;
     std::string _qvalue;
     std::string _instanceId;
     std::string _gruu;
@@ -126,6 +130,11 @@ inline const std::string& RegBinding::getCallId() const
 inline const std::string& RegBinding::getContact() const
 {
   return _contact;
+}
+
+inline const std::string& RegBinding::getBinding() const
+{
+  return _binding;
 }
 
 inline const std::string& RegBinding::getQvalue() const
@@ -206,6 +215,11 @@ inline void RegBinding::setCallId(const std::string& callId)
 inline void RegBinding::setContact(const std::string& contact)
 {
   _contact = contact;
+}
+
+inline void RegBinding::setBinding(const std::string& binding)
+{
+  _binding = binding;
 }
 
 inline void RegBinding::setQvalue(const std::string& qvalue)

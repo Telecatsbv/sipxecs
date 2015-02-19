@@ -9,28 +9,27 @@
  */
 package org.sipfoundry.sipxconfig.localization;
 
-
 import java.io.File;
 import java.util.List;
 
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sipfoundry.sipxconfig.common.SipxHibernateDaoSupport;
-import org.sipfoundry.sipxconfig.commserver.SipxReplicationContext;
-import org.sipfoundry.sipxconfig.commserver.imdb.DataSet;
-import org.sipfoundry.sipxconfig.dialplan.AutoAttendantManager;
-import org.sipfoundry.sipxconfig.dialplan.DialPlanSetup;
-import org.springframework.beans.factory.annotation.Required;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.dao.support.DataAccessUtils;
 
-public class LocalizationContextImpl extends SipxHibernateDaoSupport implements LocalizationContext {
-    private static final String PROMPTS_PREFIX = "stdprompts_";
+public class LocalizationContextImpl extends SipxHibernateDaoSupport<Localization> implements LocalizationContext,
+        ApplicationContextAware {
+
+    public static final String PROMPTS_PREFIX = "stdprompts_";
+    private static final Log LOG = LogFactory.getLog(LocalizationContextImpl.class);
     private String m_promptsDir;
     private String m_defaultRegion;
     private String m_defaultLanguage;
-    private DialPlanSetup m_dialplanSetup;
-    private AutoAttendantManager m_autoAttendantManager;
-    private SipxReplicationContext m_sipxReplicationContext;
+    private ApplicationContext m_applicationContext;
 
     public void setPromptsDir(String promptsDir) {
         m_promptsDir = promptsDir;
@@ -40,11 +39,6 @@ public class LocalizationContextImpl extends SipxHibernateDaoSupport implements 
         m_defaultRegion = defaultRegion;
     }
 
-    @Required
-    public void setAutoAttendantManager(AutoAttendantManager autoAttendantManager) {
-        m_autoAttendantManager = autoAttendantManager;
-    }
-
     public void setDefaultLanguage(String defaultLanguage) {
         m_defaultLanguage = defaultLanguage;
         // Calling getLocalization() populates the localization table
@@ -52,19 +46,17 @@ public class LocalizationContextImpl extends SipxHibernateDaoSupport implements 
         getLocalization();
     }
 
-    @Required
-    public void setDialPlanSetup(DialPlanSetup resetDialPlanTask) {
-        m_dialplanSetup = resetDialPlanTask;
-    }
-
+    @Override
     public String getCurrentRegionId() {
         return getLocalization().getRegionId();
     }
 
+    @Override
     public String getCurrentLanguage() {
         return getLocalization().getLanguage();
     }
 
+    @Override
     public String getCurrentLanguageDir() {
         String language = getLocalization().getLanguage();
         if (StringUtils.equals(language, DEFAULT)) {
@@ -73,6 +65,7 @@ public class LocalizationContextImpl extends SipxHibernateDaoSupport implements 
         return PROMPTS_PREFIX + language;
     }
 
+    @Override
     public String[] getInstalledLanguages() {
         String[] languageDirs = getListOfDirectories(m_promptsDir, PROMPTS_PREFIX);
         String[] languages = new String[languageDirs.length];
@@ -84,6 +77,7 @@ public class LocalizationContextImpl extends SipxHibernateDaoSupport implements 
         return languages;
     }
 
+    @Override
     public String[] getInstalledLanguageDirectories() {
         return getListOfDirectories(m_promptsDir, PROMPTS_PREFIX);
     }
@@ -92,17 +86,21 @@ public class LocalizationContextImpl extends SipxHibernateDaoSupport implements 
         return new File(path).list(new PrefixFileFilter(prefix));
     }
 
+    @Override
     public Localization getLocalization() {
-        List l = getHibernateTemplate().loadAll(Localization.class);
-        Localization localization = (Localization) DataAccessUtils.singleResult(l);
+        List<Localization> l = getHibernateTemplate().loadAll(Localization.class);
+        Localization localization = DataAccessUtils.singleResult(l);
         if (localization == null) {
             // The localization table is empty - create a new localization using
             // default values and update the table
             localization = new Localization();
             localization.setRegion(m_defaultRegion);
             localization.setLanguage(m_defaultLanguage);
-            getDaoEventPublisher().publishSave(localization);
-            getHibernateTemplate().saveOrUpdate(localization);
+            if (localization.isNew()) {
+                getHibernateTemplate().save(localization);
+            } else {
+                getHibernateTemplate().merge(localization);
+            }
         }
         return localization;
     }
@@ -113,6 +111,7 @@ public class LocalizationContextImpl extends SipxHibernateDaoSupport implements 
      * @return true if there was a change , false if no change was neccessary
      * @throw exception if not successful
      */
+    @Override
     public void updateRegion(String regionBeanId) {
         Localization localization = getLocalization();
         if (localization.getRegion().equals(regionBeanId)) {
@@ -120,8 +119,12 @@ public class LocalizationContextImpl extends SipxHibernateDaoSupport implements 
         }
 
         localization.setRegion(regionBeanId);
-        m_dialplanSetup.setup(regionBeanId);
-        getHibernateTemplate().saveOrUpdate(localization);
+        m_applicationContext.publishEvent(new RegionUpdatedEvent(this, regionBeanId));
+        if (localization.isNew()) {
+            getHibernateTemplate().save(localization);
+        } else {
+            getHibernateTemplate().merge(localization);
+        }
         getHibernateTemplate().flush();
         getDaoEventPublisher().publishSave(localization);
     }
@@ -131,6 +134,7 @@ public class LocalizationContextImpl extends SipxHibernateDaoSupport implements 
      *
      * @return positive value is success, negative if failure, 0 if there was no change
      */
+    @Override
     public int updateLanguage(String language) {
         if (language == null) {
             return -1;
@@ -142,18 +146,23 @@ public class LocalizationContextImpl extends SipxHibernateDaoSupport implements 
         }
         // The language has been changed - handle the change
         localization.setLanguage(language);
+        if (localization.isNew()) {
+            getHibernateTemplate().save(localization);
+        } else {
+            getHibernateTemplate().merge(localization);
+        }
+        getHibernateTemplate().flush();
+        // TODO: do we really need this? It does not seem to be caught anywhere!
+        getDaoEventPublisher().publishSave(localization);
         // Copy default AutoAttendant prompts in the currently applied language
         // to AutoAttendant prompts directory.
-        m_autoAttendantManager.updatePrompts(new File(m_promptsDir, getCurrentLanguageDir()));
-        getHibernateTemplate().saveOrUpdate(localization);
-        getHibernateTemplate().flush();
-        getDaoEventPublisher().publishSave(localization);
-        m_sipxReplicationContext.generateAll(DataSet.MAILSTORE);
+        LOG.debug("Language updated, sending LanguageUpdatedEvent...");
+        m_applicationContext.publishEvent(new LanguageUpdatedEvent(this, m_promptsDir, getCurrentLanguageDir()));
         return 1;
     }
 
-    @Required
-    public void setSipxReplicationContext(SipxReplicationContext sipxReplicationContext) {
-        m_sipxReplicationContext = sipxReplicationContext;
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) {
+        m_applicationContext = applicationContext;
     }
 }

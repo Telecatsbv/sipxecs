@@ -51,10 +51,14 @@
       #ModelSpecificAttributes4( "", "4.1.4")
    #elseif($fw == "4.1.5")
       #ModelSpecificAttributes4( "", "4.1.5")
+   #elseif($fw == "4.1.6")
+      #ModelSpecificAttributes4( "", "4.1.6")
    #elseif($fw == "5.0.0")
       #ModelSpecificAttributes4( "", "5.0.0")
    #elseif($fw == "5.0.1")
       #ModelSpecificAttributes4( "", "5.0.1")
+   #elseif($fw == "5.0.2")
+      #ModelSpecificAttributes4( "", "5.0.2")
    #elseif ($fw == "2.0")
       #ModelSpecificAttributes20("")
    #end
@@ -105,7 +109,8 @@
    MISC_FILES=""
    OVERRIDES_DIRECTORY="${optional_root_url_path}"
    CONTACTS_DIRECTORY="${optional_root_url_path}"
-   LOG_FILE_DIRECTORY="">
+   LOG_FILE_DIRECTORY="http://0.0.0.0"
+   CALL_LISTS_DIRECTORY="http://0.0.0.0">
 
 #ModelSpecificNode( "SPIP301", "3.1.X" )
 #ModelSpecificNode( "SPIP600", "3.1.X" )

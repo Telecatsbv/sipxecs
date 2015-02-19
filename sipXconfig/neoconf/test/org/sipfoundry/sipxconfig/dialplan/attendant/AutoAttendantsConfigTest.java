@@ -20,10 +20,12 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Locale;
 
 import org.custommonkey.xmlunit.XMLTestCase;
 import org.custommonkey.xmlunit.XMLUnit;
+import org.sipfoundry.commons.util.HolidayPeriod;
 import org.sipfoundry.sipxconfig.common.DialPad;
 import org.sipfoundry.sipxconfig.dialplan.AttendantMenu;
 import org.sipfoundry.sipxconfig.dialplan.AttendantMenuAction;
@@ -32,7 +34,6 @@ import org.sipfoundry.sipxconfig.dialplan.AutoAttendant;
 import org.sipfoundry.sipxconfig.dialplan.AutoAttendantManager;
 import org.sipfoundry.sipxconfig.dialplan.DialPlanContext;
 import org.sipfoundry.sipxconfig.dialplan.config.XmlFile;
-import org.sipfoundry.sipxconfig.domain.Domain;
 import org.sipfoundry.sipxconfig.domain.DomainManager;
 import org.sipfoundry.sipxconfig.test.TestHelper;
 
@@ -94,7 +95,10 @@ public class AutoAttendantsConfigTest extends XMLTestCase {
         aa.setName("abc");
         aa.setModelFilesContext(TestHelper.getModelFilesContext());
         aa.setPromptsDirectory("prompts/");
+        aa.setLanguage("en");
         aa.setPrompt("prompt.wav");
+        aa.setAllowDial("2[5-9][0-9]|3[0-4][0-9]|350");
+        aa.setDenyDial("345");
 
         AttendantMenu menu = new AttendantMenu();
         menu.addMenuItem(DialPad.NUM_0, AttendantMenuAction.AUTO_ATTENDANT, "afterhours");
@@ -105,6 +109,8 @@ public class AutoAttendantsConfigTest extends XMLTestCase {
         aa.setSettingValue("onfail/transfer", "1");
         aa.setSettingValue("onfail/transfer-extension", "999");
         aa.setSettingValue("onfail/transfer-prompt", "test.wav");
+
+        aa.setSettingValue(AutoAttendant.ON_TRANSFER_PLAY_PROMPT, "1");
 
         AutoAttendantManager aam = createMock(AutoAttendantManager.class);
         aam.getAutoAttendants();
@@ -147,10 +153,10 @@ public class AutoAttendantsConfigTest extends XMLTestCase {
         sa.setAttendant(operator);
         attendantRule.setAfterHoursAttendant(sa);
 
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
         Holiday holiday = new Holiday();
-        holiday.addDay(format.parse("2010-05-03"));
-        holiday.addDay(format.parse("2010-07-04"));
+        holiday.addPeriod(getNewHolidayPeriod(format.parse("2010-05-03 00:00"), format.parse("2010-05-03 23:59")));
+        holiday.addPeriod(getNewHolidayPeriod(format.parse("2010-07-04 00:00"), format.parse("2010-07-04 23:59")));
         holiday.setAttendant(operator);
         attendantRule.setHolidayAttendant(holiday);
 
@@ -183,6 +189,13 @@ public class AutoAttendantsConfigTest extends XMLTestCase {
         verify(dialPlanContext, aam);
     }
 
+    private HolidayPeriod getNewHolidayPeriod(Date startDate, Date endDate) {
+        HolidayPeriod holidayPeriod = new HolidayPeriod();
+        holidayPeriod.setStartDate(startDate);
+        holidayPeriod.setEndDate(endDate);
+        return holidayPeriod;
+    }
+    
     public void testGenerateAutoAttendantsWithNullMenuEntry() throws Exception {
 
         AutoAttendant operator = new AutoAttendant();
@@ -209,6 +222,8 @@ public class AutoAttendantsConfigTest extends XMLTestCase {
         aa.setSettingValue("onfail/transfer", "1");
         aa.setSettingValue("onfail/transfer-extension", "999");
         aa.setSettingValue("onfail/transfer-prompt", "test.wav");
+
+        aa.setSettingValue(AutoAttendant.ON_TRANSFER_PLAY_PROMPT, "0");
 
         AutoAttendantManager aam = createMock(AutoAttendantManager.class);
         aam.getAutoAttendants();

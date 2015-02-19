@@ -19,6 +19,8 @@ package org.sipfoundry.commons.userdb.profile;
 import java.io.InputStream;
 import java.util.List;
 
+import org.bson.types.ObjectId;
+
 public interface UserProfileService {
     static final String DISABLED = "DISABLED";
     static final String ENABLED = "ENABLED";
@@ -45,6 +47,14 @@ public interface UserProfileService {
 
     UserProfile getUserProfileByImId(String imId);
 
+    List<UserProfile> getUserProfileByAuthAccountName(String authAccountName);
+
+    List<UserProfile> getUserProfileByEmail(String email);
+
+    List<Integer> getUserIdsByAuthAccountName(String authAccountName);
+
+    List<Integer> getUserIdsByEmail(String email);
+
     InputStream getAvatar(String userName);
 
     void saveAvatar(String userName, InputStream is) throws AvatarUploadException;
@@ -68,4 +78,8 @@ public interface UserProfileService {
     int getEnabledUsersCount();
 
     int getDisabledUsersCount();
+
+    ObjectId getAvatarId(String userName);
+
+    String getAvatarDBFileMD5(String userName);
 }

@@ -23,14 +23,16 @@ import org.sipfoundry.sipxconfig.cfgmgt.DeployConfigOnEdit;
 import org.sipfoundry.sipxconfig.common.DialPad;
 import org.sipfoundry.sipxconfig.common.NamedObject;
 import org.sipfoundry.sipxconfig.feature.Feature;
+import org.sipfoundry.sipxconfig.localization.LocalizationContext;
 import org.sipfoundry.sipxconfig.setting.AbstractSettingVisitor;
 import org.sipfoundry.sipxconfig.setting.BeanWithGroups;
 import org.sipfoundry.sipxconfig.setting.Setting;
 import org.sipfoundry.sipxconfig.setting.type.FileSetting;
 import org.sipfoundry.sipxconfig.setting.type.SettingType;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 import org.springframework.beans.factory.annotation.Required;
 
-public class AutoAttendant extends BeanWithGroups implements NamedObject, DeployConfigOnEdit {
+public class AutoAttendant extends BeanWithGroups implements NamedObject, DeployConfigOnEdit, SystemAuditable {
     public static final Log LOG = LogFactory.getLog(AutoAttendant.class);
     public static final String BEAN_NAME = "autoAttendant";
     public static final String OPERATOR_ID = "operator";
@@ -43,6 +45,9 @@ public class AutoAttendant extends BeanWithGroups implements NamedObject, Deploy
     public static final String ONFAIL_TRANSFER = "onfail/transfer";
     public static final String ONFAIL_TRANSFER_EXT = "onfail/transfer-extension";
     public static final String ONFAIL_TRANSFER_PROMPT = "onfail/transfer-prompt";
+    public static final String ON_TRANSFER = "onTransfer";
+    public static final String PLAY_PROMPT = "play-prompt";
+    public static final String ON_TRANSFER_PLAY_PROMPT = "onTransfer/play-prompt";
 
     private static final String SYSTEM_NAME_PREFIX = "xcf";
     private String m_name;
@@ -51,6 +56,10 @@ public class AutoAttendant extends BeanWithGroups implements NamedObject, Deploy
     private AttendantMenu m_menu = new AttendantMenu();
     private String m_systemId;
     private String m_promptsDirectory;
+    private String m_sysDirectory;
+    private String m_lang = LocalizationContext.DEFAULT;
+    private String m_allowDial = StringUtils.EMPTY;
+    private String m_denyDial = StringUtils.EMPTY;
 
     @Override
     protected Setting loadSettings() {
@@ -132,12 +141,47 @@ public class AutoAttendant extends BeanWithGroups implements NamedObject, Deploy
         m_menu = menu;
     }
 
+    public String getAllowDial() {
+        if (StringUtils.isEmpty(m_allowDial)) {
+            return StringUtils.EMPTY;
+        }
+        return m_allowDial;
+    }
+
+    public void setAllowDial(String allowDial) {
+        m_allowDial = allowDial;
+    }
+
+    public String getDenyDial() {
+        if (StringUtils.isEmpty(m_denyDial)) {
+            return StringUtils.EMPTY;
+        }
+        return m_denyDial;
+    }
+
+    public void setDenyDial(String denyDial) {
+        m_denyDial = denyDial;
+    }
+
     public AttendantMenu getMenu() {
         return m_menu;
     }
 
+    public String getLanguage() {
+        if (StringUtils.isEmpty(m_lang)) {
+            return LocalizationContext.DEFAULT;
+        }
+        return m_lang;
+    }
+
+    public void setLanguage(String lang) {
+        m_lang = lang;
+    }
+
     public void resetToFactoryDefault() {
         setDescription(null);
+        setAllowDial(StringUtils.EMPTY);
+        setDenyDial(StringUtils.EMPTY);
         m_menu.reset(isPermanent());
     }
 
@@ -146,12 +190,27 @@ public class AutoAttendant extends BeanWithGroups implements NamedObject, Deploy
         m_promptsDirectory = promptsDirectory;
     }
 
+    @Required
+    public void setSysDirectory(String sysDirectory) {
+        m_sysDirectory = sysDirectory;
+    }
+
     public String getPromptsDirectory() {
         return m_promptsDirectory;
     }
 
     public File getPromptFile() {
+        if (StringUtils.isNotBlank(m_lang) && !StringUtils.equals(m_lang, LocalizationContext.DEFAULT)) {
+            File localizedPrompt = new File(getLocaleSysDirectory(), m_prompt);
+            if (localizedPrompt.exists()) {
+                return localizedPrompt;
+            }
+        }
         return new File(m_promptsDirectory, m_prompt);
+    }
+
+    private String getLocaleSysDirectory() {
+        return String.format("%s/stdprompts_%s", m_sysDirectory, m_lang);
     }
 
     /**
@@ -213,6 +272,8 @@ public class AutoAttendant extends BeanWithGroups implements NamedObject, Deploy
         }
         attendant.setMenu(menu);
         attendant.setPrompt(getPrompt());
+        attendant.setAllowDial(getAllowDial());
+        attendant.setDenyDial(getDenyDial());
         attendant.setSettingValue(DTMF_INTERDIGIT_TIMEOUT, getSettingValue(DTMF_INTERDIGIT_TIMEOUT));
         attendant.setSettingValue(MAX_DIGITS, getSettingValue(MAX_DIGITS));
         attendant.setSettingValue(OVERALL_DIGIT_TIMEOUT, getSettingValue(OVERALL_DIGIT_TIMEOUT));
@@ -221,7 +282,18 @@ public class AutoAttendant extends BeanWithGroups implements NamedObject, Deploy
         attendant.setSettingValue(ONFAIL_TRANSFER, getSettingValue(ONFAIL_TRANSFER));
         attendant.setSettingValue(ONFAIL_TRANSFER_EXT, getSettingValue(ONFAIL_TRANSFER_EXT));
         attendant.setSettingValue(ONFAIL_TRANSFER_PROMPT, getSettingValue(ONFAIL_TRANSFER_PROMPT));
+        attendant.setSettingValue(ON_TRANSFER_PLAY_PROMPT, getSettingValue(ON_TRANSFER_PLAY_PROMPT));
         attendant.setGroupsAsList(getGroupsAsList());
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getName();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return AutoAttendant.class.getSimpleName();
     }
 
 }

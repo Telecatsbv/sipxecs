@@ -12,6 +12,9 @@
   <bean name="conferenceConference" class="org.sipfoundry.sipxconfig.conference.Conference" scope="prototype"
     parent="beanWithSettings">
     <property name="addressManager" ref="addressManager" />
+    <property name="localizationContext" ref="localizationContext"/>
+    <property name="promptsDir" value="${sysdir.doc}"/>
+    <property name="audioDirectory" value="${sysdir.doc}/stdprompts" />
   </bean>
 
   <bean id="activeConferenceContextImpl" class="org.sipfoundry.sipxconfig.conference.ActiveConferenceContextImpl">
@@ -51,11 +54,11 @@
   </bean>
 
   <bean id="conferenceReplicationProvider" class="org.springframework.aop.framework.ProxyFactoryBean" parent="abstractDao">
-    <property name="proxyInterfaces" value="org.sipfoundry.sipxconfig.common.ReplicableProvider" />
+    <property name="proxyInterfaces" value="org.sipfoundry.sipxconfig.conference.ConferenceReplicationProvider" />
     <property name="target" ref="conferenceReplicationProviderImpl" />
   </bean>
 
-  <bean id="conferenceReplicationProviderImpl" class="org.sipfoundry.sipxconfig.conference.ConferenceReplicationProvider">
+  <bean id="conferenceReplicationProviderImpl" class="org.sipfoundry.sipxconfig.conference.ConferenceReplicationProviderImpl">
     <property name="bridgeContext" ref="conferenceBridgeContext"/>
     <property name="featureManager" ref="featureManager"/>
   </bean>

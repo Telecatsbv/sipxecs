@@ -8,9 +8,11 @@
 sipx_core = \
   sipXportLib \
   sipXtackLib \
+  sipXresiprocate \
   sipXmediaLib \
   sipXmediaAdapterLib \
   sipXcallLib \
+  sipXeslLib \
   sipXsupervisor \
   sipXcommserverLib \
   sipXsqa \
@@ -26,13 +28,16 @@ sipx_core = \
   sipXproxy \
   sipXpublisher \
   sipXregistry \
-  sipXpark \
   sipXpage \
   sipXpolycom \
   sipXrls \
   sipXsaa \
+  sipXyard \
   sipXrelease \
   sipXecs
+
+#additional configure options for sipXresiprocate package
+sipXresiprocate_OPTIONS = --with-c-ares --with-ssl --with-repro --enable-ipv6 --with-tfm
 
 # sipxecs projects that are NOT essential for a running communication system
 sipx_extra = \
@@ -44,11 +49,10 @@ sipx_extra = \
   sipXrest \
   sipXcallController \
   sipXcdrLog \
-  sipXevent \
   sipXrecording \
-  sipXsbc \
   sipXhomer \
-  sipXcallQueue
+  sipXcallQueue \
+  sipXtools
 
 # sipxecs projects that are NOT essential for a running communication system
 # and are related to configuration system. Many are phone plugins
@@ -67,7 +71,8 @@ sipx_config = \
   sipXsnom \
   sipXunidata \
   sipXgrandstream \
-  sipXaastra
+  sipXaastra \
+  sipXyealink
 
 # Language packs not required for a function communications system
 sipx_lang = \
@@ -90,14 +95,13 @@ sipx_lang = \
 sipx_all = \
   $(sipx_core) \
   $(sipx_extra) \
-  $(sipx_lang) \
-  $(sipx_config)
+  $(sipx_config) \
+  $(sipx_lang)
 
-# re: ruby-postgres, there's a new one we should be using ruby-pgsql i 
+# re: ruby-postgres, there's a new one we should be using ruby-pgsql i
 # think it's called as ruby-postgres is obsoleted.
 lib_all = \
   epel \
-  resiprocate \
   rubygem-file-tail \
   erlang \
   freeswitch \
@@ -107,11 +111,14 @@ lib_all = \
   openfire \
   ruby-dbi \
   cfengine \
-  oss_core \
   rubygem-net-ssh \
   rubygem-net-sftp \
   ruby-postgres \
-  jasperserver
+  jasperserver \
+  libjsonrpccpp \
+  libevent2 \
+  mongo-cxx-driver \
+  mongodb
 
 lib_exclude_fedora_16 = \
   epel \
@@ -135,12 +142,13 @@ lib = $(filter-out $(lib_exclude_$(DISTRO_OS)_$(DISTRO_VER)),$(lib_all))
 
 # Project compile-time dependencies. Only list project that if
 # it's dependecies were recompiled then you'd want to recompile.
+freeswitch_DEPS = erlang
 sipXtackLib_DEPS = sipXportLib
 sipXmediaLib_DEPS = sipXtackLib
 sipXmediaAdapterLib_DEPS = sipXmediaLib
 sipXcallLib_DEPS = sipXmediaAdapterLib
 sipXcustomCallerId_DEPS = sipXconfig
-sipXcommserverLib_DEPS = sipXtackLib
+sipXcommserverLib_DEPS = sipXtackLib 
 sipXsqa_DEPS = sipXcommserverLib
 sipXrelay_DEPS = sipXcommons
 sipXbridge_DEPS = sipXcommons
@@ -153,15 +161,17 @@ sipXivr_DEPS = sipXconfig
 sipXproxy_DEPS = sipXcommserverLib
 sipXpublisher_DEPS = sipXcommserverLib
 sipXregistry_DEPS = sipXcommserverLib
-sipXpark_DEPS = sipXcallLib sipXcommserverLib
 sipXpage_DEPS = sipXcommons
 sipXpolycom_DEPS = sipXconfig
 sipXrls_DEPS = sipXsqa sipXcallLib sipXcommserverLib
 sipXsaa_DEPS = sipXsqa sipXcallLib sipXcommserverLib
-sipXhomer_DEPS = sipXsqa
+sipXhomer_DEPS = sipXsqa sipXresiprocate
 sipXsbc_DEPS = sipXconfig sipXsqa sipXregistry
 sipXcallQueue_DEPS = sipXconfig
 sipXexample_DEPS = sipXcommserverLib sipXconfig
+sipXsss_DEPS = sipXsqa sipXcommserverLib sipXresiprocate
+sipXyard = sipXcommserverLib
+sipXtools_DEPS = sipXtackLib sipXcommserverLib
 
 all = \
   $(lib) \

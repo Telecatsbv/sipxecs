@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hivemind.Messages;
 import org.apache.tapestry.AbstractPage;
@@ -41,6 +42,7 @@ import org.apache.tapestry.valid.ValidationConstraint;
 import org.apache.tapestry.valid.ValidationDelegate;
 import org.apache.tapestry.valid.ValidatorException;
 import org.apache.tapestry.web.WebResponse;
+import org.sipfoundry.sipxconfig.admin.AbstractResLimitsConfig;
 import org.sipfoundry.sipxconfig.common.NamedObject;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.device.DeviceDescriptor;
@@ -358,18 +360,44 @@ public final class TapestryUtils {
      * @param settingType (example: "configserver-config" or "resource-limits")
      * @return true if validation was OK, false if it failed
      */
-    public static boolean validateFDSoftAndHardLimits(IComponent page, PersistableSettings settings, String settingType)
-    {
+    public static boolean validateFDSoftAndHardLimits(IComponent page, PersistableSettings settings,
+        String settingType) {
         SipxValidationDelegate validator = (SipxValidationDelegate) getValidator(page);
-
-        String fdSoft = settings.getSettingValue(settingType + "/fd-soft");
-        String fdHard = settings.getSettingValue(settingType + "/fd-hard");
-
-        if (Integer.parseInt(fdSoft) > Integer.parseInt(fdHard)) {
+        boolean validLimit = AbstractResLimitsConfig.validateFDSoftAndHardLimits(settings, settingType);
+        if (!validLimit) {
             validator.record(page.getMessages().getMessage("error.soft-higher-than-hard-limit"),
-                    ValidationConstraint.CONSISTENCY);
+                ValidationConstraint.CONSISTENCY);
             return false;
         }
         return true;
+    }
+
+    /**
+     * Translates table column to array of phone properties. It is safe to call with null - emtpy
+     * array is returned in such case
+     *
+     * HACK: this is dangerously dependend on relation between the table column name and the
+     * properties names
+     *
+     * @param objSortColumn column object
+     * @return array of strings by which we need to sort the table
+     */
+    public static String[] orderByFromSortColum(ITableColumn objSortColumn) {
+        if (objSortColumn == null) {
+            return ArrayUtils.EMPTY_STRING_ARRAY;
+        }
+
+        String[] orderBy = new String[] {
+            objSortColumn.getColumnName()
+        };
+
+        // fix for modelId case
+        if ("modelId".equals(orderBy[0])) {
+            return new String[] {
+                "beanId", orderBy[0]
+            };
+        }
+
+        return orderBy;
     }
 }

@@ -27,12 +27,12 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.tapestry.BaseComponent;
 import org.apache.tapestry.IPage;
 import org.apache.tapestry.annotations.Bean;
 import org.apache.tapestry.annotations.InjectObject;
 import org.apache.tapestry.annotations.InjectPage;
+import org.apache.tapestry.annotations.Parameter;
 import org.apache.tapestry.callback.PageCallback;
 import org.apache.tapestry.event.PageBeginRenderListener;
 import org.apache.tapestry.event.PageEvent;
@@ -41,18 +41,16 @@ import org.apache.tapestry.valid.IValidationDelegate;
 import org.apache.tapestry.valid.ValidatorException;
 import org.sipfoundry.sipxconfig.backup.BackupManager;
 import org.sipfoundry.sipxconfig.backup.BackupType;
-import org.sipfoundry.sipxconfig.backup.ManualRestore;
+import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.components.SipxValidationDelegate;
 import org.sipfoundry.sipxconfig.components.TapestryUtils;
 import org.sipfoundry.sipxconfig.site.common.AssetSelector;
 
 public abstract class RestoreUpload extends BaseComponent implements PageBeginRenderListener {
+    private static final String CANNOT_RESTORE_KEY = "&cannot.restore";
 
     @InjectObject(value = "spring:backupManager")
     public abstract BackupManager getBackupManager();
-
-    @InjectObject(value = "spring:manualRestore")
-    public abstract ManualRestore getManualRestore();
 
     public abstract String getDefinitionId();
 
@@ -63,6 +61,9 @@ public abstract class RestoreUpload extends BaseComponent implements PageBeginRe
     @Bean
     public abstract SipxValidationDelegate getValidator();
 
+    @Parameter(required = true)
+    public abstract boolean isCanRestore();
+
     @InjectPage(value = RestoreFinalize.PAGE)
     public abstract RestoreFinalize getFinalizePage();
 
@@ -71,11 +72,20 @@ public abstract class RestoreUpload extends BaseComponent implements PageBeginRe
         if (getUploads() == null) {
             setUploads(new HashMap<String, IUploadFile>());
         }
+        //on first page display, show informal message about whether restore could be possible
+        if (!isCanRestore()) {
+            getValidator().record(new UserException(CANNOT_RESTORE_KEY), getMessages());
+        }
     }
 
     public IPage uploadAndRestoreFiles() {
         IValidationDelegate validator = TapestryUtils.getValidator(this);
         try {
+            //make sure restore won't be initiated if validation do not pass
+            if (!isCanRestore()) {
+                getValidator().record(new UserException(CANNOT_RESTORE_KEY), getMessages());
+                return null;
+            }
             String[] ids = getBackupManager().getArchiveDefinitionIds().toArray(new String[0]);
             File dir = getBackupManager().getCleanRestoreStagingDirectory();
             Set<String> defs = new HashSet<String>();
@@ -95,8 +105,8 @@ public abstract class RestoreUpload extends BaseComponent implements PageBeginRe
 
             RestoreFinalize page = getFinalizePage();
             page.setBackupType(BackupType.local); // files are already retrieved so this is meaningless
-            List<String> none = Collections.emptyList();
             page.setUploadedIds(defs);
+            List<String> none = Collections.emptyList();
             page.setSelections(none);
             page.setCallback(new PageCallback(getPage()));
             return page;
@@ -119,7 +129,6 @@ public abstract class RestoreUpload extends BaseComponent implements PageBeginRe
 
         OutputStream os = null;
         try {
-            String prefix = StringUtils.substringBefore(fileName, ".");
             File archive = new File(restoreDir, defId);
             os = new FileOutputStream(archive);
             IOUtils.copy(uploadFile.getStream(), os);

@@ -1,5 +1,5 @@
 AC_PREREQ(2.57)
-AC_INIT(sipXportLib, 4.6.0, sipx-dev@list.sipfoundry.org)
+AC_INIT(sipXportLib, 15.04, sipx-dev@list.sipfoundry.org)
 AC_CONFIG_AUX_DIR(config)
 m4_include([config/general.m4])
 m4_include([config/ax_boost_base.m4])
@@ -11,6 +11,7 @@ AM_CONFIG_HEADER([src/config.h])
 AC_PROG_LIBTOOL
 AC_LTDL_SHLIBEXT
 AC_PATH_PROG([BASH], [bash])
+
 AC_PROG_CXX
 AX_COMPILER_VENDOR
 AC_PROG_CC

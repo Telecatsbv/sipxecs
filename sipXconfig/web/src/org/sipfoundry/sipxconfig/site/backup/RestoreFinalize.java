@@ -15,7 +15,13 @@
 package org.sipfoundry.sipxconfig.site.backup;
 
 import java.util.Collection;
+import java.util.Set;
+import java.util.TreeSet;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.tapestry.IPage;
 import org.apache.tapestry.annotations.Bean;
 import org.apache.tapestry.annotations.InjectObject;
@@ -23,11 +29,17 @@ import org.apache.tapestry.annotations.InjectPage;
 import org.apache.tapestry.annotations.Persist;
 import org.apache.tapestry.event.PageBeginRenderListener;
 import org.apache.tapestry.event.PageEvent;
+import org.apache.tapestry.valid.ValidatorException;
+import org.restlet.resource.ResourceException;
 import org.sipfoundry.sipxconfig.admin.AdminContext;
 import org.sipfoundry.sipxconfig.backup.BackupManager;
+import org.sipfoundry.sipxconfig.backup.BackupPlan;
+import org.sipfoundry.sipxconfig.backup.BackupRunnerImpl;
 import org.sipfoundry.sipxconfig.backup.BackupSettings;
 import org.sipfoundry.sipxconfig.backup.BackupType;
-import org.sipfoundry.sipxconfig.backup.ManualRestore;
+import org.sipfoundry.sipxconfig.backup.RestoreApi;
+import org.sipfoundry.sipxconfig.cdr.CdrManager;
+import org.sipfoundry.sipxconfig.common.WaitingListener;
 import org.sipfoundry.sipxconfig.components.PageWithCallback;
 import org.sipfoundry.sipxconfig.components.SipxValidationDelegate;
 import org.sipfoundry.sipxconfig.components.TapestryUtils;
@@ -36,6 +48,8 @@ import org.sipfoundry.sipxconfig.site.admin.WaitingPage;
 
 public abstract class RestoreFinalize extends PageWithCallback implements PageBeginRenderListener {
     public static final String PAGE = "backup/RestoreFinalize";
+
+    private static final Log LOG = LogFactory.getLog(RestoreFinalize.class);
 
     @Persist
     public abstract void setBackupType(BackupType type);
@@ -48,12 +62,12 @@ public abstract class RestoreFinalize extends PageWithCallback implements PageBe
     public abstract void setSelections(Collection<String> paths);
 
     @Persist
-    public abstract Collection<String> getUploadedIds();
+    public abstract Set<String> getUploadedIds();
 
-    public abstract void setUploadedIds(Collection<String> ids);
+    public abstract void setUploadedIds(Set<String> ids);
 
-    @InjectObject("spring:manualRestore")
-    public abstract ManualRestore getManualRestore();
+    @InjectObject("spring:restoreApi")
+    public abstract RestoreApi getRestoreApi();
 
     @InjectPage(value = WaitingPage.PAGE)
     public abstract WaitingPage getWaitingPage();
@@ -84,19 +98,45 @@ public abstract class RestoreFinalize extends PageWithCallback implements PageBe
             return null;
         }
 
-        Collection<String> restoreFrom = getSelections();
-        boolean isAdminRestore = isSelected(AdminContext.ARCHIVE);
-        ManualRestore restore = getManualRestore();
+        //configure plan given selected local/ftp definitions or definitions to upload
+        Set<String> selectedDefinitions = CollectionUtils.isEmpty(getSelections())
+            ? getUploadedIds() : new TreeSet<String>();
+        String[] splittedString = null;
+        if (CollectionUtils.isEmpty(selectedDefinitions)) {
+            for (String def : getSelections()) {
+                splittedString = StringUtils.split(def, '/');
+                selectedDefinitions.add(splittedString[splittedString.length - 1]);
+            }
+        }
+        boolean isAdminRestore = isSelected(AdminContext.ARCHIVE) || isSelected(CdrManager.ARCHIVE);
+        //The plan needs to know what archives are to be restored
+        //in order to corectly create the configuration .yaml file
+        BackupPlan plan = getBackupManager().findOrCreateBackupPlan(getBackupType());
+        plan.setDefinitionIds(selectedDefinitions);
+        RestoreApi restore = getRestoreApi();
+        //When restore files are uploaded, selections are empty, we do no need to stage
+        //any archive because the upload process uploads them directly in stage directory
         if (isAdminRestore) {
-            restore.restore(getBackupType(), getBackupSettings(), restoreFrom, true);
             WaitingPage waitingPage = getWaitingPage();
-            waitingPage.setWaitingListener(restore);
+            waitingPage.setWaitingListener(new RestoreWaitingListener(restore,
+                plan, getBackupSettings(), getSelections()));
             return waitingPage;
         } else {
-            restore.restore(getBackupType(), getBackupSettings(), restoreFrom);
-            getValidator().recordSuccess(getMessages().getMessage("restore.success"));
-        }
+            try {
+                getValidator().recordSuccess(getMessages().getMessage("restore.initiated"));
+                restore.restore(plan, getBackupSettings(), getSelections());
+                // if we are here, restore is successful
+                getValidator().recordSuccess(getMessages().getMessage("restore.success"));
 
+            } catch (ResourceException e) {
+                if (e.getCause() instanceof BackupRunnerImpl.TimeoutException) {
+                    //BackupRunnerImpl has a background timeout > foreground timeout for restore: it went background
+                    getValidator().recordSuccess(getMessages().getMessage("restore.background"));
+                } else if (e.getCause() instanceof BackupRunnerImpl.StdErrException) {
+                    getValidator().record(new ValidatorException(e.getMessage()));
+                }
+            }
+        }
         return null;
     }
 
@@ -119,5 +159,30 @@ public abstract class RestoreFinalize extends PageWithCallback implements PageBe
         }
 
         return false;
+    }
+
+    private static class RestoreWaitingListener implements WaitingListener {
+        private RestoreApi m_restoreApi;
+        private BackupPlan m_backupPlan;
+        private BackupSettings m_backupSettings;
+        private Collection<String> m_selections;
+
+        public RestoreWaitingListener(RestoreApi restoreApi, BackupPlan backupPlan, BackupSettings backupSettings,
+            Collection<String> selections) {
+            m_restoreApi = restoreApi;
+            m_backupPlan = backupPlan;
+            m_backupSettings = backupSettings;
+            m_selections = selections;
+        }
+
+        @Override
+        public void afterResponseSent() {
+            try {
+                LOG.info("Initiate configuration restore...");
+                m_restoreApi.restore(m_backupPlan, m_backupSettings, m_selections);
+            } catch (ResourceException e) {
+                LOG.error("Cannot restore admin backup ", e);
+            }
+        }
     }
 }

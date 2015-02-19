@@ -20,6 +20,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -30,6 +31,7 @@ import net.coobird.thumbnailator.geometry.Positions;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -43,12 +45,17 @@ public class UserProfileServiceImpl implements UserProfileService {
     private static final String USER_PROFILE_COLLECTION = "userProfile";
     private static final String USER_ID = "_id";
     private static final String IM_ID = "m_imId";
+    private static final String AUTH_ACCOUNT_NAME = "m_authAccountName";
+    private static final String PRIMARY_EMAIL = "m_emailAddress";
+    private static final String ALTERNATE_EMAIL = "m_alternateEmailAddress";
+    private static final String ALIASES_EMAIL_SET = "m_emailAddressAliasesSet";
     private static final String USERNAME = "m_userName";
     private static final String BRANCH_NAME = "m_branchName";
     private static final String BRANCH_ADDRESS = "m_branchAddress";
     private static final String AVATAR_NAME = "avatar_%s.png";
     private static final int LIMIT_DISABLE = 500;
     private static final int LIMIT_DELETE = 50;
+    private static String m_defaultId = "";
     private MongoTemplate m_template;
 
     @Override
@@ -129,25 +136,88 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     @Override
+    public List<UserProfile> getUserProfileByAuthAccountName(String authAccountName) {
+        if (authAccountName != null) {
+            return m_template.find(new Query(Criteria.where(AUTH_ACCOUNT_NAME).is(authAccountName)),
+                    UserProfile.class, USER_PROFILE_COLLECTION);
+        }
+        return null;
+    }
+
+    @Override
+    public List<UserProfile> getUserProfileByEmail(String email) {
+        if (email != null) {
+            Query query = new Query(new Criteria().orOperator(Criteria.where(PRIMARY_EMAIL).is(email),
+                    Criteria.where(ALTERNATE_EMAIL).is(email),
+                    Criteria.where(ALIASES_EMAIL_SET).is(email)));
+            return m_template.find(query, UserProfile.class, USER_PROFILE_COLLECTION);
+        }
+        return null;
+    }
+
+    @Override
+    public List<Integer> getUserIdsByAuthAccountName(String authAccountName) {
+        List<Integer> ids = new ArrayList<Integer>();
+        List<UserProfile> userProfiles = getUserProfileByAuthAccountName(authAccountName);
+        for (UserProfile userProfile : userProfiles) {
+            ids.add(Integer.valueOf(userProfile.getUserId()));
+        }
+        return ids;
+    }
+
+    @Override
+    public List<Integer> getUserIdsByEmail(String email) {
+        List<Integer> ids = new ArrayList<Integer>();
+        List<UserProfile> userProfiles = getUserProfileByEmail(email);
+        for (UserProfile userProfile : userProfiles) {
+            ids.add(Integer.valueOf(userProfile.getUserId()));
+        }
+        return ids;
+    }
+
+    @Override
     public List<UserProfile> getAllUserProfiles() {
         return m_template.findAll(UserProfile.class);
     }
 
     @Override
     public InputStream getAvatar(String userName) {
-        GridFS avatarFS = new GridFS(m_template.getDb());
-        GridFSDBFile imageForOutput = avatarFS.findOne(String.format(AVATAR_NAME, userName));
-        if (imageForOutput != null) {
-            return imageForOutput.getInputStream();
-        }
-        // try default avatar
-        imageForOutput = avatarFS.findOne(String.format(AVATAR_NAME, "default"));
-        if (imageForOutput != null) {
-            return imageForOutput.getInputStream();
+        GridFSDBFile image = getAvatarDBFile(userName);
+        if (image != null) {
+            return image.getInputStream();
         }
         return null;
     }
 
+    @Override
+    public ObjectId getAvatarId(String userName) {
+        GridFSDBFile imageForOutput = getAvatarDBFile(userName);
+        if (imageForOutput != null) {
+            return (ObjectId) getAvatarDBFile(userName).getId();
+        }
+
+        return null;
+    }
+
+    private GridFSDBFile getAvatarDBFile(String userName) {
+        GridFS avatarFS = new GridFS(m_template.getDb());
+        GridFSDBFile imageForOutput = avatarFS.findOne(String.format(AVATAR_NAME, userName));
+        if (imageForOutput != null) {
+            return imageForOutput;
+        }
+        // try default avatar
+        imageForOutput = avatarFS.findOne(String.format(AVATAR_NAME, "default"));
+        if (imageForOutput != null) {
+            m_defaultId = imageForOutput.getId().toString();
+            return imageForOutput;
+        }
+        return null;
+    }
+    @Override
+    public String getAvatarDBFileMD5(String userName) {
+        GridFSDBFile avatar = getAvatarDBFile(userName);
+        return avatar != null ? avatar.getMD5() : null;
+    }
     @Override
     public void deleteAvatar(String userName) {
         GridFS avatarFS = new GridFS(m_template.getDb());
@@ -237,8 +307,8 @@ public class UserProfileServiceImpl implements UserProfileService {
     }
 
     private List<UserProfile> getUserProfiles(int firstRow, int pageSize, String property, boolean enabled) {
-        return m_template.find(new Query(Criteria.where(property).is(enabled)).skip(firstRow)
-                .limit(pageSize), UserProfile.class, USER_PROFILE_COLLECTION);
+        return m_template.find(new Query(Criteria.where(property).is(enabled)).skip(firstRow).limit(pageSize),
+                UserProfile.class, USER_PROFILE_COLLECTION);
     }
 
     @Override
@@ -253,5 +323,9 @@ public class UserProfileServiceImpl implements UserProfileService {
 
     private Long countUsers(boolean active) {
         return m_template.count(new Query(Criteria.where("m_enabled").is(active)), USER_PROFILE_COLLECTION);
+    }
+
+    public static String getDefaultId() {
+        return m_defaultId;
     }
 }

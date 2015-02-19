@@ -99,11 +99,12 @@ unsigned long osSocketGetDefaultBindAddress()
 /* ============================ CREATORS ================================== */
 
 // Constructor
-OsSocket::OsSocket()
+OsSocket::OsSocket(unsigned int flags)
    : socketDescriptor(OS_INVALID_SOCKET_DESCRIPTOR)
    , localHostPort(OS_INVALID_SOCKET_DESCRIPTOR)
    , remoteHostPort(OS_INVALID_SOCKET_DESCRIPTOR)
    , mIsConnected(FALSE)
+   , mFlags(flags)
    , mActual_socketDescriptor(OS_INVALID_SOCKET_DESCRIPTOR)
 {
 }
@@ -148,6 +149,9 @@ int OsSocket::write(const char* buffer, int bufferLength)
    }
 #endif // FORCE_SOCKET_ERRORS
 
+   // try to lock for write
+   bool locked = lock();
+
    ssize_t bytesSent;
 
    int flags = 0;
@@ -166,7 +170,7 @@ int OsSocket::write(const char* buffer, int bufferLength)
    bytesSent = send(socketDescriptor, buffer, bufferLength, flags);
    if (bytesSent != bufferLength)
    {
-      Os::Logger::instance().log(FAC_KERNEL, PRI_ERR,
+      Os::Logger::instance().log(FAC_KERNEL, PRI_DEBUG,
                     "OsSocket::write %d (%s:%d %s:%d) send returned %zd, errno=%d '%s'",
                     socketDescriptor,
                     remoteHostName.data(), remoteHostPort,
@@ -185,11 +189,17 @@ int OsSocket::write(const char* buffer, int bufferLength)
    if (bytesSent == bufferLength)
    {
       Os::Logger::instance().log(FAC_KERNEL, PRI_DEBUG,
-                    "OsSocket::write %d (%s:%d %s:%d) is on the wire.",
+                    "OsSocket::write %d (rhost: %s, rport: %d lhost: %s, lport :%d) of %zd bytes is on the wire.",
                     socketDescriptor,
                     remoteHostName.data(), remoteHostPort,
                     localHostName.data(), localHostPort,
                     bytesSent);
+   }
+
+   // unlock, if needed
+   if (locked)
+   {
+     unlock();
    }
 
    return(bytesSent);
@@ -318,7 +328,7 @@ int OsSocket::read(char* buffer, int bufferLength,
 
          // Others should not.
          default:
-            Os::Logger::instance().log(FAC_KERNEL, PRI_WARNING,
+            Os::Logger::instance().log(FAC_KERNEL, PRI_DEBUG,
                           "OsSocket::read %d (%s:%d %s:%d) recvfrom returned %d '%s'",
                           socketDescriptor,
                           remoteHostName.data(), remoteHostPort,
@@ -457,7 +467,7 @@ UtlBoolean OsSocket::isReadyToReadEx(long waitMilliseconds,UtlBoolean &rSocketEr
         {
             rSocketError = TRUE;
             numReady = -1;
-            Os::Logger::instance().log(FAC_KERNEL, PRI_WARNING,
+            Os::Logger::instance().log(FAC_KERNEL, PRI_DEBUG,
                           "OsSocket::isReadyToRead %d (%s:%d %s:%d) poll returned %d (errno=%d '%s') in socket: %x %p",
                           socketDescriptor,
                           remoteHostName.data(), remoteHostPort,
@@ -611,7 +621,7 @@ UtlBoolean OsSocket::isReadyToWrite(long waitMilliseconds) const
 
        if(resCode < 0)
        {
-          Os::Logger::instance().log(FAC_KERNEL, PRI_WARNING,
+          Os::Logger::instance().log(FAC_KERNEL, PRI_DEBUG,
                         "OsSocket::isReadyToWrite %d (%s:%d %s:%d) poll returned %d (errno=%d '%s') in socket: %d %p",
                         socketDescriptor,
                         remoteHostName.data(), remoteHostPort,
@@ -840,6 +850,22 @@ void OsSocket::setDefaultBindAddress(const unsigned long bind_address)
     mInitializeSem.acquire();
     m_DefaultBindAddress = bind_address;
     mInitializeSem.release();
+}
+
+bool OsSocket::lock(bool force)
+{
+  bool lock = (force || (OsSocket::SAFE_WRITE & mFlags));
+  if (lock)
+  {
+    safeWriteMutex.lock();
+  }
+
+  return lock;
+}
+
+void OsSocket::unlock()
+{
+  safeWriteMutex.unlock();
 }
 
 unsigned long OsSocket::getDefaultBindAddress()
@@ -1228,7 +1254,7 @@ UtlBoolean OsSocket::isFramed(IpProtocolSocketType type)
    return r;
 }
 
-//:Returns TRUE if the given IpProtocolSocketType is a relaible message protocol
+//:Returns TRUE if the given IpProtocolSocketType is a reliable message protocol
 // (that is, the transport mechanism will ensure delivery), so that "100 Trying"
 // responses and re-sends are not needed.
 UtlBoolean OsSocket::isReliable(IpProtocolSocketType type)

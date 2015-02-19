@@ -1,3 +1,19 @@
+/**
+ *
+ *
+ * Copyright (c) 2014 eZuce, Inc. All rights reserved.
+ * Contributed to SIPfoundry under a Contributor Agreement
+ *
+ * This software is free software; you can redistribute it and/or modify it under
+ * the terms of the Affero General Public License (AGPL) as published by the
+ * Free Software Foundation; either version 3 of the License, or (at your option)
+ * any later version.
+ *
+ * This software is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+ * FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License for more
+ * details.
+ */
 package org.sipfoundry.openfire.muc;
 
 import java.util.Collection;
@@ -42,7 +58,7 @@ public class RoomManager {
             try {
                 mucService = XMPPServer.getInstance().getMultiUserChatManager()
                         .createMultiUserChatService(subdomain, "default MUC service", false);
-                Collection<JID> admins = XMPPServer.getAdmins();
+                Collection<JID> admins = XMPPServer.getInstance().getAdmins();
                 JID admin = admins.iterator().next();
                 mucService.addSysadmin(admin);
                 mucService.setLogConversationsTimeout(60);
@@ -67,7 +83,7 @@ public class RoomManager {
 
         if (mucService == null) {
             try {
-                Collection<JID> admins = XMPPServer.getAdmins();
+                Collection<JID> admins = XMPPServer.getInstance().getAdmins();
                 JID admin = admins.iterator().next();
                 mucService = XMPPServer.getInstance().getMultiUserChatManager()
                         .createMultiUserChatService(MUC_SUBDOMAIN, DEFAULT_DESCRIPTION, false);
@@ -111,7 +127,7 @@ public class RoomManager {
                     }
                 }
 
-                for (JID admins : XMPPServer.getAdmins()) {
+                for (JID admins : XMPPServer.getInstance().getAdmins()) {
                     if (!mucRoom.getOwners().contains(admins)) {
                         mucRoom.addOwner(jid, mucRoom.getRole());
                     }

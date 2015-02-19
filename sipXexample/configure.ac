@@ -1,9 +1,14 @@
 AC_PREREQ(2.57)
-AC_INIT(sipxexample, 4.6.0, sipx-dev@list.sipfoundry.org)
+AC_INIT(sipxexample, 15.04, sipx-dev@list.sipfoundry.org)
 AC_CONFIG_AUX_DIR(config)
 AM_INIT_AUTOMAKE(foreign tar-ustar)
 m4_include([config/general.m4])
 m4_include([config/sipXlib.m4])
+
+# java projects - typical macros
+m4_include([config/java.m4])
+m4_include([config/java2.m4])
+m4_include([config/dart.m4])
 
 # cpp projects - typical macros
 AC_CONFIG_SRCDIR([cpp-executable/src/ExampleApp.cpp])
@@ -16,17 +21,15 @@ AX_COMPILER_VENDOR
 SFAC_INIT_FLAGS
 SFAC_LIB_COMMSERVER
 
-# java projects - typical macros
-m4_include([config/java.m4])
-m4_include([config/java2.m4])
+# java projects
 AC_PROG_JAVA_CC([javac])
 AC_PROG_JAVA([java])
 PROG_JAVA_DEP
 
-# mainly for sipXconfig UI plugins
+# sipXconfig UI plugins
 CHECK_DART_SDK
 
-# Psotgres operations
+# projects that interact w/postgres
 CHECK_POSTGRES
 
 # ruby projects - typical macros

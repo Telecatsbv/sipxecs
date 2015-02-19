@@ -10,7 +10,7 @@ Packager: SIPfoundry <sipx-dev@sipfoundry.org>
 Url: http://www.sipfoundry.org
 
 BuildRequires: automake
-BuildRequires: java-devel >= 1.6
+BuildRequires: java-1.7.0-openjdk-devel
 BuildRequires: zip
 BuildRequires: sipxcommons >= %version
 BuildRequires: sipxopenfire
@@ -64,6 +64,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(644,root,root) %{_datadir}/sipxecs/schema/autoattendants.xsd
 %attr(644,root,root) %{_datadir}/sipxecs/schema/validusers.xsd
 %config(noreplace) %attr(755,sipx,sipx) %{_localstatedir}/sipxdata/mediaserver/data/moh
+%config(noreplace) %{_sysconfdir}/sipxpbx/sipxivr/log4j.properties
 
 %post
 if grep -q :on <<<`/sbin/chkconfig sipxivr --list 2>&1`; then

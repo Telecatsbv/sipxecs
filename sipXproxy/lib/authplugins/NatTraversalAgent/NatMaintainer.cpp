@@ -16,7 +16,9 @@
 #include "net/CallId.h"
 #include "net/Url.h"
 #include "net/SipMessage.h"
+#include "net/NameValueTokenizer.h"
 #include "NatTraversalAgentDataTypes.h"
+#include "os/OsLogger.h"
 
 // DEFINES
 #define NAT_REFRESH_INTERVAL_IN_MILLISECS (20000)
@@ -28,7 +30,7 @@ using namespace std;
 // TYPEDEFS
 // STATIC INITIALIZERS
 
-NatMaintainer::NatMaintainer( SipRouter* sipRouter, RegDB* pRegDb, SubscribeDB* pSubscribeDb ) :
+NatMaintainer::NatMaintainer( SipRouter* sipRouter, RegDB* pRegDb, SubscribeDB* pSubscribeDb, const UtlString& externalAddress, int externalPort  ) :
    mRefreshRoundNumber( 0 ),
    mNextSeqValue( 1 ),
    mTimerMutex( OsMutex::Q_FIFO ),
@@ -64,6 +66,34 @@ NatMaintainer::NatMaintainer( SipRouter* sipRouter, RegDB* pRegDb, SubscribeDB* 
    UtlString fromTag;
    CallId::getNewTag( fromTag );
    mpKeepAliveMessage->setFromFieldTag( fromTag );   
+   
+  // adjust the via host and port
+   
+  UtlString topmostVia;
+  if( mpKeepAliveMessage->getViaFieldSubField(&topmostVia, 0 ) )
+  {
+    UtlString viaSentProtocol;
+    NameValueTokenizer::getSubField( topmostVia, 0, SIP_SUBFIELD_SEPARATORS, &viaSentProtocol );
+    UtlString sentByAndViaParams;
+    NameValueTokenizer::getSubField( topmostVia, 1, SIP_SUBFIELD_SEPARATORS, &sentByAndViaParams );
+    UtlString viaParams;
+    NameValueTokenizer::getSubField( sentByAndViaParams, 1, ";", &viaParams );
+
+    mpKeepAliveMessage->removeTopVia();
+
+    UtlString newVia;
+    char portNumericForm[24];
+    sprintf( portNumericForm, "%d", externalPort);
+    newVia += viaSentProtocol;
+    newVia += SIP_SUBFIELD_SEPARATOR;
+    newVia += externalAddress;
+    newVia += ":";
+    newVia += portNumericForm;
+    newVia += ";";
+    newVia += viaParams;
+
+    mpKeepAliveMessage->addViaField( newVia, TRUE );
+  }
 }
 
 NatMaintainer::~NatMaintainer()
@@ -76,54 +106,62 @@ NatMaintainer::~NatMaintainer()
 
 int NatMaintainer::run( void* runArg )
 {
-  try
+  OsStatus rc;
+  UtlString stringToMatch( SIPX_PRIVATE_CONTACT_URI_PARAM );
+  
+  while( !isShuttingDown() )
   {
-     OsStatus rc;
-     while( !isShuttingDown() )
+     try
      {
-  //TODO: Optimization.  Do not maintain db entries for which we are not the primary since
-  // no pinhole is open for us at the remote NAT if we are the secondary.  Note:  once this
-  // optimization gets implemented, we will need to start refreshing callers of every active
-  // CallTracker if not registered with the system handling the call to ensure that its
-  // pinhole remains open throughout the call.
-        rc = mTimerMutex.acquire( NAT_REFRESH_INTERVAL_IN_MILLISECS );
-        if( rc == OS_WAIT_TIMEOUT )
-        {
-           if( mpSipRouter )
-           {
-              mRefreshRoundNumber++;
-              // Increment CSeq so that the OPTIONS sent in this
-              // wave have incrementing Cseq as per spec
-              mpKeepAliveMessage->setCSeqField( mNextSeqValue, "OPTIONS" );
-              mNextSeqValue++;
+       //TODO: Optimization.  Do not maintain db entries for which we are not the primary since
+       // no pinhole is open for us at the remote NAT if we are the secondary.  Note:  once this
+       // optimization gets implemented, we will need to start refreshing callers of every active
+       // CallTracker if not registered with the system handling the call to ensure that its
+       // pinhole remains open throughout the call.
+       rc = mTimerMutex.acquire( NAT_REFRESH_INTERVAL_IN_MILLISECS );
+       if( rc == OS_WAIT_TIMEOUT )
+       {
+          if( mpSipRouter )
+          {
+             mRefreshRoundNumber++;
+             // Increment CSeq so that the OPTIONS sent in this
+             // wave have incrementing Cseq as per spec
+             mpKeepAliveMessage->setCSeqField( mNextSeqValue, "OPTIONS" );
+             mNextSeqValue++;
 
-              // timer has expired - refresh timeout
-              UtlSList resultList;
-              UtlString stringToMatch( SIPX_PRIVATE_CONTACT_URI_PARAM );
+             // timer has expired - refresh timeout
+       
 
-              // start by sending keep-alives to non-expired contacts for far-end NATed phones
-              // found in the subscription database
-              sendKeepAliveToContactList( resultList );
-              resultList.destroyAll();
-              sendKeepAliveToSubscribeContactList(stringToMatch);
+             // start by sending keep-alives to non-expired contacts for far-end NATed phones
+             // found in the subscription database
+             sendKeepAliveToSubscribeContactList(stringToMatch);
 
-              // next, send keep-alives to non-expired contacts for far-end NATed phones
-              // found in the registration database
-              sendKeepAliveToRegContactList(stringToMatch);
+             // next, send keep-alives to non-expired contacts for far-end NATed phones
+             // found in the registration database
+             sendKeepAliveToRegContactList(stringToMatch);
 
-              // finally, send keep-alives to the endpoints that were inserted into our
-              // external keep alive list by other components of the NAT traversal feature.
-              sendKeepAliveToExternalKeepAliveList();
-           }
-        }
+             // finally, send keep-alives to the endpoints that were inserted into our
+             // external keep alive list by other components of the NAT traversal feature.
+             sendKeepAliveToExternalKeepAliveList();
+          }
+       }
+       else
+       {
+         OS_LOG_ERROR(FAC_SIP, "NatMaintainer::run Unexpected wait error: " << rc); 
+       }
+     }
+     catch(const std::exception& e)
+     {
+       OS_LOG_ERROR(FAC_SIP, "NatMaintainer::run Exception - " << e.what());
+     }
+     catch(...)
+     {
+       OS_LOG_ERROR(FAC_SIP, "NatMaintainer::run Exception - UNKNOWN");
      }
   }
-  catch(...)
-  {
-    //
-    // Treat all exceptions as benign
-    //
-  }
+  
+  OS_LOG_NOTICE(FAC_SIP, "NatMaintainer::run TERMINATED");
+  
   return 0;
 }
 

@@ -82,6 +82,8 @@ MwiPlugin::handleNotifyResponse (
 
 void MwiPlugin::handleMwiData(MwiPluginQueue::MwiData& mwiData)
 {
+  try
+  {
     if (!mwiData.subscribe)
     {
       if (mwiData.mailBoxData.empty())
@@ -295,6 +297,28 @@ void MwiPlugin::handleMwiData(MwiPluginQueue::MwiData& mwiData)
                       ,httpStatus
                       );
       }
+  }
+#ifdef MONGO_assert
+  catch (mongo::DBException& e)
+  {
+    OS_LOG_ERROR( FAC_SIP, "SipRouter::handleMessage() Exception: "
+             << e.what() );
+  }
+#endif
+  catch (boost::exception& e)
+  {
+    OS_LOG_ERROR( FAC_SIP, "SipRouter::handleMessage() Exception: "
+             << boost::diagnostic_information(e));
+  }
+  catch (std::exception& e)
+  {
+    OS_LOG_ERROR( FAC_SIP, "SipRouter::handleMessage() Exception: "
+             << e.what() );
+  }
+  catch (...)
+  {
+    OS_LOG_ERROR( FAC_SIP, "SipRouter::handleMessage() Exception: Unknown Exception");
+  }
 }
 
 OsStatus

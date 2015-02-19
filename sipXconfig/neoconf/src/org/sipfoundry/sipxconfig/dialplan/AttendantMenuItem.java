@@ -9,11 +9,13 @@
  */
 package org.sipfoundry.sipxconfig.dialplan;
 
+import org.sipfoundry.sipxconfig.common.NamedObject;
+
 
 /**
  * This represent the expected response of the auto attendant after user presses a dial-pad key
  */
-public class AttendantMenuItem {
+public class AttendantMenuItem implements NamedObject {
 
     private AttendantMenuAction m_action;
 
@@ -49,5 +51,58 @@ public class AttendantMenuItem {
 
     public void setParameter(String parameter) {
         m_parameter = parameter;
+    }
+
+    @Override
+    public String toString() {
+        return "AttendantMenuItem [m_action=" + m_action + ", m_parameter=" + m_parameter + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((m_action == null) ? 0 : m_action.hashCode());
+        result = prime * result + ((m_parameter == null) ? 0 : m_parameter.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        AttendantMenuItem other = (AttendantMenuItem) obj;
+        if (m_action == null) {
+            if (other.m_action != null) {
+                return false;
+            }
+        } else if (!m_action.equals(other.m_action)) {
+            return false;
+        }
+        if (m_parameter == null) {
+            if (other.m_parameter != null) {
+                return false;
+            }
+        } else if (!m_parameter.equals(other.m_parameter)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String getName() {
+        return getParameter();
+    }
+
+    @Override
+    public void setName(String name) {
+        //Do Nothing
     }
 }

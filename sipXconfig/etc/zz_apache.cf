@@ -33,9 +33,11 @@ bundle agent apache_config {
   vars:
     apache_2_2::
       "ssl_mutex" string => "SSLMutex default";
+      "require_all_granted" string => "";
 
     !apache_2_2::
       "ssl_mutex" string => "Mutex sysvsem default";
+      "require_all_granted" string => "Require all granted";
 
     any::
       "ssl_web" slist => {
@@ -65,6 +67,13 @@ bundle agent apache_config {
         create => "true",
         edit_defaults => empty,
         edit_line => expand_template("$(sipx.SIPX_CFDATA)/ssl.conf"),
+        classes => if_repaired("restart_apache");
+
+      "$(sipx.APACHE2_CONFDIR)/unitelite.conf"
+        comment => "add apache unite conf $(this.promiser)",
+        create => "true",
+        edit_defaults => empty,
+        edit_line => expand_template("$(sipx.SIPX_CONFDIR)/unite/unitelite.conf"),
         classes => if_repaired("restart_apache");
 
       "$(sipx.APACHE2_CONFDIR)/ssl/."

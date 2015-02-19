@@ -2,9 +2,9 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:security="http://www.springframework.org/schema/security"
-  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
   http://www.springframework.org/schema/security
-  http://www.springframework.org/schema/security/spring-security-3.1.xsd">
+  http://www.springframework.org/schema/security/spring-security-3.2.xsd">
 
   <!-- ======================== FILTER CHAIN ======================= -->
 
@@ -22,26 +22,27 @@
             filters="lazySecurityContextPersistenceFilter,privateUserKeyProcessingFilter,digestExceptionTranslationFilter,filterInvocationInterceptor"/>
       <security:filter-chain pattern="/rest/avatar/.*"
             filters="lazySecurityContextPersistenceFilter,basicAuthenticationFilter,digestAuthenticationFilter,digestExceptionTranslationFilter,anonymousProcessingFilter,filterInvocationInterceptor"/>
-      <security:filter-chain pattern="/(services|rest)/.*"
-            filters="lazySecurityContextPersistenceFilter,basicAuthenticationFilter,digestAuthenticationFilter,digestExceptionTranslationFilter,filterInvocationInterceptor"/>
+      <security:filter-chain pattern="/(services|rest|api)/.*"
+            filters="lazySecurityContextPersistenceFilter,optionsAuthFilter,basicAuthenticationFilter,digestAuthenticationFilter,digestExceptionTranslationFilter,filterInvocationInterceptor"/>
       <security:filter-chain pattern="/(TestPage|FirstUser).html"
             filters="securityContextPersistenceFilter"/>
       <security:filter-chain pattern="/.*"
             filters="securityContextPersistenceFilter,authenticationProcessingFilter,loginExceptionTranslationFilter,filterInvocationInterceptor"/>
     </security:filter-chain-map>
     <property name="domainManager" ref="domainManager" />
+    <property name="adminContext" ref="adminContextImpl" />
   </bean>
 
   <!-- ======================== AUTHENTICATION ======================= -->
   <bean id="authenticationManager" class="org.springframework.security.authentication.ProviderManager">
     <property name="providers">
       <list>
-        <ref local="testAuthenticationProvider" />
-        <ref local="ldapAuthProvider" />
-        <ref local="userAuthenticationProvider" />
-        <ref local="sharedSecretUserAuthenticationProvider" />
-        <ref local="locationAuthenticationProvider" />
-        <ref local="anonymousAuthenticationProvider"/>
+        <ref bean="testAuthenticationProvider" />
+        <ref bean="ldapAuthProvider" />
+        <ref bean="userAuthenticationProvider" />
+        <ref bean="sharedSecretUserAuthenticationProvider" />
+        <ref bean="locationAuthenticationProvider" />
+        <ref bean="anonymousAuthenticationProvider"/>
       </list>
     </property>
     <property name="authenticationEventPublisher" ref="defaultAuthenticationEventPublisher" />
@@ -79,10 +80,12 @@
 
   <bean id="standardUserDetailsService" class="org.sipfoundry.sipxconfig.security.StandardUserDetailsService">
     <property name="coreContext" ref="coreContext" />
+    <property name="adminContext" ref="adminContext" />
   </bean>
 
   <bean id="sharedSecretUserDetailsService" class="org.sipfoundry.sipxconfig.security.SharedSecretUserDetailsService">
     <property name="coreContext" ref="coreContext" />
+    <property name="adminContext" ref="adminContext" />
     <property name="domainManager" ref="domainManager" />
   </bean>
 
@@ -141,6 +144,8 @@
     <property name="authenticationEntryPoint" ref="authenticationEntryPoint" />
     <property name="authenticationDetailsSource" ref="authenticationDetailsSource" />
   </bean>
+
+  <bean id="optionsAuthFilter" class="org.sipfoundry.sipxconfig.security.OptionsAuthFilter"/>
 
   <bean id="authenticationEntryPoint" class="org.sipfoundry.sipxconfig.security.SipxBasicAuthenticationEntryPoint">
     <property name="domainManager" ref="domainManager" />
@@ -214,10 +219,10 @@
     <security:intercept-url pattern="/rest/auto-attendant/specialmode" access="ROLE_ADMIN,ROLE_ATTENDANT_ADMIN"/>
     <security:intercept-url pattern="/rest/auto-attendant" access="ROLE_ADMIN,ROLE_ATTENDANT_ADMIN"/>
     <security:intercept-url pattern="/rest/call/.*" access="ROLE_USER"/>
-    <security:intercept-url pattern="/rest/my/.*" access="ROLE_USER"/>
+    <security:intercept-url pattern="/(rest|api)/my/.*" access="ROLE_USER"/>
     <security:intercept-url pattern="/rest/avatar/.*" access="ROLE_ANONYMOUS,ROLE_ADMIN,ROLE_USER"/>
     <security:intercept-url pattern="/rest/private/.*" access="ROLE_USER"/>
-    <security:intercept-url pattern="/(services|rest)/.*" access="ROLE_ADMIN"/>
+    <security:intercept-url pattern="/(services|rest|api)/.*" access="ROLE_ADMIN"/>
     <security:intercept-url pattern="/initial-config/.*" access="ROLE_LOCATION"/>
   </security:filter-security-metadata-source>
 

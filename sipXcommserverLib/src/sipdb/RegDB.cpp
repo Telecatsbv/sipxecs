@@ -20,6 +20,7 @@
 #include <os/OsLogger.h>
 #include "sipdb/RegDB.h"
 #include "sipdb/RegExpireThread.h"
+#include "sipdb/MongoMod.h"
 
 using namespace std;
 
@@ -56,6 +57,9 @@ void RegDB::updateBinding(RegBinding& binding)
 		_local->updateBinding(binding);
 		return;
 	}
+  
+  MongoDB::UpdateTimer updateTimer(const_cast<RegDB&>(*this));
+  
 	if (binding.getTimestamp() == 0)
 		binding.setTimestamp(OsDateTime::getSecsSinceEpoch());
 
@@ -64,6 +68,23 @@ void RegDB::updateBinding(RegBinding& binding)
 		string serverId = _localAddress;
 		binding.setLocalAddress(serverId);
 	}
+  
+  if (binding.getBinding().empty())
+  {
+    Url curl(binding.getContact().c_str());
+    UtlString hostPort;
+    UtlString user;
+    curl.getHostWithPort(hostPort);
+    curl.getUserId(user);
+    
+    std::ostringstream strm;
+    strm << "sip:";
+    if (!user.isNull())
+      strm << user.data() << "@";
+    strm << hostPort.data();
+    
+    binding.setBinding(strm.str());
+  }
 
 	mongo::BSONObj query = BSON(
 			"identity" << binding.getIdentity() <<
@@ -79,6 +100,7 @@ void RegDB::updateBinding(RegBinding& binding)
           "uri" << binding.getUri() <<
           "callId" << binding.getCallId() <<
           "contact" << binding.getContact() <<
+          "binding" << binding.getBinding() <<
           "qvalue" << binding.getQvalue() <<
           "instanceId" << binding.getInstanceId() <<
           "gruu" << binding.getGruu() <<
@@ -90,7 +112,7 @@ void RegDB::updateBinding(RegBinding& binding)
           "primary" << binding.getPrimary() <<
           "expired" << isExpired );
 
-    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getWriteQueryTimeout()));
     mongo::DBClientBase* client = conn->get();
 
     client->remove(_ns, query);
@@ -115,13 +137,15 @@ void RegDB::expireOldBindings(const string& identity, const string& callId, unsi
 		_local->expireOldBindings(identity, callId, cseq, timeNow);
 		return;
 	}
+  
+  MongoDB::UpdateTimer updateTimer(const_cast<RegDB&>(*this));
 	mongo::BSONObj query = BSON(
 			"identity" << identity <<
 			"callId"<< callId <<
 			"cseq" << BSON_LESS_THAN(cseq) <<
                         "shardId" << getShardId());
 
-    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getWriteQueryTimeout()));
     mongo::DBClientBase* client = conn->get();
 
 	client->remove(_ns, query);
@@ -138,11 +162,13 @@ void RegDB::expireAllBindings(const string& identity, const string& callId, unsi
 		_local->expireAllBindings(identity, callId, cseq, timeNow);
 		return;
 	}
+  
+  MongoDB::UpdateTimer updateTimer(const_cast<RegDB&>(*this));
 	mongo::BSONObj query = BSON(
                         "shardId" << getShardId() <<
 			"identity" << identity);
 
-    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getWriteQueryTimeout()));
     mongo::DBClientBase* client = conn->get();
 
     client->remove(_ns, query);
@@ -161,16 +187,18 @@ void RegDB::removeAllExpired()
     return;
   }
 
-  unsigned long timeNow = OsDateTime::getSecsSinceEpoch();
-  OS_LOG_INFO(FAC_SIP, "RegDB::removeAllExpired INVOKED for shard == " << getShardId() << " and expireTime <= " << timeNow);
-
+  unsigned long timeNow = OsDateTime::getSecsSinceEpoch() - _expireGracePeriod;
   
+  
+  OS_LOG_INFO(FAC_SIP, "RegDB::removeAllExpired INVOKED for shard == " << getShardId() << " and expireTime <= " << timeNow << " gracePeriod: " << _expireGracePeriod << " sec");
+
+  MongoDB::UpdateTimer updateTimer(const_cast<RegDB&>(*this));
   mongo::BSONObj query = BSON(
             "shardId" << getShardId() <<
             "expirationTime" << BSON_LESS_THAN_EQUAL((long long)timeNow));
 
-  MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
-    mongo::DBClientBase* client = conn->get();
+  MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getWriteQueryTimeout()));
+  mongo::DBClientBase* client = conn->get();
 
   client->remove(_ns, query);
   client->ensureIndex("node.registrar",  BSON( "identity" << 1 ));
@@ -185,6 +213,94 @@ bool RegDB::isOutOfSequence(const string& identity, const string& callId, unsign
 	return false;
 }
 
+bool RegDB::isRegisteredBinding(const Url& curl, bool preferPrimary)
+{
+  bool isRegistered = false;
+  UtlString hostPort;
+  UtlString user;
+  curl.getHostWithPort(hostPort);
+  curl.getUserId(user);
+
+  std::ostringstream binding;
+  binding << "sip:";
+  if (!user.isNull())
+    binding << user.data() << "@";
+  binding << hostPort.data();
+  
+  mongo::BSONObjBuilder query;
+	query.append("binding", binding.str());
+
+	if (_local)
+  {
+		preferPrimary = false;
+		_local->isRegisteredBinding(curl, preferPrimary);
+		query.append("shardId", BSON("$ne" << _local->getShardId()));
+	} 
+
+  MongoDB::ReadTimer readTimer(const_cast<RegDB&>(*this));
+  
+	mongo::BSONObjBuilder builder;
+	if (!preferPrimary)
+	  BaseDB::nearest(builder, query.obj());
+	else
+	  BaseDB::primaryPreferred(builder, query.obj());
+
+	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
+	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
+
+  if (!pCursor.get())
+  {
+   throw mongo::DBException("mongo query returned null cursor", 0);
+  }
+
+	isRegistered = pCursor->more();
+	conn->done();
+  
+  OS_LOG_INFO(FAC_SIP, "RegDB::isRegisteredBinding returning " << (isRegistered ? "TRUE" : "FALSE") << " for binding " <<  binding.str());
+   
+	return isRegistered;
+}
+
+
+static void push_or_replace_binding(RegDB::Bindings& bindings, const RegBinding& binding)
+{
+  //
+  // Check if the call-id or contact of this binding has been previously pushed
+  //
+  for (RegDB::Bindings::iterator iter = bindings.begin(); iter != bindings.end(); iter++)
+  {
+    if (iter->getCallId() == binding.getCallId() || iter->getContact() == binding.getContact())
+    {
+      //
+      // This is already inserted previously most probably by local shard.
+      // Check which one of them has the larger timestamp, and therefore
+      // the most up-to-date
+      //
+
+      if (binding.getTimestamp() > iter->getTimestamp())
+      {
+        //
+        // The new binding has a more recent timestamp value.  replace the old one
+        //
+        OS_LOG_INFO(FAC_SIP, "RegDB::findAndReplaceOlderBindings - replacing duplicate binding for " << binding.getUri());
+        *iter = binding;
+      }
+      else
+      {
+        //
+        // Simply ignore this binding.  It is older (or equal) than what was previously pushed
+        //
+        OS_LOG_INFO(FAC_SIP, "RegDB::findAndReplaceOlderBindings - dropping older binding for " << binding.getUri());
+      }
+      return;
+    }
+  }
+  //
+  // We haven't found any older duplicate
+  //
+  bindings.push_back(binding);
+}
+
 bool RegDB::getUnexpiredContactsUser(const string& identity, unsigned long timeNow, Bindings& bindings, bool preferPrimary) const
 {
 	static string gruuPrefix = GRUU_PREFIX;
@@ -193,13 +309,15 @@ bool RegDB::getUnexpiredContactsUser(const string& identity, unsigned long timeN
 
 	mongo::BSONObjBuilder query;
   query.append("expirationTime", BSON_GREATER_THAN((long long)timeNow));
-
+ 
 	if (_local)
   {
 		preferPrimary = false;
 		_local->getUnexpiredContactsUser(identity, timeNow, bindings, preferPrimary);
 		query.append("shardId", BSON("$ne" << _local->getShardId()));
 	}
+  
+   MongoDB::ReadTimer readTimer(const_cast<RegDB&>(*this));
 
 	if (isGruu) {
 		string searchString(identity);
@@ -217,9 +335,13 @@ bool RegDB::getUnexpiredContactsUser(const string& identity, unsigned long timeN
 	else
 	  BaseDB::primaryPreferred(builder, query.obj());
 
-	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
 	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
-	if (pCursor.get() && pCursor->more())
+	if (!pCursor.get())
+	{
+	  throw mongo::DBException("mongo query returned null cursor", 0);
+	}
+	else if (pCursor->more())
 	{
 		while (pCursor->more())
 		{
@@ -230,14 +352,17 @@ bool RegDB::getUnexpiredContactsUser(const string& identity, unsigned long timeN
         OS_LOG_INFO(FAC_SIP, "RegDB::getUnexpiredContactsUser "
         << " Identity: " << identity
         << " Contact: " << binding.getContact()
-        << " Expires: " << binding.getExpirationTime() - timeNow << " sec");
-        bindings.push_back(binding);
+        << " Expires: " << binding.getExpirationTime() - OsDateTime::getSecsSinceEpoch() << " sec"
+        << " Call-Id: " << binding.getCallId());
+
+        push_or_replace_binding(bindings, binding);
       }
       else
       {
         OS_LOG_WARNING(FAC_SIP, "RegDB::getUnexpiredContactsUser returned an expired record?!?!"
           << " Identity: " << identity
           << " Contact: " << binding.getContact()
+          << " Call-Id: " << binding.getCallId()
           << " Expires: " <<  binding.getExpirationTime() << " epoch"
           << " TimeNow: " << timeNow << " epoch");
       }
@@ -266,21 +391,32 @@ bool RegDB::getUnexpiredContactsUserContaining(const string& matchIdentity, unsi
 		query.append("shardId", BSON("$ne" << _local->getShardId()));
 	} 
 
+  MongoDB::ReadTimer readTimer(const_cast<RegDB&>(*this));
+   
 	mongo::BSONObjBuilder builder;
 	if (!preferPrimary)
 	  BaseDB::nearest(builder, query.obj());
 	else
 	  BaseDB::primaryPreferred(builder, query.obj());
 
-	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
 	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
-	if (pCursor.get() && pCursor->more())
+
+  if (!pCursor.get())
+  {
+   throw mongo::DBException("mongo query returned null cursor", 0);
+  }
+  else if (pCursor->more())
 	{
 		while (pCursor->more())
 		{
-			RegBinding binding(pCursor->next());
-			if (binding.getContact().find(matchIdentity) != string::npos)
-				bindings.push_back(binding);
+			RegBinding binding(pCursor->next());     
+      if (binding.getContact().find(matchIdentity) == string::npos)
+      {
+        continue;
+      }
+
+      push_or_replace_binding(bindings, binding);
 		}
 		conn->done();
 		return bindings.size() > 0;
@@ -288,6 +424,29 @@ bool RegDB::getUnexpiredContactsUserContaining(const string& matchIdentity, unsi
 
 	conn->done();
 	return false;
+}
+
+
+bool RegDB::getUnexpiredContactsUserWithAddress(const string& identity, const std::string& address, unsigned long timeNow, Bindings& bindings, bool preferPrimary) const
+{
+  Bindings regRecords;
+  
+  if (!getUnexpiredContactsUser(identity, timeNow, regRecords, preferPrimary))
+  {
+    return false;
+  }
+  
+  bindings.clear();
+  
+  for (Bindings::const_iterator iter = regRecords.begin(); iter != regRecords.end(); iter++)
+  {
+    if (iter->getContact().find(address) != std::string::npos)
+    {
+      bindings.push_back(*iter);
+    }
+  }
+  
+  return !bindings.empty();
 }
 
 
@@ -306,19 +465,26 @@ bool RegDB::getUnexpiredContactsUserInstrument(const string& identity, const str
 		query.append("shardId", BSON("$ne" << _local->getShardId()));
 	} 
 
+  MongoDB::ReadTimer readTimer(const_cast<RegDB&>(*this));
+   
 	mongo::BSONObjBuilder builder;
 	if (!preferPrimary)
 	  BaseDB::nearest(builder, query.obj());
 	else
 	  BaseDB::primaryPreferred(builder, query.obj());
 
-	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
 	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
-	if (pCursor.get() && pCursor->more())
+  if (!pCursor.get())
+  {
+   throw mongo::DBException("mongo query returned null cursor", 0);
+  }
+  else if (pCursor->more())
 	{
 		while (pCursor->more())
 		{
-			bindings.push_back(RegBinding(pCursor->next()));
+      RegBinding binding(pCursor->next());
+			push_or_replace_binding(bindings, binding);
 		}
 		conn->done();
 		return true;
@@ -342,18 +508,26 @@ bool RegDB::getUnexpiredContactsInstrument(const string& instrument, unsigned lo
 		query.append("shardId", BSON("$ne" << _local->getShardId()));
 	} 
 
-	mongo::BSONObjBuilder builder;
+  MongoDB::ReadTimer readTimer(const_cast<RegDB&>(*this));
+	
+  mongo::BSONObjBuilder builder;
 	if (!preferPrimary)
 	  BaseDB::nearest(builder, query.obj());
 	else
 	  BaseDB::primaryPreferred(builder, query.obj());
 
-    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
 	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
-	if (pCursor.get() && pCursor->more())
+  if (!pCursor.get())
+  {
+   throw mongo::DBException("mongo query returned null cursor", 0);
+  }
+  else if (pCursor->more())
 	{
-		while (pCursor->more()) {
-			bindings.push_back(RegBinding(pCursor->next()));
+		while (pCursor->more()) 
+    {
+			RegBinding binding(pCursor->next());
+			push_or_replace_binding(bindings, binding);
 		}
 		conn->done();
 		return true;
@@ -369,9 +543,11 @@ void RegDB::cleanAndPersist(int currentExpireTime)
 		_local->cleanAndPersist(currentExpireTime);
 		return;
 	}
+  
+   MongoDB::UpdateTimer updateTimer(const_cast<RegDB&>(*this));
     mongo::BSONObj query = BSON(
         "expirationTime" << BSON_LESS_THAN(currentExpireTime));
-    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getWriteQueryTimeout()));
     conn->get()->remove(_ns, query);
 	conn->done();
 }
@@ -382,8 +558,11 @@ void RegDB::clearAllBindings()
 		_local->clearAllBindings();
 		return;
 	}
+  
+  MongoDB::UpdateTimer updateTimer(const_cast<RegDB&>(*this));
+  
 	mongo::BSONObj all;
-    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getWriteQueryTimeout()));
     conn->get()->remove(_ns, all);
 	conn->done();
 }

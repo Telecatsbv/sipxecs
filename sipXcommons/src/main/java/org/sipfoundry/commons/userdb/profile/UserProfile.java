@@ -17,19 +17,35 @@
 package org.sipfoundry.commons.userdb.profile;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.index.CompoundIndex;
+import org.springframework.data.mongodb.core.index.CompoundIndexes;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document
+@CompoundIndexes({
+    @CompoundIndex(name = "email_idx", def = "{'m_emailAddress': 1, 'm_alternateEmailAddress': 1, 'm_emailAddressAliasesSet': 1}")
+})
 public class UserProfile {
 
     @Id
     private String m_userid;
-
+    @Indexed
     private String m_userName;
+    //plays the role of a user alias, just that this is not unique
+    //if multiple authAccountNames then user cannot authenticate and
+    //domain needs to be specified authAccountName/domain
+    @Indexed
+    private String m_authAccountName;
     private String m_firstName;
     private String m_lastName;
 
@@ -52,6 +68,13 @@ public class UserProfile {
     private String m_alternateImId;
     private String m_emailAddress;
     private String m_alternateEmailAddress;
+    //email aliases to persist in mongo
+    private Set<String> m_emailAddressAliasesSet;
+    //email aliases as they are received from external (user input, import)
+    //this field is not stored in mongo
+    //the Set m_emailAddressAliases will split this string and save in mongo
+    @Transient
+    private String m_emailAddressAliases;
     private boolean m_useBranchAddress;
     private String m_branchName;
     private String m_manager;
@@ -71,6 +94,13 @@ public class UserProfile {
     private boolean m_ldapManaged;
     private Date m_lastImportedDate;
     private Date m_disabledDate;
+
+    @Indexed
+    private String m_custom1;
+    @Indexed
+    private String m_custom2;
+    @Indexed
+    private String m_custom3;
 
     public String getUserId() {
         return m_userid;
@@ -204,7 +234,7 @@ public class UserProfile {
     }
 
     public String getImDisplayName() {
-        return m_imDisplayName;
+        return m_imDisplayName != null ? m_imDisplayName : m_imId;
     }
 
     public void setImDisplayName(String imDisplayName) {
@@ -248,7 +278,7 @@ public class UserProfile {
     }
 
     public void setEmailAddress(String emailAddress) {
-        m_emailAddress = emailAddress;
+        m_emailAddress = StringUtils.lowerCase(emailAddress);
     }
 
     public String getAvatar() {
@@ -283,7 +313,7 @@ public class UserProfile {
     }
 
     public void setAlternateEmailAddress(String alternateEmailAddress) {
-        m_alternateEmailAddress = alternateEmailAddress;
+        m_alternateEmailAddress = StringUtils.lowerCase(alternateEmailAddress);
     }
 
     public String getDidNumber() {
@@ -406,5 +436,61 @@ public class UserProfile {
 
     public long getTimestamp() {
         return m_timestamp;
+    }
+
+    public String getAuthAccountName() {
+        return m_authAccountName;
+    }
+
+    public void setAuthAccountName(String authAccountName) {
+        m_authAccountName = StringUtils.lowerCase(authAccountName);
+    }
+
+    public String getEmailAddressAliases() {
+        if (m_emailAddressAliasesSet != null) {
+            m_emailAddressAliases = StringUtils.join(m_emailAddressAliasesSet, ";");
+        }
+        return m_emailAddressAliases;
+    }
+
+    public void setEmailAddressAliases(String emailAddressAliases) {
+        m_emailAddressAliases = StringUtils.lowerCase(emailAddressAliases);
+        if (emailAddressAliases != null) {
+            m_emailAddressAliasesSet = new LinkedHashSet<String>(Arrays.asList(m_emailAddressAliases.split(";")));
+        } else {
+            m_emailAddressAliasesSet = new LinkedHashSet<String>(0);
+        }
+    }
+
+    public Set<String> getEmailAddressAliasesSet() {
+        return m_emailAddressAliasesSet;
+    }
+
+    public void setEmailAddressAliasesSet(Set<String> emailAddressAliasesSet) {
+        m_emailAddressAliasesSet = emailAddressAliasesSet;
+    }
+
+    public String getCustom1() {
+        return m_custom1;
+    }
+
+    public void setCustom1(String custom1) {
+        m_custom1 = custom1;
+    }
+
+    public String getCustom2() {
+        return m_custom2;
+    }
+
+    public void setCustom2(String custom2) {
+        m_custom2 = custom2;
+    }
+
+    public String getCustom3() {
+        return m_custom3;
+    }
+
+    public void setCustom3(String custom3) {
+        m_custom3 = custom3;
     }
 }

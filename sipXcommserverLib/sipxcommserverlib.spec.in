@@ -25,7 +25,7 @@ BuildRequires: xerces-c-devel >= 2.6.0
 BuildRequires: shadow-utils
 %endif
 
-BuildRequires: mongodb-devel >= 2.0.2
+BuildRequires: mongo-cxx-driver-devel >= 2.6.7
 
 Source: %name-%version.tar.gz
 
@@ -49,6 +49,19 @@ Requires: patch
 # bind-utils required for dig
 Requires: bind-utils
 Requires: sipxsupervisor >= %version
+Requires: poco-crypto
+Requires: poco-data
+Requires: poco-foundation
+Requires: poco-mysql
+Requires: poco-net
+Requires: poco-netssl
+Requires: poco-odbc
+Requires: poco-pagecompiler
+Requires: poco-sqlite
+Requires: poco-util
+Requires: poco-xml
+Requires: poco-zip
+
 Obsoletes: %{name}-doc
 
 Prefix: %_prefix
@@ -75,7 +88,7 @@ Requires: xerces-c-devel >= 2.6.0
 Requires: sipxportlib-devel >= %version
 Requires: sipxtacklib-devel >= %version
 Requires: unixODBC-devel >= 2.2
-Requires: mongodb-devel >= 2.0.2
+Requires: mongo-cxx-driver-devel >= 2.6.7
 
 Group: Development/Libraries
 Vendor: SIPfoundry

@@ -22,6 +22,24 @@
       <tr jwcid="userIdPanel" for="user:userId">
         <input jwcid="userId" id="user:userId" type="text" autocomplete="off"/>
       </tr>
+      <tr jwcid="@common/FieldPanel" for="user:imId"
+        field="component:imId"
+        label="message:label.imId"
+        description="message:description.imId">
+        <input jwcid="imId@TextField" id="user:imId"
+          value="ognl:imAccount.imId"
+          validators="spring-validators:validImId"
+          maxlength="255"
+          autocomplete="off" />
+      </tr>
+      <tr jwcid="@common/FieldPanel" for="authAccountName"
+        field="component:authAccountName"
+        label="message:label.authAccountName"
+        description="message:desc.authAccountName">
+       <span jwcid="authAccountName@TextField" id="authAccountName" maxlength="255"
+         value="ognl:user.userProfile.authAccountName"
+         type="text" autocomplete="off"/>
+      </tr>      
       <tr jwcid="@common/FieldPanel" for="salutation"
         field="component:salutation"
         label="message:label.salutation">
@@ -94,6 +112,30 @@
          value="ognl:user.userProfile.emailAddress"
          type="text" autocomplete="off"/>
       </tr>
+      <tr jwcid="@common/FieldPanel" for="custom1"
+        field="component:custom1"
+        label="message:label.custom1"
+        description="message:desc.custom1">
+       <span jwcid="custom1@TextField" id="custom1" maxlength="255"
+         value="ognl:user.userProfile.custom1"
+         type="text" autocomplete="off"/>
+      </tr>
+      <tr jwcid="@common/FieldPanel" for="custom2"
+        field="component:custom2"
+        label="message:label.custom2"
+        description="message:desc.custom2">
+       <span jwcid="custom2@TextField" id="custom2" maxlength="255"
+         value="ognl:user.userProfile.custom2"
+         type="text" autocomplete="off"/>
+      </tr>      
+      <tr jwcid="@common/FieldPanel" for="custom3"
+        field="component:custom3"
+        label="message:label.custom3"
+        description="message:desc.custom3">
+       <span jwcid="custom3@TextField" id="custom3" maxlength="255"
+         value="ognl:user.userProfile.custom3"
+         type="text" autocomplete="off"/>
+      </tr>
       <tr jwcid="@common/FieldPanel" for="user:notified"
         field="component:notified"
         label="message:notified"
@@ -117,6 +159,6 @@
       <tr>
          <td><label><span key="label.disabledDate"/></label></td>
          <td><b><span jwcid="disabledDate@Insert" id="user:disabledDate" value="ognl:user.disabledDateStr"/></b></td>
-      </tr>        
+      </tr>              
     </table>
   </fieldset>

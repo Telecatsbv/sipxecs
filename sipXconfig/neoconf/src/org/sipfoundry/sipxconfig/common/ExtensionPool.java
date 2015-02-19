@@ -9,8 +9,10 @@
  */
 package org.sipfoundry.sipxconfig.common;
 
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
-public class ExtensionPool extends BeanWithId implements NamedObject {
+
+public class ExtensionPool extends BeanWithId implements NamedObject, SystemAuditable {
 
     private boolean m_enabled;
     private String m_name;
@@ -91,6 +93,16 @@ public class ExtensionPool extends BeanWithId implements NamedObject {
     /** Set the next extension in the range for this pool */
     public void setNextExtension(int nextExtension) {
         setNextExtension(new Integer(nextExtension));
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getFirstExtension() + " - " + getLastExtension();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return ExtensionPool.class.getSimpleName();
     }
 
 }

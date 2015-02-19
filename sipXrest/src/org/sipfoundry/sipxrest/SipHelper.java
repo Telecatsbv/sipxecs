@@ -31,6 +31,7 @@ import javax.sip.TransactionUnavailableException;
 import javax.sip.address.Address;
 import javax.sip.address.Hop;
 import javax.sip.address.SipURI;
+import javax.sip.address.URI;
 import javax.sip.header.AcceptHeader;
 import javax.sip.header.AllowHeader;
 import javax.sip.header.CSeqHeader;
@@ -60,11 +61,13 @@ public class SipHelper {
 
     private static final String SDP = "sdp";
 
-    private int m_maxForwards = 70;
+    private final int m_maxForwards = 70;
 
-    private AbstractSipListener abstractListener;
+    private final AbstractSipListener abstractListener;
 
     public static final String BUSY_MESSAGE = "Busy Here";
+
+    public static final String RINGING_MESSAGE = "180 Ringing";
 
     SipHelper(AbstractSipListener abstractListener) {
         this.abstractListener = abstractListener;
@@ -211,25 +214,30 @@ public class SipHelper {
     }
 
     final public void tearDownDialog(Dialog dialog) {
-        tearDownDialog(dialog, null);
+        tearDownDialog(dialog, null, null);
     }
 
 
-    final public void tearDownDialog(Dialog dialog, ReasonHeader reasonHeader) {
-        logger.debug("Tearinging Down Dialog : " + dialog);
+    final public void tearDownDialog(Dialog dialog, ReasonHeader reasonHeader, URI byeUri) {
         if (dialog == null) {
             return;
         }
+        logger.debug("Tearinging Down Dialog (any state) with call id: " + dialog.getCallId() + " and state: " + dialog.getState());
         try {
-            if (dialog.getState() == DialogState.CONFIRMED) {
+            if (dialog.getState() != null && (dialog.getState().equals(DialogState.CONFIRMED) || dialog.getState().equals(DialogState.TERMINATED))) {
                 Request request = dialog.createRequest(Request.BYE);
+                if (byeUri != null) {
+                    request.setRequestURI(byeUri);
+                }
+                SipURI requestURI = (SipURI)request.getRequestURI();
+                logger.debug("BYE transport: " + requestURI.getTransportParam());
                 if (reasonHeader != null) {
                     request.addHeader(reasonHeader);
                 }
                 SipProvider provider = ((DialogExt) dialog).getSipProvider();
                 ClientTransaction ctx = provider.getNewClientTransaction(request);
                 dialog.sendRequest(ctx);
-            } else if (dialog.getState() != DialogState.TERMINATED) {
+            } else {
                 dialog.delete();
             }
         } catch (Exception e) {

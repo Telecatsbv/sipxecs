@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.sipfoundry.sipxconfig.common" default-lazy="false">
 
   <!--
@@ -71,7 +71,7 @@
     </id>
     <property name="cronString" />
     <property name="enabled" />
-  </class>  
+  </class>
 
   <query name="userByAlias">
     <![CDATA[select u from User u join u.aliases alias where alias = :value]]>
@@ -124,14 +124,9 @@
     <![CDATA[select u from User u where u.isShared = :isShared]]>
   </query>
 
-  <query name="potentialImAccountsByUserNameOrAlias">
-    <![CDATA[select new org.sipfoundry.sipxconfig.im.ImAccount(u) from User u left outer join u.aliases alias
-      where (lower(u.userName) = lower(:imId) or lower(alias) = lower(:imId))
-      and u.id != :userId]]>
-  </query>
-
   <query name="userByUserName">
     <![CDATA[select u from User u where u.userName = :value]]>
   </query>
   
+
 </hibernate-mapping>

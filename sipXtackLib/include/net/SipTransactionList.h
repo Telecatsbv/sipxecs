@@ -25,7 +25,7 @@
 // DEFINES
 // MACROS
 
-#define DEFAULT_GARBAGE_COLLECTOR_INTERVAL 100
+#define DEFAULT_GARBAGE_COLLECTOR_INTERVAL 1000
 
 // EXTERNAL FUNCTIONS
 // EXTERNAL VARIABLES
@@ -61,7 +61,8 @@ public:
 
     SipTransaction* findTransactionFor(const SipMessage& message,
                                        UtlBoolean isOutgoing,
-                                       enum SipTransaction::messageRelationship& relationship);
+                                       enum SipTransaction::messageRelationship& relationship,
+                                       bool garbageCollect = false);
     //: Find a transaction for the given message
     // Note: the caller should first lock the list and keep
     // it locked until all access of the transaction is complete

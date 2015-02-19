@@ -18,13 +18,15 @@ import org.sipfoundry.sipxconfig.common.BeanWithId;
 import org.sipfoundry.sipxconfig.common.NamedObject;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.setting.Group;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
-public class Phonebook extends BeanWithId implements NamedObject {
+public class Phonebook extends BeanWithId implements NamedObject, SystemAuditable {
     private String m_name;
     private String m_description;
     private boolean m_showOnPhone = true;
     private Set<Group> m_members = new TreeSet<Group>();
     private Set<Group> m_consumers = new TreeSet<Group>();
+    private final Set<Group> m_previousConsumers = new TreeSet<Group>();
     private Collection<PhonebookEntry> m_entries = new ArrayList<PhonebookEntry>();
     private User m_user;
 
@@ -42,14 +44,17 @@ public class Phonebook extends BeanWithId implements NamedObject {
     }
 
     public void replaceConsumers(Collection<Group> groups) {
+        m_previousConsumers.addAll(m_consumers);
         m_consumers.clear();
         m_consumers.addAll(groups);
     }
 
+    @Override
     public String getName() {
         return m_name;
     }
 
+    @Override
     public void setName(String name) {
         m_name = name;
     }
@@ -103,5 +108,19 @@ public class Phonebook extends BeanWithId implements NamedObject {
 
     public void setUser(User user) {
         m_user = user;
+    }
+
+    public Set<Group> getPreviousConsumers() {
+        return m_previousConsumers;
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getName();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return Phonebook.class.getSimpleName();
     }
 }

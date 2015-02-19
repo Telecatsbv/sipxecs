@@ -24,6 +24,7 @@ const char* TransferControl::RecognizerConfigKey1 = "EXCHANGE_SERVER_FQDN";
 const char* TransferControl::RecognizerConfigKey2 = "ADDITIONAL_EXCHANGE_SERVER_FQDN";
 
 const char* SIP_METHOD_URI_PARAMETER = "method";
+const char* SIP_SIPX_REFERROR_HEADER = "X-sipX-referror";
 
 // TYPEDEFS
 // FORWARD DECLARATIONS
@@ -207,6 +208,11 @@ TransferControl::authorizeAndModify(const UtlString& id,    /**< The authenticat
                 	   SipXauthIdentity controllerIdentity;
                 	   controllerIdentity.setIdentity(id);
                 	   controllerIdentity.encodeUri(target);
+                	   
+                	   //
+                     // Add the referror param
+                     //
+                     target.setUrlParameter(SIP_SIPX_REFERROR_HEADER, id.data());
 
                 	   // add the References to the refer-to.
                 	   UtlString refcallId(callId);
@@ -218,32 +224,10 @@ TransferControl::authorizeAndModify(const UtlString& id,    /**< The authenticat
                                 mInstanceName.data(), callId.data()
                                );
 
-                	    UtlString location;
-                	    mpSipRouter->getUserLocation(id, location);
-                	    if (!location.isNull())
-                	    {
-                	      SipXlocationInfo locationInfo;
-                	      locationInfo.setInfo(id, location);
-
-                	      if (locationInfo.encodeUri(target))
-                	      {
-                	        Os::Logger::instance().log(FAC_AUTH, PRI_DEBUG, "TransferControl[%s]::authorizeAndModify "
-                	            "identity [%s], adding location field [%s] to refer-to ",
-                	            mInstanceName.data(), id.data(), location.data());
-                	      }
-                	      else
-                	      {
-                	        Os::Logger::instance().log(FAC_AUTH, PRI_WARNING, "TransferControl[%s]::authorizeAndModify "
-                	            "identity [%s], failed to add location field [%s] to refer-to ",
-                	            mInstanceName.data(), id.data(), location.data());
-                	      }
-                	    }
-                	    else
-                	    {
-                	      Os::Logger::instance().log(FAC_AUTH, PRI_DEBUG, "TransferControl[%s]::authorizeAndModify "
-                	          "identity [%s] has no location specified",
-                	          mInstanceName.data(), id.data());
-                	    }
+                	   if (!mpSipRouter->supportMultipleGatewaysPerLocation())
+                	   {
+                	     addLocationInfo(id, target);
+                	   }
 
                      Os::Logger::instance().log(FAC_AUTH, PRI_DEBUG, "TransferControl[%s]::authorizeAndModify "
                                 "adding Reference field [%s] to refer-to",
@@ -278,6 +262,31 @@ TransferControl::authorizeAndModify(const UtlString& id,    /**< The authenticat
          UtlString targetCallId;
          UtlString targetFromTag;
          UtlString targetToTag;
+         UtlString referrorId;
+
+         requestUri.getUrlParameter(SIP_SIPX_REFERROR_HEADER, referrorId, 0);
+         if (!referrorId.isNull())
+         {
+           //
+           // This is a transfer.  Set the parameter as a SIP header so it doesn't get lost during redirections
+           //
+           request.setHeaderValue(SIP_SIPX_REFERROR_HEADER, referrorId.data(), 0);
+           
+           OS_LOG_INFO(FAC_SIP, "Setting " << SIP_SIPX_REFERROR_HEADER << ": " << referrorId.data() << " from local domain transfer.");
+           //
+           // Remove the uri parameter
+           //
+           UtlString uri;
+           UtlString protocol;
+           
+           Url newUri(requestUri);
+           newUri.removeUrlParameter(SIP_SIPX_REFERROR_HEADER);
+           newUri.getUri(uri);
+           
+           request.getRequestProtocol(&protocol);
+           
+           request.setFirstHeaderLine(method, uri, protocol);
+         }
 
          if (request.getReplacesData(targetCallId, targetToTag, targetFromTag))
          {
@@ -293,7 +302,7 @@ TransferControl::authorizeAndModify(const UtlString& id,    /**< The authenticat
             if (!bSpiralingRequest)
             {
                // remove any x-sipX-Location-Info header
-               SipXlocationInfo::remove(request);
+               SipXSignedHeader::remove(request, SIP_SIPX_LOCATION_INFO);
             }
          }
          else
@@ -311,11 +320,197 @@ TransferControl::authorizeAndModify(const UtlString& id,    /**< The authenticat
       // Some earlier plugin already denied this - don't waste time figuring it out.
       Os::Logger::instance().log(FAC_AUTH, PRI_DEBUG, "TransferControl[%s]::authorizeAndModify "
                     "prior authorization result %s for call %s",
-                    mInstanceName.data(), AuthResultStr(priorResult), callId.data()
-                    );
+                    mInstanceName.data(), AuthResultStr(priorResult), callId.data());
    }
    
    return result;
+}
+
+/// Boolean indicator that returns true if the plugin wants to process requests
+/// that requires no authentication
+bool TransferControl::willModifyTrustedRequest() const
+{
+  return true;
+}
+
+/// This method is called by the proxy if willModifyRequest() flag is set to true
+/// giving this plugin the opportunity to modify the request even if it requires
+/// no authentication
+void TransferControl::modifyTrustedRequest(
+                                 const Url&  requestUri,  ///< parsed target Uri
+                                 SipMessage& request,     ///< see below regarding modifying this
+                                 bool bSpiralingRequest  ///< true if request is still spiraling through proxy
+                                 )
+{
+  UtlString method;
+  request.getRequestMethod(&method);
+  
+  if (method.compareTo(SIP_INVITE_METHOD) == 0)
+  {
+    UtlString referrorId;
+    requestUri.getUrlParameter(SIP_SIPX_REFERROR_HEADER, referrorId, 0);
+    if (!referrorId.isNull())
+    {
+      //
+      // This is a transfer.  Set the parameter as a SIP header so it doesn't get lost during redirections
+      //
+      request.setHeaderValue(SIP_SIPX_REFERROR_HEADER, referrorId.data(), 0);
+      
+      OS_LOG_INFO(FAC_SIP, "Setting " << SIP_SIPX_REFERROR_HEADER << ": " << referrorId.data() << " from non-local domain transfer.");
+      
+      //
+      // Remove the uri parameter
+      //
+      UtlString uri;
+      UtlString protocol;
+
+      Url newUri(requestUri);
+      newUri.removeUrlParameter(SIP_SIPX_REFERROR_HEADER);
+      newUri.getUri(uri);
+
+      request.getRequestProtocol(&protocol);
+      request.setFirstHeaderLine(method, uri, protocol);
+    }
+  }
+}
+
+bool TransferControl::willModifyFinalResponse() const
+{
+  return true;
+}
+
+void TransferControl::modifyFinalResponse(
+  SipTransaction* pTransaction, 
+  const SipMessage& request, 
+  SipMessage& finalResponse)
+{
+  //
+  // Check if the response is a 302
+  //
+  int statusCode = -1;
+  statusCode = finalResponse.getResponseStatusCode();
+  bool is3xx = (statusCode >= SIP_3XX_CLASS_CODE && statusCode < SIP_4XX_CLASS_CODE);
+  if (!is3xx)
+    return;
+  
+  //
+  // Check if the 3xx is from the registrar by checking for sipXecs-CallDest in the contact
+  //
+  UtlString  contactString;
+  UtlString targetId;
+  
+  finalResponse.getContactEntry(0, &contactString);
+  Url contactUri( contactString );
+  contactUri.getUserId(targetId);
+  if (contactString.first(SIP_SIPX_CALL_DEST_FIELD) != UtlString::UTLSTRING_NOT_FOUND)
+    return;
+     
+  //
+  // Check if it already has SIP_SIPX_AUTHIDENTITY
+  //
+  if (contactString.first(SIP_SIPX_AUTHIDENTITY) != UtlString::UTLSTRING_NOT_FOUND)
+    return;
+  
+  //
+  // At this point we already know that this is a 302 redirect that did not come from sipx or is signed by sipx
+  //
+  OS_LOG_DEBUG(FAC_SIP, "TransferControl::modifyFinalResponse - Evaluating contact " << contactString.data());
+ 
+  //
+  // Get the request-uri user
+  //
+  UtlString stringUri;
+  UtlString requestUriUser;
+  request.getRequestUri(&stringUri);
+  // The requestUri is an addr-spec, not a name-addr.
+  Url requestUri(stringUri, TRUE);
+  requestUri.getUserId(requestUriUser);
+  if (requestUriUser.isNull())
+  {
+    OS_LOG_ERROR(FAC_SIP, "TransferControl::modifyFinalResponse - Unable to determine user identity.")
+    return;
+  }
+  
+  //
+  // Get local domain
+  //
+  UtlString localDomain;
+  mpSipRouter->getDomain(localDomain);
+  if (localDomain.isNull())
+  {
+    OS_LOG_ERROR(FAC_SIP, "TransferControl::modifyFinalResponse - Unable to determine local domain.")
+    return;
+  }
+  
+  //
+  // Create the identity
+  //
+  std::ostringstream identity;
+  identity << requestUriUser.data() << "@" << localDomain.data();
+  
+  //
+  // Get the source address of the response
+  //
+  UtlString srcAddress;
+  int srcPort = PORT_NONE;
+  finalResponse.getSendAddress(&srcAddress, &srcPort);
+  if (srcAddress.isNull())
+  {
+    OS_LOG_ERROR(FAC_SIP, "TransferControl::modifyFinalResponse - Unable to determine source address.")
+    return;
+  }
+  
+  //
+  // Check if the identity is registered to this address
+  //
+  if  (!mpSipRouter->isRegisteredAddress(identity.str(), srcAddress.str()))
+  {
+    OS_LOG_WARNING(FAC_SIP, "TransferControl::modifyFinalResponse - " << identity.str() << " is not registered from address " << srcAddress.str());
+    return;
+  }
+  
+  //
+  // 3XX is from a registered user.  Sign the contact
+  //
+  SipXauthIdentity authIdentity;
+  authIdentity.setIdentity(identity.str().c_str());
+  authIdentity.encodeUri(contactUri);
+  
+  UtlString signedContact;
+  contactUri.toString(signedContact);
+  
+  finalResponse.setContactField(signedContact, 0);
+  
+  OS_LOG_INFO(FAC_SIP, "TransferControl::modifyFinalResponse - identity=" << identity.str() << " contact was " <<  contactString.data() << " now " <<  signedContact.data());
+}
+
+void TransferControl::addLocationInfo(const UtlString& id, /// The authenticated identity of the request originator,
+                                                      /// this is expected to not be null
+                                           Url& target   /// Refer-To header where to add location info
+                                        )
+{
+  SipXSignedHeader locationInfo(id, SIP_SIPX_LOCATION_INFO);
+
+  UtlString location;
+  mpSipRouter->getUserLocation(id, location);
+  if (!location.isNull())
+  {
+    // set location param if any
+    locationInfo.setParam(SIPX_SIPXECS_LOCATION_URI_PARAM, location.data());
+  }
+  else
+  {
+    Os::Logger::instance().log(FAC_AUTH, PRI_DEBUG, "TransferControl[%s]::authorizeAndModify "
+        "identity [%s] has no location specified",
+        mInstanceName.data(), id.data());
+  }
+
+  if (!locationInfo.encodeUri(target))
+  {
+    Os::Logger::instance().log(FAC_AUTH, PRI_INFO, "TransferControl[%s]::authorizeAndModify "
+       "identity [%s], failed to add location field [] to refer-to ",
+       mInstanceName.data(), id.data());
+  }
 }
 
 
@@ -323,3 +518,4 @@ TransferControl::authorizeAndModify(const UtlString& id,    /**< The authenticat
 TransferControl::~TransferControl()
 {
 }
+

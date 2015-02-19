@@ -15,15 +15,43 @@
  */
 
 #include "sipdb/MongoOpLog.h"
+#include "sipdb/MongoMod.h"
 #include <mongo/client/connpool.h>
 
-MongoOpLog::MongoOpLog(const MongoDB::ConnectionInfo& info, const std::string ns) :
-	MongoDB::BaseDB(info),
-  _isRunning(false),
-  _pTailThread(0),
-  _pTailConnection(0),
-  _ns(ns)
+#include <os/OsLogger.h>
+#include <os/OsDateTime.h>
+
+const std::string MongoOpLog::NS("local.oplog.rs");
+
+const int MongoOpLog::MULTIPLIER = 1000;
+
+const char* MongoOpLog::ts_fld(){static std::string name = "ts"; return name.c_str();}
+const char* MongoOpLog::op_fld(){static std::string name = "op"; return name.c_str();}
+void MongoOpLog::createOpLogDataMap(OpLogDataMap& opLogDataMap)
 {
+  opLogDataMap.insert(std::pair<std::string, OpLogType>("u", Update));
+  opLogDataMap.insert(std::pair<std::string, OpLogType>("i", Insert));
+  opLogDataMap.insert(std::pair<std::string, OpLogType>("d", Delete));
+}
+
+MongoOpLog::MongoOpLog(const MongoDB::ConnectionInfo& info,
+                       const mongo::BSONObj& customQuery,
+                       const int querySleepTime,
+                       const unsigned long startFromTimestamp) :
+	MongoDB::BaseDB(info, NS),
+  _isRunning(false),
+  _pThread(0),
+  _querySleepTime(querySleepTime),
+  _startFromTimestamp(startFromTimestamp),
+  _customQuery(customQuery)
+{
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::MongoOpLog:" <<
+                        " entering" <<
+                        " querySleepTime=" << querySleepTime <<
+                        " startFromTimestamp=" << startFromTimestamp);
+
+  _customQuery.getOwned();
+  createOpLogDataMap(_opLogDataMap);
 }
 
 MongoOpLog::~MongoOpLog()
@@ -31,143 +59,286 @@ MongoOpLog::~MongoOpLog()
   stop();
 }
 
-void MongoOpLog::registerCallback(OpLog type, OpLogCallBack cb)
+void MongoOpLog::registerCallback(OpLogType type, OpLogCallBack cb)
 {
-  switch(type)
+  if (type < Insert ||
+      type > OpLogTypeNumber)
   {
-    case Insert:
-      _insertCb.push_back(cb);
-      break;
-    case Delete:
-      _deleteCb.push_back(cb);
-      break;
-    case Update:
-      _updateCb.push_back(cb);
-      break;
-    case All:
-      _allCb.push_back(cb);
-      break;
+    OS_LOG_ERROR(FAC_SIP, "MongoOpLog::registerCallback:" <<
+                          " invalid callback type");
+
+    return;
   }
+
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::registerCallback:" <<
+                        " entering" <<
+                        " type=" << type);
+
+  if (type < OpLogTypeNumber)
+    _opLogCbVectors[type].push_back(cb);
 }
 
-void MongoOpLog::run()
+bool MongoOpLog::run()
 {
-  if (!_pTailThread)
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::run:" <<
+                        " starting MongoOpLog thread");
+
+  bool rc = prepareFirstEntry(_lastEntry);
+  if (false == rc)
   {
-    _pTailThread = new boost::thread(boost::bind(&MongoOpLog::internal_run, this));
+    OS_LOG_ERROR(FAC_SIP, "MongoOpLog::run" <<
+                 " exited with error");
+    return rc;
   }
-  else if (!_pTailConnection)
-  {
-    //
-    // There is a thread but no connecton
-    //
-    stop();
-    _pTailThread = new boost::thread(boost::bind(&MongoOpLog::internal_run, this));
-  }
+
+  _isRunning = true;
+  _pThread = new boost::thread(boost::bind(&MongoOpLog::internal_run_esafe, this));
+
+  return true;
 }
 
 void MongoOpLog::stop()
 {
-  _isRunning = false;
-  if (_pTailThread)
+  if (false == _isRunning)
   {
-    if (_pTailConnection)
-    {
-      (*_pTailConnection).done();
-      (*_pTailConnection).kill();
-    }
-    _pTailThread->join();
+    return;
   }
-  
-  delete _pTailThread;
-  delete _pTailConnection;
-  _pTailThread = 0;
-  _pTailConnection = 0;
+
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::stop:" <<
+                       " stopping MongoOpLog thread");
+
+  _isRunning = false;
+
+  if (_pThread)
+  {
+    _pThread->join();
+
+    delete _pThread;
+    _pThread = 0;
+  }
+
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::stop:" <<
+                       " exiting");
+}
+
+// The monitor thread stays in this function as long as the cursor is not dead
+// If the cursor already processed lastEntryObj, it gets blocked in a while in
+// cursor->more() for 1 or 2 seconds until new entries are added to this collection.
+// After that the entries are processed and the thread gets blocked again in
+// cursor->more function
+bool MongoOpLog::processQuery(mongo::DBClientCursor* cursor,
+                              mongo::BSONObj& lastEntry)
+{
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::processQuery:" <<
+                        " entering");
+
+  if (!cursor)
+  {
+    OS_LOG_ERROR(FAC_SIP, "MongoOpLog:processQuery - Cursor is NULL");
+    return false;
+  }
+
+  while (_isRunning)
+  {
+    if (!cursor->more())
+    {
+      if (_querySleepTime)
+      {
+        sleep(_querySleepTime);
+      }
+
+      if (cursor->isDead())
+      {
+        break;
+      }
+
+      continue; // we will try more() again
+    }
+
+    // WARNING: BSONObj must stay in scope for the life of the BSONElement
+    lastEntry = cursor->next().getOwned();
+    runCallBacks(lastEntry);
+  }
+
+  return true;
+}
+
+void MongoOpLog::createQuery(const mongo::BSONObj& lastEntry, mongo::BSONObj& query)
+{
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::createQuery:" <<
+                        " entering");
+
+  mongo::BSONObjBuilder queryBSONObjBuilder;
+
+  queryBSONObjBuilder.appendElements(BSON(ts_fld() << mongo::GT << lastEntry[ts_fld()]));
+  if (!_customQuery.isEmpty())
+  {
+    queryBSONObjBuilder.appendElements(_customQuery);
+  }
+  query = queryBSONObjBuilder.obj();
+}
+
+bool MongoOpLog::prepareFirstEntry(mongo::BSONObj& lastEntry)
+{
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::prepareFirstEntry:" <<
+                        " entering");
+
+  if (_startFromTimestamp == 0)
+  {
+    lastEntry = mongoMod::minKey;
+  }
+  else
+  {
+    mongo::BSONObjBuilder builder;
+    unsigned long long timeStamp = (unsigned long long)_startFromTimestamp << 32;
+    builder.appendTimestamp(ts_fld(), timeStamp);
+
+    lastEntry = builder.obj();
+
+    // Check that the created BSONElement has the correct timeStamp
+    unsigned long long lastEntryTimeStamp = lastEntry[ts_fld()].timestampTime();
+    if (_startFromTimestamp * MULTIPLIER != lastEntryTimeStamp)
+    {
+      OS_LOG_ERROR(FAC_SIP, "MongoOpLog::prepareFirstEntry" <<
+                            " time stamps are different " <<
+                            _startFromTimestamp * MULTIPLIER << lastEntryTimeStamp);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+void MongoOpLog::internal_run_esafe()
+{
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::internal_run_esafe:"
+              << " entering");
+
+  while (_isRunning)
+  {
+    try
+    {
+      internal_run();
+    }
+    #ifdef MONGO_assert
+    catch (mongo::DBException& e)
+    {
+      OS_LOG_ERROR( FAC_SIP, "MongoOpLog::internal_run_esafe Mongo DB Exception: "
+          << e.what());
+    }
+    #endif //MONGO_assert
+    catch (boost::exception& e)
+    {
+      OS_LOG_ERROR( FAC_SIP, "MongoOpLog::internal_run_esafe Boost Library Exception: "
+          << boost::diagnostic_information(e));
+    }
+    catch (std::exception& e)
+    {
+      OS_LOG_ERROR( FAC_SIP, "MongoOpLog::internal_run_esafe Standard Library Exception: "
+          << e.what());
+    }
+    catch (...)
+    {
+      OS_LOG_ERROR( FAC_SIP, "MongoOpLog::internal_run_esafe Exception: Unknown exception");
+    }
+
+    if (_isRunning)
+    {
+      // reset timestamp to check for entries right after the exception was triggered
+      _startFromTimestamp = OsDateTime::getSecsSinceEpoch();
+      // sleep for some time to give mongo time to recover
+      sleep(EXCEPTION_RECOVER_TIME_SEC);
+    }
+  }
+
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::internal_run_esafe:"
+              << " exiting");
 }
 
 void MongoOpLog::internal_run()
 {
-  mongo::BSONElement lastTailId = mongo::minKey.firstElement();
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::internal_run:"
+              << " entering");
 
-  mongo::Query query = QUERY( "_id" << mongo::GT << lastTailId
-          << "ns" << _ns).sort("$natural");
+  mongo::BSONObj query;
+  // WARNING: BSONObj must stay in scope for the life of the BSONElement
+  createQuery(_lastEntry, query);
 
-  _pTailConnection = mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString());
-  mongoMod::ScopedDbConnection& conn = *_pTailConnection;
-
-  std::auto_ptr<mongo::DBClientCursor> c =
-    conn.get()->query("local.oplog", query, 0, 0, 0,
-                      mongo::QueryOption_CursorTailable | mongo::QueryOption_AwaitData | mongo::QueryOption_SlaveOk );
-  while(true)
-  {
-    if(c->isDead())
-    {
-      delete _pTailConnection;
-      _pTailConnection = 0;
-      return;
-    }
-
-    if(!c->more())
-      break;
-
-    mongo::BSONObj o = c->next();
-    lastTailId = o["_id"];
-  }
-
-  _isRunning = true;
+  MongoDB::ScopedDbConnectionPtr pConn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
 
   while (_isRunning)
   {
-    std::auto_ptr<mongo::DBClientCursor> c =
-      conn.get()->query("local.oplog", query, 0, 0, 0,
-                 mongo::QueryOption_CursorTailable | mongo::QueryOption_AwaitData | mongo::QueryOption_SlaveOk );
-    while(true)
+    // If we are at the end of the data, block for a while rather
+    // than returning no data. After a timeout period, we do return as normal
+    std::auto_ptr<mongo::DBClientCursor> cursor = pConn->get()->query(_ns, query, 0, 0, 0,
+                 mongo::QueryOption_CursorTailable | mongo::QueryOption_AwaitData );
+
+    bool rc = processQuery(cursor.get(), _lastEntry);
+    if (false == rc)
     {
-      if(c->isDead())
-      {
-        delete _pTailConnection;
-        _pTailConnection = 0;
-        _isRunning = false;
-        return;
-      }
-
-      if(!c->more())
-        break;
-
-      mongo::BSONObj o = c->next();
-      lastTailId = o["_id"];
-      notifyCallBacks(o.getStringField("op"), o.toString());
+      break;
     }
+
+    createQuery(_lastEntry, query);
   }
 
+  pConn->done();
+
+  OS_LOG_INFO(FAC_SIP, "MongoOpLog::internal_run:"
+              << " exiting");
 }
 
-void MongoOpLog::notifyCallBacks(const std::string& type, const std::string& opLog)
+bool MongoOpLog::getOpLogType(const std::string& operationType,
+                              OpLogType& opLogType)
 {
-  if (type.empty() || opLog.empty())
-    return;
-  std::vector<OpLogCallBack>* _pCb = 0;
-  if (type == "i") // insert
-     _pCb = &_insertCb;
-  else if (type == "u") // update
-    _pCb = &_updateCb;
-  else if (type == "d") // delete
-    _pCb = &_deleteCb;
-  
-  if (_pCb)
+  OpLogDataMap::iterator it;
+
+  it = _opLogDataMap.find(operationType);
+  if (_opLogDataMap.end() != it)
   {
-    //
-    // Notify specific subscribers
-    //
-    for(std::vector<OpLogCallBack>::iterator iter = (*_pCb).begin(); iter != (*_pCb).end(); iter++)
-      (*iter)(opLog);
-    //
-    // Notify all subscribers
-    //
-    for(std::vector<OpLogCallBack>::iterator iter = _allCb.begin(); iter != _allCb.end(); iter++)
-      (*iter)(opLog);
+    opLogType = it->second;
+
+    return true;
   }
+
+  return false;
 }
 
+void MongoOpLog::runCallBacks(const mongo::BSONObj& bSONObj)
+{
+  std::string type = bSONObj.getStringField(op_fld());
+  std::string opLog = bSONObj.toString();
 
+  OS_LOG_DEBUG(FAC_SIP, "MongoOpLog::notifyCallBacks:" <<
+                " type=" << type <<
+                " opLog=" << opLog);
+
+  if (type.empty())
+  {
+    OS_LOG_WARNING(FAC_SIP, "MongoOpLog::notifyCallBacks:"
+                << " type is empty");
+    return;
+  }
+
+  // Notify all subscribers
+  for(OpLogCbVector::iterator iter = _opLogCbVectors[All].begin(); iter != _opLogCbVectors[All].end(); iter++)
+  {
+    (*iter)(bSONObj);
+  }
+
+  OpLogType opLogType;
+  bool found = false;
+  found = getOpLogType(type, opLogType);
+  if (false == found)
+  {
+    return;
+  }
+  
+  // Notify specific subscribers
+  for(OpLogCbVector::iterator iter = _opLogCbVectors[opLogType].begin();
+      iter != _opLogCbVectors[opLogType].end(); iter++)
+  {
+    (*iter)(bSONObj);
+  }
+}
 

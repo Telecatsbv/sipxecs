@@ -18,13 +18,13 @@ package org.sipfoundry.sipxconfig.security;
 import static org.sipfoundry.commons.security.Util.retrieveDomain;
 import static org.sipfoundry.commons.security.Util.retrieveUsername;
 
+import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
-import org.sipfoundry.sipxconfig.bulk.ldap.LdapManager;
-import org.sipfoundry.sipxconfig.bulk.ldap.LdapSystemSettings;
-import org.sipfoundry.sipxconfig.common.AbstractUser;
-import org.springframework.beans.factory.annotation.Required;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.sipfoundry.sipxconfig.common.User;
 import org.springframework.dao.DataAccessException;
-import org.springframework.util.Assert;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -36,6 +36,7 @@ import org.springframework.security.authentication.encoding.PlaintextPasswordEnc
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.util.Assert;
 
 /**
  * An {@link AuthenticationProvider} implementation that retrieves user details
@@ -52,7 +53,7 @@ public class DaoAuthenticationProvider extends AbstractUserDetailsAuthentication
     // ~ Instance fields
     // ================================================================================================
 
-
+    private static final Log LOG = LogFactory.getLog(DaoAuthenticationProvider.class);
 
     private PasswordEncoder passwordEncoder = new PlaintextPasswordEncoder();
 
@@ -113,30 +114,63 @@ public class DaoAuthenticationProvider extends AbstractUserDetailsAuthentication
     protected final UserDetails retrieveUser(String username, UsernamePasswordAuthenticationToken authentication)
             throws AuthenticationException {
 
-        UserDetailsImpl loadedUser;
+        UserDetailsImpl loadedUser = null;
 
         String userLoginName = retrieveUsername(username);
         String domain = retrieveDomain(username);
         try {
             loadedUser = (UserDetailsImpl)getUserDetailsService().loadUserByUsername(userLoginName);
         }
+        catch (DuplicateUserException dupEx) {
+            if (StringUtils.isEmpty(domain)) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Duplicate user exception: " + dupEx.getMessage());
+                }
+                throw new AuthenticationServiceException(dupEx.getMessage());
+            } else {
+                List<User> users = dupEx.getUsers();
+                boolean loaded = false;
+                for (User user : users) {
+                    if (loaded && StringUtils.equals(user.getUserDomain(), domain)) {
+                        String message = "duplicate user and domain";
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Duplicate user exception: " + message);
+                        }
+                        throw new AuthenticationServiceException(message);
+                    }
+                    if (!loaded && StringUtils.equals(user.getUserDomain(), domain)) {
+                        loadedUser = (UserDetailsImpl) ((AbstractUserDetailsService) getUserDetailsService()).
+                            createUserDetails(userLoginName, user);
+                        loaded = true;
+                    }
+                }
+            }
+        }
         catch (DataAccessException repositoryProblem) {
             throw new AuthenticationServiceException(repositoryProblem.getMessage(), repositoryProblem);
         }
 
         if (loadedUser == null) {
-            throw new AuthenticationServiceException(
-                    "UserDetailsService returned null, which is an interface contract violation");
+            String message = "UserDetailsService returned null, which is an interface contract violation";
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(message);
+            }
+            throw new AuthenticationServiceException(message);
         }
 
         // all admin users should be able to login with sipXecs password even if LDAP only
-        if (!loadedUser.isAdmin()) {
+        // some non-admin are configured to authenticate to db only - policy verification is not needed
+        if (!loadedUser.isAdmin() && !loadedUser.isDbAuthOnly()) {
             m_systemAuthPolicyCollector.verifyPolicy(username);
         }
 
         if (domain != null && !StringUtils.equals(loadedUser.getUserDomain(), domain)) {
-            throw new AuthenticationServiceException("The following domain does not belong to the actual user: " + domain
-                    + " in the system - is an interface contract violation");
+            String message = "The following domain does not belong to the actual user: " + domain
+                + " in the system - is an interface contract violation";
+            if (LOG.isDebugEnabled()) {
+                LOG.debug(message);
+            }
+            throw new AuthenticationServiceException(message);
         }
         return loadedUser;
     }

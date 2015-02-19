@@ -2,8 +2,7 @@
 	<span jwcid="ieHackScript@Script" script="AdminNavigation.script" />
 	<ul id="nav">
 		<li>
-			<div class="roundedMainSectionBoxTopLeft"></div><div class="roundedMainSectionBoxTopRight"></div>
-			<div class="roundedMainSectionBoxInside">
+			<div class="navigationMenuItemTop">
 				<a class="heading"><span key="menu.section.user">Users</span></a>
 				<ul>
 					<span jwcid="@common/Plugin" blockId="UserTop"/>
@@ -16,8 +15,7 @@
 			</div>
 		</li>
 		<li>
-			<div class="roundedMainSectionBoxTopLeft"></div><div class="roundedMainSectionBoxTopRight"></div>
-			<div class="roundedMainSectionBoxInside">
+			<div class="navigationMenuItemTop">
 				<a class="heading"><span key="menu.section.devices">Devices</span></a>
 				<ul>
 					<span jwcid="@common/Plugin" blockId="DevicesTop"/>
@@ -34,8 +32,7 @@
 			</div>
 		</li>
 		<li>
-			<div class="roundedMainSectionBoxTopLeft"></div><div class="roundedMainSectionBoxTopRight"></div>
-			<div class="roundedMainSectionBoxInside">
+			<div class="navigationMenuItemTop">
 				<a class="heading"><span key="menu.section.admin">Features</span></a>
 				<ul>
 					<span jwcid="@common/Plugin" blockId="FeaturesTop"/>
@@ -44,8 +41,7 @@
 			</div>
 		</li>
 		<li>
-			<div class="roundedMainSectionBoxTopLeft"></div><div class="roundedMainSectionBoxTopRight"></div>
-			<div class="roundedMainSectionBoxInside">
+			<div class="navigationMenuItemTop">
 				<a class="heading"><span key="menu.section.system">System</span></a>
 				<ul>
 					<span jwcid="@common/Plugin" blockId="SystemTop"/>
@@ -71,19 +67,21 @@
 					<span jwcid="@common/AdminNavigationMenu" pagePath="admin/ManageCertificates" label="ognl:messages.getMessage('menu.certificates')" />
 					<span jwcid="@common/AdminNavigationMenu" pagePath="admin/TimeSettingsPage" label="ognl:messages.getMessage('menu.timeSettings')" />
 					<span jwcid="@common/AdminNavigationMenu" pagePath="mongo/ManageMongo" label="ognl:messages.getMessage('menu.manageMongo')" />
+					<span jwcid="@common/AdminNavigationMenu" pagePath="admin/EditMongo" label="ognl:messages.getMessage('menu.mongoSettings')" />
 					<span jwcid="@common/Plugin" blockId="SystemBottom"/>
 				</ul>
 			</div>
 		</li>
 		<li>
-			<div class="roundedMainSectionBoxTopLeft"></div><div class="roundedMainSectionBoxTopRight"></div>
-			<div class="roundedMainSectionBoxInside">
+			<div class="navigationMenuItemTop">
 				<a class="heading"><span key="menu.section.diag">Diagnostics</span></a>
 				<ul>
 					<span jwcid="@common/Plugin" blockId="DiagnosticsTop"/>
 					<span jwcid="@common/AdminNavigationMenu" pagePath="admin/JobStatusPage" label="ognl:messages.getMessage('menu.jobs')" />
 					<span jwcid="@common/AdminNavigationMenu" pagePath="admin/SnapshotPage" label="ognl:messages.getMessage('menu.snapshot')" />
-					<span jwcid="@common/AdminNavigationMenu" pagePath="admin/LoginHistoryPage" label="ognl:messages.getMessage('menu.loginhistory')" />
+					<span jwcid="@If" condition="ognl:isSystemAuditEnabled()">
+						<span jwcid="@common/AdminNavigationMenu" pagePath="admin/systemaudit/ManageSystemAudit" label="ognl:messages.getMessage('menu.managesystemaudit')" />
+					</span>
 					<span jwcid="@common/AdminNavigationMenu" pagePath="admin/AlarmsPage" label="ognl:messages.getMessage('menu.alarms')" />
 					<li><span jwcid="@admin/AboutDialog" id="menu.about" linkTitle="message:menu.about"/></li>
 					<span jwcid="@common/Plugin" blockId="DiagnosticsBottom"/>

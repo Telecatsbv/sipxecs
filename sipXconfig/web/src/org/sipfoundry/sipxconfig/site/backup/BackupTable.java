@@ -15,27 +15,39 @@
 package org.sipfoundry.sipxconfig.site.backup;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.tapestry.BaseComponent;
 import org.apache.tapestry.IRequestCycle;
 import org.apache.tapestry.annotations.InjectObject;
 import org.apache.tapestry.annotations.Parameter;
-import org.sipfoundry.sipxconfig.backup.BackupCommandRunner;
 import org.sipfoundry.sipxconfig.backup.BackupManager;
 import org.sipfoundry.sipxconfig.backup.BackupPlan;
+import org.sipfoundry.sipxconfig.backup.BackupRunner;
+import org.sipfoundry.sipxconfig.backup.BackupSettings;
 import org.sipfoundry.sipxconfig.backup.BackupType;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.components.SelectMap;
 import org.sipfoundry.sipxconfig.components.SipxValidationDelegate;
 
 public abstract class BackupTable extends BaseComponent {
-    private static final String SPACE = " ";
+    private static final String SEPARATOR = "|";
+    private static final String SAVED_BACKUP_ID_FORMAT = "yyyyMMddHHmm";
+    private static final String DISPLAYED_BACKUP_ID_FORMAT = "MM/dd/yyyy HH:mm";
+
+    private static final Log LOG = LogFactory.getLog(BackupTable.class);
 
     @Parameter(required = true)
     public abstract void setBackupPlan(BackupPlan plan);
@@ -49,6 +61,9 @@ public abstract class BackupTable extends BaseComponent {
 
     @InjectObject("spring:backupManager")
     public abstract BackupManager getBackupManager();
+
+    @InjectObject("spring:backupRunner")
+    public abstract BackupRunner getBackupRunner();
 
     public abstract void setBackup(String backup);
 
@@ -80,11 +95,11 @@ public abstract class BackupTable extends BaseComponent {
     public abstract SipxValidationDelegate getValidator();
 
     public String getBackupId() {
-        return StringUtils.split(getBackup(), SPACE)[0];
+        return StringUtils.split(getBackup(), SEPARATOR)[0];
     }
 
     public Collection<String> getBackupFiles() {
-        String[] row = StringUtils.split(getBackup(), SPACE);
+        String[] row = StringUtils.split(getBackup(), SEPARATOR);
         if (row.length <= 1) {
             return Collections.emptyList();
         }
@@ -93,7 +108,7 @@ public abstract class BackupTable extends BaseComponent {
     }
 
     public String getBackupPath() {
-        return getBackupId() + '/' + getBackupFile();
+        return getSavedBackupId(getBackupId()) + '/' + getBackupFile();
     }
 
     public String getRemoteDownloadLink() {
@@ -101,7 +116,7 @@ public abstract class BackupTable extends BaseComponent {
     }
 
     public String getLocalDownloadDir() {
-        return getDownloadLinkBase() + '/' + getBackupId();
+        return getDownloadLinkBase() + '/' + getSavedBackupId(getBackupId());
     }
 
     public boolean isLocalLink() {
@@ -125,16 +140,52 @@ public abstract class BackupTable extends BaseComponent {
 
     public void loadBackups() {
         File planFile = getBackupManager().getPlanFile(getBackupPlan());
-        BackupCommandRunner runner = new BackupCommandRunner(planFile, getBackupManager().getBackupScript());
-        runner.setMode(getMode());
-        List<String> backups = runner.list();
+        Map<String, List<String>> backupsMap = new HashMap<String, List<String>>();
+        BackupSettings settings = getBackupManager().getSettings();
+        try {
+            if (getBackupPlan().getType() != BackupType.ftp || !settings.isFtpEmpty()) {
+                backupsMap = getBackupRunner().list(planFile);
+            }
+        } catch (Exception ex) {
+            LOG.error("Cannot retrieve backups list ", ex);
+        }
+        List<String> backups = new ArrayList<String>();
+        for (Map.Entry<String, List<String>> entries : backupsMap.entrySet()) {
+            StringBuilder backup = new StringBuilder();
+            backup.append(getBackupIdToDisplay(entries.getKey()));
+            for (String entry : entries.getValue()) {
+                backup.append(SEPARATOR)
+                      .append(entry);
+            }
+            backups.add(backup.toString());
+        }
         if (backups.size() > getTableSize()) {
             backups = backups.subList(0, getTableSize());
         }
         setBackups(backups);
 
         if (!backups.isEmpty()) {
-            setDownloadLinkBase(runner.getBackupLink());
+            setDownloadLinkBase(settings.getPath(getBackupPlan()));
         }
+    }
+
+    private String getFormattedKey(String key, DateFormat currentFormat, DateFormat newFormat) {
+        try {
+            Date date = currentFormat.parse(key);
+            return newFormat.format(date);
+        } catch (Exception e) {
+            LOG.debug("Cannot format: " + key, e);
+        }
+        return key;
+    }
+
+    private String getBackupIdToDisplay(String backupIdToSave) {
+        return getFormattedKey(backupIdToSave,
+            new SimpleDateFormat(SAVED_BACKUP_ID_FORMAT), new SimpleDateFormat(DISPLAYED_BACKUP_ID_FORMAT));
+    }
+
+    private String getSavedBackupId(String backupIdToDisplay) {
+        return getFormattedKey(backupIdToDisplay,
+            new SimpleDateFormat(DISPLAYED_BACKUP_ID_FORMAT), new SimpleDateFormat(SAVED_BACKUP_ID_FORMAT));
     }
 }

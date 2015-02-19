@@ -12,17 +12,15 @@ package org.sipfoundry.sipxconfig.im;
 
 import static org.apache.commons.lang.StringUtils.defaultString;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
+import static org.sipfoundry.sipxconfig.common.AbstractUser.IM_ACCOUNT;
 
 import org.sipfoundry.sipxconfig.common.AbstractUser;
-import org.sipfoundry.sipxconfig.common.User;
 
 /**
  * Flyweight facade for User class that simplifies using it in the context of instant messaging
  * services
  */
 public class ImAccount {
-    public static final String IM_ACCOUNT = "im/im-account";
-
     private final AbstractUser m_user;
 
     public ImAccount(AbstractUser user) {
@@ -65,11 +63,11 @@ public class ImAccount {
 
     public String getDefaultImId() {
         String userName = m_user.getUserName();
-        if (!User.isNumeric(userName)) {
+        if (!AbstractUser.isNumeric(userName)) {
             return userName;
         }
         for (String alias : m_user.getAliases()) {
-            if (!User.isNumeric(alias)) {
+            if (!AbstractUser.isNumeric(alias)) {
                 return alias;
             }
         }
@@ -94,7 +92,7 @@ public class ImAccount {
     }
 
     public String getDefaultImDisplayName() {
-        return defaultString(m_user.getDisplayName(), m_user.getUserName());
+        return defaultString(m_user.getDisplayName(), m_user.getImId());
     }
 
     public String getEmailAddress() {

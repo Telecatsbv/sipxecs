@@ -77,7 +77,17 @@ public enum Index {
     // additional phone settings
     ADDITIONAL_PHONE_SETTINGS("additionalPhoneSettings", 54),
     // additional line settings
-    ADDITIONAL_LINE_SETTINGS("additionalLineSettings", 55);
+    ADDITIONAL_LINE_SETTINGS("additionalLineSettings", 55),
+    // authorization account name - can be used for authentication
+    AUTH_ACCOUNT_NAME("userProfile.authAccountName", 56),
+    // semi column separated email addresses - can be used for authentication
+    EMAIL_ADDRESS_ALIASES("userProfile.emailAddressAliases", 57),
+    //generic field 1
+    CUSTOM_1("userProfile.custom1", 58),
+    //generic field 2
+    CUSTOM_2("userProfile.custom2", 59),
+    //generic field 3
+    CUSTOM_3("userProfile.custom3", 60);
 
     private final String m_name;
     private final int m_value;
@@ -156,7 +166,7 @@ public enum Index {
             "Email voicemail notification", "Email format", "Email attach audio",
             "Alternate email voicemail notification", "Alternate email format", "Alternate email attach audio",
             "Internal Voicemail Server", "Caller ID", "Block Caller ID", "Additional phone settings",
-            "Additional line settings"
+            "Additional line settings", "Auth Account Name", "EMail address aliases", "Custom 1", "Custom 2", "Custom 3"
         };
     }
 }

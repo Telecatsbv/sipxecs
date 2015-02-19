@@ -30,6 +30,11 @@
 
 #include <utl/XmlContent.h>
 
+#include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string.hpp>
+#include <sstream>
+#include <vector>
+
 #define SIP_DEFAULT_RTT 500
 // The time in milliseconds that we allow poll() to wait.
 // This must be short, as the run() loop must wake up periodically to check
@@ -327,8 +332,17 @@ UtlBoolean SipClient::sendTo(SipMessage& message,
                                portToSendTo );
 
       // Post the message to the task's queue.
-      OsStatus status = postMessage(sendMsg, OsTime::NO_WAIT);
-      sendOk = status == OS_SUCCESS;
+      
+      if (mSocketType != OsSocket::UDP)
+      {
+        OsStatus status = postMessage(sendMsg, OsTime::NO_WAIT);
+        sendOk = status == OS_SUCCESS;
+      }
+      else
+      {
+        sendOk = handleMessage(sendMsg);
+      }
+      
       if (!sendOk)
       {
          Os::Logger::instance().log(FAC_SIP, PRI_ERR,
@@ -421,7 +435,51 @@ long SipClient::getLastTouchedTime() const
 
 UtlBoolean SipClient::isOk()
 {
+  
+    
    return OsServerTaskWaitable::isOk() && mClientSocket->isOk() && isNotShut();
+}
+
+bool SipClient::isWritable()
+{
+  static const char * KEEP_ALIVE = "\r\n\r\n";
+  static const int KEEP_ALIVE_SIZE = strlen(KEEP_ALIVE);
+  static const int KEEP_ALIVE_WAIT_TIME = 10; // milliseconds
+  
+  bool writable = false;
+  
+  if (isOk())
+  {
+    //
+    // Send CRLF/CRLF with maximum wait time of 10 milliseconds
+    //
+    if (OsSocket::isFramed(mClientSocket->getIpProtocol()))
+    {
+      //
+      // UDP sockets are shared sockets.  This is only applicable for TCP/TLS clients
+      //
+      writable = true;
+    }
+    else
+    {
+      //
+      // TCP and TLS.  Make sure sockets are writable
+      //
+      writable = mClientSocket->write(KEEP_ALIVE, KEEP_ALIVE_SIZE, KEEP_ALIVE_WAIT_TIME) > 0;
+      
+      if (!writable)
+      {
+        //
+        // Close this socket.  The other end closed the connection.
+        // This also assures that garbage collector collects this client 
+        // in the next iteration because isOk() would now return false.
+        //
+        mClientSocket->close();
+      }
+    }
+  }
+  
+  return writable;
 }
 
 UtlBoolean SipClient::isAcceptableForDestination( const UtlString& hostName, int hostPort, const UtlString& localIp )
@@ -462,14 +520,10 @@ UtlBoolean SipClient::isAcceptableForDestination( const UtlString& hostName, int
          {
              isAcceptable = TRUE;
          }
-         else if ( mSocketType == OsSocket::SSL_SOCKET && ( 
-             hostName.compareTo(mRemoteHostName, UtlString::ignoreCase) == 0 ||
-             hostName.compareTo(mRemoteSocketAddress, UtlString::ignoreCase) == 0 || 
-             hostName.compareTo(mReceivedAddress, UtlString::ignoreCase) == 0 || 
-             hostName.compareTo(mRemoteViaAddress, UtlString::ignoreCase) == 0 ) 
-             )
+         else if (mRemoteViaPort == tempHostPort && (   hostName.compareTo(mRemoteHostName, UtlString::ignoreCase) == 0
+                 || hostName.compareTo(mRemoteSocketAddress, UtlString::ignoreCase) == 0))
          {
-            isAcceptable = TRUE;
+           isAcceptable = TRUE;
          }
          else if (   mRemoteViaPort == tempHostPort
                   && hostName.compareTo(mRemoteViaAddress, UtlString::ignoreCase) == 0)
@@ -485,7 +539,7 @@ UtlBoolean SipClient::isAcceptableForDestination( const UtlString& hostName, int
    }
 
    // Make sure client is okay before declaring it acceptable
-   if( isAcceptable && !isOk() )
+   if( isAcceptable && !isWritable() )
    {
       Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
                     "SipClient[%s]::isAcceptableForDestination('%s', %d, '%s')"
@@ -506,6 +560,8 @@ const UtlString& SipClient::getLocalIp()
 // Thread execution code.
 int SipClient::run(void* runArg)
 {
+  static const int SIZE_OF_PING = strlen("\r\n\r\n");
+  
    OsMsg*    pMsg = NULL;
    OsStatus  res;
    // Buffer to hold data read from the socket but not yet parsed
@@ -717,22 +773,15 @@ int SipClient::run(void* runArg)
                              HTTP_DEFAULT_SOCKET_BUFFER_SIZE,
                              &readBuffer);
 
-         if (res >= 65536)
+         if (msg->ignoreLastRead())
          {
            //
-           // This is more than the allowable size of a SIP message.  Discard!
+           // Read operation thinks this is NOT a valid SIP/HTTP packet.  Eg. STUN requests
            //
-            UtlString remoteHostAddress;
-            int remoteHostPort;
-            msg->getSendAddress(&remoteHostAddress, &remoteHostPort);
-            OS_LOG_WARNING(FAC_SIP, "Received a SIP Message ("
-             << res << " bytes) beyond the maximum allowable size from host "
-             << remoteHostAddress.data() << ":" << remoteHostPort);
-            delete msg;
-            readBuffer.remove(0);
-            continue;
+           delete msg;
+           readBuffer.remove(0);
+           continue;
          }
-
          // Use readBuffer to hold any unparsed data after the message
          // we read.
          // Note that if a message was successfully parsed, readBuffer
@@ -792,12 +841,7 @@ int SipClient::run(void* runArg)
              // The 'message' was a keepalive (CR-LF or CR-LF-CR-LF).
              UtlString fromIpAddress;
              int fromPort;
-             UtlString buffer;
-             int bufferLen;
-
-             // send one CRLF set in the reply
-             buffer.append("\r\n");
-             bufferLen = buffer.length();
+             
 
              // Get the send address for response.
              msg->getSendAddress(&fromIpAddress, &fromPort);
@@ -838,34 +882,47 @@ int SipClient::run(void* runArg)
                Os::Logger::instance().log(FAC_SIP_INCOMING, PRI_DEBUG, "%s", logMessage.data());
             }
 
-            // send the CR-LF response message
-            switch (mSocketType)
+            //
+            // Only send a PONG (CRLF) for PING (CRLF/CRLF)
+            // 
+            if (crlfCount == SIZE_OF_PING)
             {
-            case OsSocket::TCP:
-            {
-               Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                             "SipClient[%s]::run send TCP keep-alive CR-LF response, ",
-                             mName.data());
-               SipClientSendMsg sendMsg(OsMsg::OS_EVENT,
-                                        SipClientSendMsg::SIP_CLIENT_SEND_KEEP_ALIVE,
-                                        fromIpAddress,
-                                        fromPort);
-                handleMessage(sendMsg);     // add newly created keep-alive to write buffer
-            }
-               break;
-            case OsSocket::UDP:
-            {
-                Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                              "SipClient[%s]::run send UDP keep-alive CR-LF response, ",
-                              mName.data());
-               (dynamic_cast <OsDatagramSocket*> (mClientSocket))->write(buffer.data(),
-                                                                         bufferLen,
-                                                                         fromIpAddress,
-                                                                         fromPort);
-            }
-               break;
-            default:
-               break;
+              UtlString buffer;
+              int bufferLen;
+
+              // send one (PONG) CRLF set in the reply
+              buffer.append("\r\n");
+              bufferLen = buffer.length();
+             
+              // send the CR-LF response message
+              switch (mSocketType)
+              {
+              case OsSocket::TCP:
+              {
+                 Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
+                               "SipClient[%s]::run send TCP keep-alive CR-LF response, ",
+                               mName.data());
+                 SipClientSendMsg sendMsg(OsMsg::OS_EVENT,
+                                          SipClientSendMsg::SIP_CLIENT_SEND_KEEP_ALIVE,
+                                          fromIpAddress,
+                                          fromPort);
+                  handleMessage(sendMsg);     // add newly created keep-alive to write buffer
+              }
+                 break;
+              case OsSocket::UDP:
+              {
+                  Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
+                                "SipClient[%s]::run send UDP keep-alive CR-LF response, ",
+                                mName.data());
+                 (dynamic_cast <OsDatagramSocket*> (mClientSocket))->write(buffer.data(),
+                                                                           bufferLen,
+                                                                           fromIpAddress,
+                                                                           fromPort);
+              }
+                 break;
+              default:
+                 break;
+              }
             }
 
             // Delete the SipMessage allocated above, which is no longer needed.
@@ -883,11 +940,20 @@ int SipClient::run(void* runArg)
 
             // Do preliminary processing of message to log it,
             // clean up its data, and extract any needed source address.
-            preprocessMessage(*msg, readBuffer, res);
-
-            // Dispatch the message.
-            // dispatch() takes ownership of *msg.
-            mpSipUserAgent->dispatch(msg);
+            if (preprocessMessage(*msg, readBuffer, res))
+            {
+              // Dispatch the message.
+              // dispatch() takes ownership of *msg.
+              mpSipUserAgent->dispatch(msg);
+            }
+            else
+            {
+              //
+              // Drop this message silently but log it on debug
+              //
+              OS_LOG_DEBUG( FAC_SIP, "SipClient::preprocessMessage -  Dropping " << res << " bytes of malformed packet." );
+              delete msg;
+            }
 
             // Now that logging is done, remove the parsed bytes and
             // remember any unparsed input for later use.
@@ -951,15 +1017,280 @@ int SipClient::run(void* runArg)
    return 0;        // and then exit
 }
 
+static std::vector<std::string> string_tokenize(const std::string& str, const char* tok)
+{
+  std::vector<std::string> tokens;
+  boost::split(tokens, str, boost::is_any_of(tok), boost::token_compress_on);
+  return tokens;
+}
+
+static bool convert_tel_to_sip_uri(const std::string& telUri, const std::string& domain, std::string& sipUri)
+{
+  sipUri.reserve(telUri.size() + domain.size() + 11);
+  sipUri = "sip:";
+  std::string scheme;
+  scheme.reserve(5);
+  bool foundScheme = false;
+  bool foundParams = false;
+  for (std::string::const_iterator iter = telUri.begin(); iter != telUri.end(); iter++)
+  {
+    if (!foundScheme)
+    {
+      if (*iter == ':')
+      {
+        foundScheme = true;
+        if (scheme != "tel")
+        {
+          return false;
+        }
+      }
+      else
+      {
+        scheme.push_back(*iter);
+      }
+    }
+    else if (!foundParams)
+    {
+      if (*iter == ';')
+      {
+        foundParams = true;
+        sipUri += "@";
+        sipUri += domain;
+        sipUri += ";user=phone;";
+      }
+      else
+      {
+        sipUri.push_back(*iter);
+      }
+    }
+    else
+    {
+      sipUri.push_back(*iter);
+    }
+  }
+  
+  if (!foundParams)
+  {
+    sipUri += "@";
+    sipUri += domain;
+    sipUri += ";user=phone";
+  }
+  
+  return true;
+}
+
+static bool convert_start_line_tel_uri(const std::string& startLine, const std::string& domain, std::string& requestLine)
+{
+  //
+  // Tokenize the start line 
+  //
+  std::vector<std::string> startLineTokens = string_tokenize(startLine, " ");
+  if (startLineTokens.size() != 3)
+  {
+    OS_LOG_WARNING(FAC_SIP, "SipClient::convert_start_line_tel_uri - unable to get valid token count from " << startLine);
+    return false;
+  }
+  
+  std::string& method = startLineTokens[0];
+  std::string& telUri = startLineTokens[1];
+  std::string& version = startLineTokens[2];
+  std::string sipUri;
+  
+  convert_tel_to_sip_uri(telUri, domain, sipUri);
+  
+    
+  std::ostringstream strm;
+  strm << method << " " << sipUri << " " << version;
+  requestLine = strm.str();
+  
+  return true;
+}
+
+bool SipClient::preprocessRequestLine(SipMessage& msg)
+{
+  if (msg.isResponse())
+    return true;
+
+  //
+  // Check if we have a telephone URI and convert it to sip uri format
+  //
+  std::string firstHeaderLine = msg.getFirstHeaderLine();
+  if (firstHeaderLine.find("tel:") != std::string::npos)
+  {
+    if (mpSipUserAgent->getDomain().empty())
+    {
+      //
+      // If domain is not set, we will drop the request because we do not support the
+      // tel-uri format.  This has been reported to crash the proxy
+      //
+      OS_LOG_WARNING(FAC_SIP, "SipClient::preprocessRequestLine - Unable to process " <<  firstHeaderLine << " because SipUserAgent::getDomain() is not set.");
+      return false;
+    }
+
+    std::string requestLine;
+    if (!convert_start_line_tel_uri(firstHeaderLine, mpSipUserAgent->getDomain(), requestLine))
+    {
+      OS_LOG_WARNING(FAC_SIP, "SipClient::preprocessRequestLine - Unable to convert " <<  firstHeaderLine << " to a SIP URI.");
+      return false;
+    }
+
+    OS_LOG_INFO(FAC_SIP, "SipClient::preprocessRequestLine - Rewrote tel request-line: (was) " <<  firstHeaderLine << " (now) " << requestLine);
+
+    msg.setFirstHeaderLine(requestLine.c_str());
+  }
+
+  return true;
+}
+
+static bool convert_uri_header_tel_uri(SipMessage& msg, const std::string& headerName, const std::string& header, const std::string& domain, std::string& newHeader)
+{
+  //
+  // Check if we have enclosing brackets
+  //
+  bool hasBrackets = header.find("<tel:") != std::string::npos;
+  std::string displayName;
+  std::string headerParams;
+  std::string telUri;
+  std::string sipUri;
+  
+  if (!hasBrackets)
+  {
+    telUri = header;
+  }
+  else
+  {
+    displayName.reserve(header.size());
+    telUri.reserve(header.size());
+    headerParams.reserve(header.size());
+    
+    bool foundLT = false;
+    bool foundGT = false;
+    for (std::string::const_iterator iter = header.begin(); iter != header.end(); iter++)
+    {
+      if (!foundLT)
+      {
+        if (*iter == '<')
+        {
+          foundLT = true;
+        }
+        else
+        {
+          displayName.push_back(*iter);
+        }
+      }
+      else if (!foundGT)
+      {
+        if (*iter == '>')
+        {
+          foundGT = true;
+        }
+        else
+        {
+          telUri.push_back(*iter);
+        }
+      }
+      else
+      {
+        headerParams.push_back(*iter);
+      }
+    }
+  }
+  
+  if (!convert_tel_to_sip_uri(telUri, domain, sipUri))
+    return false;
+  
+  std::ostringstream prop;
+  prop << headerName << "-TEL-URI";
+  msg.setProperty(prop.str(), telUri);
+  
+  std::ostringstream strm;
+  if (!displayName.empty())
+  {
+    strm << displayName;
+  }
+  
+  strm << "<" << sipUri << ">" << headerParams;
+  newHeader = strm.str();
+  return true;
+}
+
+bool SipClient::preprocessUriHeader(SipMessage& msg, const char* headerName)
+{
+  const char* hdr = msg.getHeaderValue(0, headerName);
+  if (!hdr)
+  {
+    return false;
+  }
+ 
+  std::string header = hdr;
+  if (header.find("tel:") != std::string::npos)
+  {
+    if (mpSipUserAgent->getDomain().empty())
+    {
+      //
+      // If domain is not set, we will drop the request because we do not support the
+      // tel-uri format.  This has been reported to crash the proxy
+      //
+      OS_LOG_WARNING(FAC_SIP, "SipClient::preprocessUriHeader - Unable to process " <<  header << " because SipUserAgent::getDomain() is not set.");
+      return false;
+    }
+
+    std::string newHeader;
+    if (!convert_uri_header_tel_uri(msg, headerName, header, mpSipUserAgent->getDomain(), newHeader))
+    {
+      OS_LOG_WARNING(FAC_SIP, "SipClient::preprocessUriHeader - Unable to convert " <<  header << " to a SIP URI.");
+      return false;
+    }
+
+    OS_LOG_INFO(FAC_SIP, "SipClient::preprocessUriHeader - Rewrote tel-uri " << headerName << " : (was) " <<  header << " (now) " << newHeader);
+
+    msg.setHeaderValue(headerName, newHeader.c_str(), 0);
+  }
+  
+  return true;
+}
+
 // Do preliminary processing of message to log it,
 // clean up its data, and extract any needed source address.
-void SipClient::preprocessMessage(SipMessage& msg,
+bool SipClient::preprocessMessage(SipMessage& msg,
                                   const UtlString& msgText,
                                   int msgLength)
 {
+  
+  msg.setProperty("transport-queue-size", boost::lexical_cast<std::string>(mIncomingQ.numMsgs()));
+  msg.setProperty("transport-queue-max-size", boost::lexical_cast<std::string>(mIncomingQ.maxMsgs()));
+
    // Canonicalize short field names.
    msg.replaceShortFieldNames();
 
+   //
+   // Make sure that the message is valid.  We will check for presence of Call-Id, CSeq, From, To and Via Fields
+   //
+   if (
+     !msg.getHeaderValue(0, SIP_CSEQ_FIELD) ||
+     !msg.getHeaderValue(0, SIP_CALLID_FIELD) ||
+     !msg.getHeaderValue(0, SIP_FROM_FIELD) ||
+     !msg.getHeaderValue(0, SIP_TO_FIELD) ||
+     !msg.getHeaderValue(0, SIP_VIA_FIELD))
+   {
+     return false;
+   }
+   
+   if (!preprocessRequestLine(msg))
+   {
+     return false;
+   }
+   
+   if (!preprocessUriHeader(msg, SIP_FROM_FIELD))
+   {
+     return false;
+   }
+   
+   if (!preprocessUriHeader(msg, SIP_TO_FIELD))
+   {
+     return false;
+   }
+   
    // Get the send address.
    UtlString fromIpAddress;
    int fromPort;
@@ -1076,6 +1407,8 @@ void SipClient::preprocessMessage(SipMessage& msg,
            msgText.data(), msgLength);
 
    mpSipUserAgent->executeAllSipInputProcessors(msg, fromIpAddress.data(), portIsValid(fromPort) ? fromPort : defaultPort());
+
+   return true;
 }
 
 // Test whether the socket is ready to read. (Does not block.)

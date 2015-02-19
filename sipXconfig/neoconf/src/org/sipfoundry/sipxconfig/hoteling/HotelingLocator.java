@@ -18,11 +18,14 @@ package org.sipfoundry.sipxconfig.hoteling;
 
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.ListableBeanFactory;
 
 public class HotelingLocator implements BeanFactoryAware {
+    private static final Log LOG = LogFactory.getLog(HotelingLocator.class);
     private HotelingManager m_hotelingManager;
 
     /*
@@ -37,15 +40,20 @@ public class HotelingLocator implements BeanFactoryAware {
     public boolean isHotellingEnabled() {
         if (m_hotelingManager == null) {
             return false;
-        } else {
-            return m_hotelingManager.isActive();
         }
+        return true;
     }
 
     @Override
     public void setBeanFactory(BeanFactory bf) {
         Map<String, HotelingManager> managers = ((ListableBeanFactory) bf).getBeansOfType(HotelingManager.class);
         if (!managers.isEmpty()) {
+            /*
+             * see above comment. Only one manager is supported for now.
+             */
+            if (managers.size() > 1) {
+                LOG.warn("Multiple hoteling managers declared, but only one is supported!");
+            }
             for (String key : managers.keySet()) {
                 m_hotelingManager = managers.get(key);
                 return;

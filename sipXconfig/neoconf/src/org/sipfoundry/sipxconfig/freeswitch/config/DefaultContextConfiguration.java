@@ -10,6 +10,7 @@ package org.sipfoundry.sipxconfig.freeswitch.config;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -25,6 +26,7 @@ import org.sipfoundry.sipxconfig.freeswitch.FreeswitchExtension;
 import org.sipfoundry.sipxconfig.freeswitch.FreeswitchExtensionCollector;
 import org.sipfoundry.sipxconfig.freeswitch.FreeswitchSettings;
 import org.sipfoundry.sipxconfig.ivr.Ivr;
+import org.sipfoundry.sipxconfig.parkorbit.ParkOrbitContext;
 import org.springframework.beans.factory.annotation.Required;
 
 /**
@@ -34,17 +36,21 @@ public class DefaultContextConfiguration extends AbstractFreeswitchConfiguration
     private ConferenceBridgeContext m_conferenceContext;
     private FreeswitchExtensionCollector m_freeswitchExtensionCollector;
     private FeatureManager m_featureManager;
+    private ParkOrbitContext m_parkOrbitContext;
 
     @Override
     public void write(Writer writer, Location location, FreeswitchSettings settings) throws IOException {
         Bridge bridge = m_conferenceContext.getBridgeByServer(location.getFqdn());
         boolean authCodes = m_featureManager.isFeatureEnabled(AuthCodes.FEATURE, location);
+        boolean park = m_featureManager.isFeatureEnabled(ParkOrbitContext.FEATURE, location);
         List<FreeswitchExtension> extensions = m_freeswitchExtensionCollector.getExtensions();
-        write(writer, location, bridge, authCodes, extensions, settings.isBlindTransferEnabled());
+        write(writer, location, bridge, authCodes, park, m_parkOrbitContext.getParkOrbits(), extensions,
+            settings.isBlindTransferEnabled());
     }
 
-    void write(Writer writer, Location location, Bridge bridge, boolean authCodes,
-            List<FreeswitchExtension> extensions, boolean blindTransfer) throws IOException {
+    void write(Writer writer, Location location, Bridge bridge, boolean authCodes, boolean park, Collection orbits,
+        List<FreeswitchExtension> extensions, boolean blindTransfer)
+        throws IOException {
         VelocityContext context = new VelocityContext();
         if (bridge != null) {
             Set<Conference> conferences = bridge.getConferences();
@@ -53,20 +59,18 @@ public class DefaultContextConfiguration extends AbstractFreeswitchConfiguration
         if (authCodes) {
             context.put("acccode", true);
         }
+        if (park) {
+            context.put("park", true);
+            context.put("orbits", orbits);
+        }
         if (blindTransfer) {
             context.put("blindTransfer", true);
         }
         context.put("domainName", Domain.getDomain().getName());
-        List<FreeswitchExtension> freeswitchExtensions = new ArrayList<FreeswitchExtension>();
-        for (FreeswitchExtension extension : extensions) {
-            if (extension.isEnabled()) {
-                freeswitchExtensions.add(extension);
-            }
-        }
         context.put("location", location);
         addAdditionalLocations(context, location);
         context.put("dollar", "$");
-        context.put("freeswitchExtensions", freeswitchExtensions);
+        getFreeswitchExtensions(context, location, extensions);
         write(writer, context);
     }
 
@@ -90,6 +94,17 @@ public class DefaultContextConfiguration extends AbstractFreeswitchConfiguration
         return "freeswitch/default_context.xml.vm";
     }
 
+    protected void getFreeswitchExtensions(VelocityContext context, Location location,
+            List<FreeswitchExtension> extensions) {
+        List<FreeswitchExtension> freeswitchExtensions = new ArrayList<FreeswitchExtension>();
+        for (FreeswitchExtension extension : extensions) {
+            if (extension.isEnabled()) {
+                freeswitchExtensions.add(extension);
+            }
+        }
+        context.put("freeswitchExtensions", freeswitchExtensions);
+    }
+
     private void addAdditionalLocations(VelocityContext context, Location location) {
         List<Location> locations = getFeatureManager().getLocationsForEnabledFeature(Ivr.FEATURE);
         if (locations != null) {
@@ -106,5 +121,10 @@ public class DefaultContextConfiguration extends AbstractFreeswitchConfiguration
     @Required
     public void setFeatureManager(FeatureManager featureManager) {
         m_featureManager = featureManager;
+    }
+
+    @Required
+    public void setParkOrbitContext(ParkOrbitContext context) {
+        m_parkOrbitContext = context;
     }
 }

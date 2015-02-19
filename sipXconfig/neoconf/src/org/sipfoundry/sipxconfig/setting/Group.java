@@ -30,6 +30,7 @@ import org.sipfoundry.sipxconfig.common.Replicable;
 import org.sipfoundry.sipxconfig.commserver.imdb.AliasMapping;
 import org.sipfoundry.sipxconfig.commserver.imdb.DataSet;
 import org.sipfoundry.sipxconfig.setting.type.SettingType;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
 /**
  * User labeled storage of settings.
@@ -37,7 +38,8 @@ import org.sipfoundry.sipxconfig.setting.type.SettingType;
  * @author dhubler
  *
  */
-public class Group extends ValueStorage implements Comparable, NamedObject, Replicable {
+public class Group extends ValueStorage implements Comparable<Group>, NamedObject, Replicable, SystemAuditable {
+    private static final String E911_SETTING_PATH = "e911/location";
     private String m_name;
     private String m_description;
     private String m_resource;
@@ -92,8 +94,7 @@ public class Group extends ValueStorage implements Comparable, NamedObject, Repl
     }
 
     @Override
-    public int compareTo(Object arg0) {
-        Group b = (Group) arg0;
+    public int compareTo(Group b) {
         int w1 = defaultWeight(m_weight);
         int w2 = defaultWeight(b.getWeight());
         int cmp = w1 - w2;
@@ -207,7 +208,7 @@ public class Group extends ValueStorage implements Comparable, NamedObject, Repl
 
     @Override
     public Set<DataSet> getDataSets() {
-        return Collections.EMPTY_SET;
+        return Collections.emptySet();
     }
 
     @Override
@@ -230,18 +231,26 @@ public class Group extends ValueStorage implements Comparable, NamedObject, Repl
         Map<String, Object> props = new HashMap<String, Object>();
         props.put(UID, getName());
         props.put(GROUP_RESOURCE, getResource());
-        if (getDescription() != null) {
-            props.put(DESCR, getDescription());
-        }
+        props.put(DESCR, StringUtils.defaultString(getDescription()));
+        String defaultValue = "0";
         String imgroup = getSettingValue("im/im-group");
-        if (imgroup != null) {
-            props.put(IM_GROUP, imgroup);
-        }
+        props.put(IM_GROUP, StringUtils.defaultString(imgroup, defaultValue));
+
         String mybudygrp = getSettingValue("im/add-pa-to-group");
-        if (mybudygrp != null) {
-            props.put(MY_BUDDY_GROUP, mybudygrp);
-        }
+        props.put(MY_BUDDY_GROUP, StringUtils.defaultString(mybudygrp, defaultValue));
+
         return props;
+    }
+
+    public void setE911LocationId(Integer id) {
+        if (id != null && id < 0) {
+            return;
+        }
+        if (id == null) {
+            setSettingValue(E911_SETTING_PATH, null);
+        } else {
+            setSettingValue(E911_SETTING_PATH, id.toString());
+        }
     }
 
     @Override
@@ -250,7 +259,17 @@ public class Group extends ValueStorage implements Comparable, NamedObject, Repl
     }
 
     @Override
-    public boolean isEnabled() {
+    public boolean isReplicationEnabled() {
         return true;
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return "[" + getResource() + "Group]" + " " + getName();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return Group.class.getSimpleName();
     }
 }

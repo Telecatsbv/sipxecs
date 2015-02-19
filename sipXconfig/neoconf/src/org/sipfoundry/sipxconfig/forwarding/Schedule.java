@@ -14,15 +14,16 @@ import java.util.List;
 import java.util.TimeZone;
 
 import org.apache.commons.lang.StringUtils;
-import org.sipfoundry.sipxconfig.dialplan.attendant.WorkingTime;
-import org.sipfoundry.sipxconfig.dialplan.attendant.WorkingTime.Interval;
-import org.sipfoundry.sipxconfig.dialplan.attendant.WorkingTime.WorkingHours;
 import org.sipfoundry.sipxconfig.common.BeanWithId;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.common.UserException;
+import org.sipfoundry.sipxconfig.dialplan.attendant.WorkingTime;
+import org.sipfoundry.sipxconfig.dialplan.attendant.WorkingTime.Interval;
+import org.sipfoundry.sipxconfig.dialplan.attendant.WorkingTime.WorkingHours;
 import org.sipfoundry.sipxconfig.setting.Group;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
-public abstract class Schedule extends BeanWithId {
+public abstract class Schedule extends BeanWithId implements SystemAuditable {
     private User m_user;
     private String m_name;
     private String m_description;
@@ -90,11 +91,13 @@ public abstract class Schedule extends BeanWithId {
         workingTime.checkValid();
     }
 
-    static class ScheduleException extends UserException {
+    @SuppressWarnings("serial")
+    public static class ScheduleException extends UserException {
         private static final String ERROR = "Invalid schedule. Schedule must have at least one period defined.";
 
         ScheduleException() {
             super(ERROR);
         }
     }
+
 }

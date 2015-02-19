@@ -28,6 +28,7 @@ import javax.sip.RequestEvent;
 import javax.sip.ServerTransaction;
 import javax.sip.SipException;
 import javax.sip.SipProvider;
+import javax.sip.address.URI;
 import javax.sip.header.AcceptHeader;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentLengthHeader;
@@ -38,6 +39,7 @@ import javax.sip.header.SubscriptionStateHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.sipfoundry.sipxrest.RestServer;
 import org.sipfoundry.sipxrest.SipHelper;
@@ -343,6 +345,7 @@ public class DialogContext {
     }
 
     public void processNotify(RequestEvent requestEvent) {
+        logger.debug("Entering method processNotify ");
         try {
             if (this.method.equalsIgnoreCase("refer")) {
                 ServerTransaction serverTransaction = requestEvent.getServerTransaction();
@@ -355,26 +358,35 @@ public class DialogContext {
                 logger.debug("got a NOTIFY");
                 SubscriptionStateHeader subscriptionState = (SubscriptionStateHeader) request
                         .getHeader(SubscriptionStateHeader.NAME);
+                boolean ringing = false;
                 if (request.getContentLength().getContentLength() != 0) {
                     String statusLine = new String(request.getRawContent());
                     logger.debug("dialog = " + dialog);
                     logger.debug("status line = " + statusLine);
 
-                    if (!statusLine.equals("")) {
+                    if (!StringUtils.isEmpty(statusLine)) {
+                        ringing = containsIgnoreCase(statusLine, SipHelper.RINGING_MESSAGE);
                         this.setStatus(SipHelper.getCallId(request), request.getMethod(),
                                 statusLine);
+                        logger.debug("Ringing received " + ringing);
                     }
                 }
-
-                if (subscriptionState.getState().equalsIgnoreCase(
-                        SubscriptionStateHeader.TERMINATED)) {
+                boolean terminated = subscriptionState.getState().equalsIgnoreCase(SubscriptionStateHeader.TERMINATED);
+                logger.debug("Is subscription state terminated: " + terminated);
+                if (ringing || terminated) {
                     String content = new String(request.getRawContent());
                     ReasonHeader busyHeader = null;
                     if (containsIgnoreCase(content, SipHelper.BUSY_MESSAGE)) {
                         busyHeader = SipListenerImpl.getInstance().getHelper().createBusyReasonHeader(request.getSIPVersion());
                     }
-
-                    SipListenerImpl.getInstance().getHelper().tearDownDialog(dialog, busyHeader);
+                    DialogContext context = (DialogContext)dialog.getApplicationData();
+                    URI byeUri = null;
+                    if (context != null) {
+                        byeUri = context.getRequest(dialog).getRequestURI();
+                        logger.debug("BYE URI is: " + byeUri);
+                    }
+                    logger.debug("Send BYE - Ringing " + ringing + " Subscription state terminated " + terminated);
+                    SipListenerImpl.getInstance().getHelper().tearDownDialog(dialog, busyHeader, byeUri);
                 }
             } else {
                 this.forwardRequest(requestEvent);

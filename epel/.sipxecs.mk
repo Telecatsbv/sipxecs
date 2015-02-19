@@ -29,6 +29,8 @@ epel.clean :
 # Only used for building, not required for ISO
 BUILD_EPEL = \
 	bakefile-* \
+	c-ares19-* \
+	c-ares19-devel-* \
 	Canna-libs-* \
 	ccache-* \
 	compface-1.5*\
@@ -43,19 +45,32 @@ BUILD_EPEL = \
 	erlang-rebar-* \
 	gperftools-devel-* \
 	gtest-devel-* \
+	gyp-* \
+	http-parser-* \
+	http-parser-devel-* \
 	libdnet-* \
 	libdnet-devel-* \
 	libev-* \
 	libmongodb-devel-2.4* \
+	libuv-* \
+	libuv-devel-* \
 	neXtaw-* \
+	node-gyp-* \
+	nodejs-* \
+	npm-* \
 	poco-* \
 	poco-debug-* \
 	python-empy-* \
 	rubygem-mocha-* \
+	v8-* \
 	v8-devel-* \
 	wxGTK-devel-* \
 	wxGTK-media-* \
 	xemacs-* \
+	leveldb-devel-* \
+	ldns-devel-* \
+	portaudio-devel-* \
+	jack-audio-connection-kit-devel*
 
 # Technincally these could be build and runtime requirements
 RUNTIME_EPEL = \
@@ -64,6 +79,7 @@ RUNTIME_EPEL = \
 	erlang-gproc-* \
 	erlang-erlando-* \
 	erlang-ibrowse-* \
+	erlang-rpm-macros-* \
 	fail2ban-* \
 	gperftools-libs-* \
 	gtest-1* \
@@ -73,6 +89,7 @@ RUNTIME_EPEL = \
 	libmcrypt-* \
 	libmongodb-2.4* \
 	libunwind-* \
+	monit-* \
 	mongodb-2.4* \
 	mongodb-server-2.4* \
 	openpgm-5* \
@@ -103,5 +120,12 @@ RUNTIME_EPEL = \
 	wxBase-* \
 	wxGTK-2.* \
 	wxGTK-gl-* \
-	zeromq-*
+	zeromq-* \
+	leveldb-* \
+	python-pymongo-gridfs-2.5* \
+	sipp-* \
+	socat-1.7.* \
+	ldns-1.6.16-2* \
+	portaudio-19* \
+	jack-audio-connection-kit-*
 

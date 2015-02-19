@@ -20,10 +20,12 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 import org.apache.commons.lang.time.FastDateFormat;
+import org.codehaus.jackson.annotate.JsonPropertyOrder;
 
 /**
  * Time zone independent value of time of day (hh:mm)
  */
+@JsonPropertyOrder(alphabetic = true)
 public class TimeOfDay {
     private int m_hrs = -1;
     private int m_min = -1;
@@ -70,6 +72,11 @@ public class TimeOfDay {
         return m_min;
     }
 
+    @Override
+    public String toString() {
+        return "TimeOfDay [m_hrs=" + m_hrs + ", m_min=" + m_min + "]";
+    }
+
     public static class TimeOfDayFormat extends Format {
         private Locale m_locale;
 
@@ -81,6 +88,7 @@ public class TimeOfDay {
             m_locale = locale;
         }
 
+        @Override
         public StringBuffer format(Object obj, StringBuffer toAppendTo, FieldPosition pos) {
             if (!(obj instanceof TimeOfDay)) {
                 throw new IllegalArgumentException("Unknown class: "
@@ -95,6 +103,7 @@ public class TimeOfDay {
             return format.format(date, toAppendTo, pos);
         }
 
+        @Override
         public Object parseObject(String source, ParsePosition pos) {
             DateFormat format = DateFormat.getTimeInstance(DateFormat.SHORT, m_locale);
             Date date = (Date) format.parseObject(source, pos);

@@ -39,7 +39,6 @@ import org.sipfoundry.sipxconfig.feature.FeatureManager;
 import org.sipfoundry.sipxconfig.feature.GlobalFeature;
 import org.sipfoundry.sipxconfig.feature.LocationFeature;
 import org.sipfoundry.sipxconfig.im.ImManager;
-import org.sipfoundry.sipxconfig.parkorbit.ParkOrbitContext;
 import org.sipfoundry.sipxconfig.proxy.ProxyManager;
 import org.sipfoundry.sipxconfig.setting.PatternSettingFilter;
 import org.sipfoundry.sipxconfig.setting.Setting;
@@ -59,7 +58,7 @@ public class RegistrarConfiguration implements ConfigProvider, ApplicationContex
 
     @Override
     public void replicate(ConfigManager manager, ConfigRequest request) throws IOException {
-        if (!request.applies(Registrar.FEATURE, ParkOrbitContext.FEATURE, ProxyManager.FEATURE, ImManager.FEATURE)) {
+        if (!request.applies(Registrar.FEATURE, ProxyManager.FEATURE, ImManager.FEATURE)) {
             return;
         }
 
@@ -70,7 +69,6 @@ public class RegistrarConfiguration implements ConfigProvider, ApplicationContex
         Address imApi = manager.getAddressManager().getSingleAddress(ImManager.XMLRPC_ADDRESS);
         Address presenceApi = manager.getAddressManager().getSingleAddress(Registrar.PRESENCE_MONITOR_ADDRESS);
         Address proxy = manager.getAddressManager().getSingleAddress(ProxyManager.TCP_ADDRESS);
-        Address park = manager.getAddressManager().getSingleAddress(ParkOrbitContext.SIP_TCP_PORT);
         for (Location location : locations) {
             File dir = manager.getLocationDataDirectory(location);
             boolean enabled = fm.isFeatureEnabled(Registrar.FEATURE, location);
@@ -78,7 +76,7 @@ public class RegistrarConfiguration implements ConfigProvider, ApplicationContex
             if (enabled) {
                 Writer w = new FileWriter(new File(dir, "registrar-config.part"));
                 try {
-                    write(w, settings, domain, location, proxy, imApi, presenceApi, park, fm);
+                    write(w, settings, domain, location, proxy, imApi, presenceApi, fm);
                 } finally {
                     IOUtils.closeQuietly(w);
                 }
@@ -86,7 +84,7 @@ public class RegistrarConfiguration implements ConfigProvider, ApplicationContex
                 //All resource limits for all services are globbaly agregated and replicated
                 //in ResLimitsConfiguration.java
                 //The replication of resource-limits.ini is effective on each node that runs
-                //at least one of the processes: mwi, registrar, proxy, park, rls, saa
+                //at least one of the processes: mwi, registrar, proxy, rls, saa
                 Writer registrarResLimitsWriter = new FileWriter(new File(dir, "resource-limits-registrar.ini"));
                 try {
                     m_registrarLimitsConfig.writeResourceLimits(registrarResLimitsWriter, settings);
@@ -98,7 +96,7 @@ public class RegistrarConfiguration implements ConfigProvider, ApplicationContex
     }
 
     void write(Writer wtr, RegistrarSettings settings, Domain domain, Location location, Address proxy,
-            Address imApi, Address presenceApi, Address park, FeatureManager fm) throws IOException {
+            Address imApi, Address presenceApi, FeatureManager fm) throws IOException {
         KeyValueConfiguration file = KeyValueConfiguration.colonSeparated(wtr);
         Setting root = settings.getSettings();
         file.writeSettings(SettingUtil.filter(NO_UNDERSCORE, root.getSetting("registrar-config")));
@@ -122,7 +120,6 @@ public class RegistrarConfiguration implements ConfigProvider, ApplicationContex
         file.write("SIP_REDIRECT_AUTHORITY_LEVEL.998-TIMEOFDAY", WEIGHT_100);
         file.write("SIP_REDIRECT_AUTHORITY_LEVEL.999-AUTHROUTER", WEIGHT_100);
 
-        file.write("SIP_REDIRECT.100-PICKUP.ORBIT_FILENAME", "$(sipx.SIPX_CONFDIR)/orbits.xml");
         file.write("SIP_REDIRECT.130-MAPPING.MAPPING_RULES_FILENAME", "$(sipx.SIPX_CONFDIR)/mappingrules.xml");
         file.write("SIP_REDIRECT.140-FALLBACK.MAPPING_RULES_FILENAME", "$(sipx.SIPX_CONFDIR)/fallbackrules.xml");
         file.write("SIP_REDIRECT_HOOK_LIBRARY.090-USERPARAM", "$(sipx.SIPX_LIBDIR)/libRedirectorUserParam.so");
@@ -151,12 +148,6 @@ public class RegistrarConfiguration implements ConfigProvider, ApplicationContex
         file.write("SIP_REGISTRAR_SYNC_WITH", "obsolete");
         file.writeSettings(root.getSetting("userparam"));
         file.writeSettings(root.getSetting("call-pick-up"));
-
-        if (park != null) {
-            String parkUri = format("%s;transport=tcp?Route=sip:%s:%d", domain.getName(), park.getAddress(),
-                    park.getPort());
-            file.write("SIP_REDIRECT.100-PICKUP.PARK_SERVER", parkUri);
-        }
 
         file.writeSettings("SIP_REDIRECT.130-MAPPING.", root.getSetting("mapping"));
         file.writeSettings(root.getSetting("isn"));

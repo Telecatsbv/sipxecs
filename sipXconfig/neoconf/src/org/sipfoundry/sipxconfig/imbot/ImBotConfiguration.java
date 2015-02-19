@@ -30,7 +30,7 @@ import org.sipfoundry.sipxconfig.cfgmgt.ConfigManager;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigProvider;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigRequest;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigUtils;
-import org.sipfoundry.sipxconfig.cfgmgt.KeyValueConfiguration;
+import org.sipfoundry.sipxconfig.cfgmgt.LoggerKeyValueConfiguration;
 import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.domain.Domain;
 import org.sipfoundry.sipxconfig.feature.FeatureManager;
@@ -38,6 +38,8 @@ import org.sipfoundry.sipxconfig.im.ImManager;
 import org.sipfoundry.sipxconfig.ivr.Ivr;
 import org.sipfoundry.sipxconfig.localization.LocalizationContext;
 import org.sipfoundry.sipxconfig.restserver.RestServer;
+import org.sipfoundry.sipxconfig.setting.Setting;
+import org.sipfoundry.sipxconfig.setting.SettingUtil;
 import org.springframework.beans.factory.annotation.Required;
 
 public class ImBotConfiguration implements ConfigProvider {
@@ -61,6 +63,7 @@ public class ImBotConfiguration implements ConfigProvider {
         Address imApi = manager.getAddressManager().getSingleAddress(ImManager.XMLRPC_ADDRESS);
         Domain domain = manager.getDomainManager().getDomain();
         ImBotSettings settings = m_imbot.getSettings();
+        Setting imbotSettings = settings.getSettings().getSetting("imbot");
         Set<Location> locations = request.locations(manager);
         for (Location location : locations) {
             File dir = manager.getLocationDataDirectory(location);
@@ -70,6 +73,11 @@ public class ImBotConfiguration implements ConfigProvider {
             if (!enabled) {
                 continue;
             }
+
+            String log4jFileName = "log4j-imbot.properties.part";
+            String[] logLevelKeys = {"log4j.logger.org.sipfoundry.sipximbot"};
+            SettingUtil.writeLog4jSetting(imbotSettings, dir, log4jFileName, logLevelKeys);
+
             File f = new File(manager.getLocationDataDirectory(location), "sipximbot.properties.part");
             Writer wtr = new FileWriter(f);
             try {
@@ -83,9 +91,7 @@ public class ImBotConfiguration implements ConfigProvider {
     protected static void write(Writer wtr, ImBotSettings settings, Domain domain, Address ivr, Address admin,
         Address rest,
             Address imApi) throws IOException {
-        KeyValueConfiguration config = KeyValueConfiguration.equalsSeparated(wtr);
-        config.write("log.level", settings.getLogLevel());
-        config.write("imbot.httpport", settings.getHttpPort());
+        LoggerKeyValueConfiguration config = LoggerKeyValueConfiguration.equalsSeparated(wtr);
         config.write("imbot.locale", settings.getLocale());
         config.write("imbot.paUserName", settings.getPersonalAssistantImId() + '@' + domain.getName());
         config.write("imbot.paPassword", settings.getPersonalAssistantImPassword());

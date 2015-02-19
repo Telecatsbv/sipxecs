@@ -23,9 +23,9 @@ import java.util.List;
 import org.sipfoundry.sipxconfig.address.Address;
 
 public class ResourceRecords {
-    private String m_proto;
-    private String m_resource;
-    private List<ResourceRecord> m_records;
+    private final String m_proto;
+    private final String m_resource;
+    private final List<ResourceRecord> m_records;
     private boolean m_isInternal;
 
     public ResourceRecords(String proto, String resource) {
@@ -47,6 +47,10 @@ public class ResourceRecords {
 
     public void addRecord(ResourceRecord record) {
         m_records.add(record);
+    }
+
+    public void addRecords(Collection<ResourceRecord> records) {
+        m_records.addAll(records);
     }
 
     public void addAddresses(Collection<Address> addresses) {
@@ -71,5 +75,10 @@ public class ResourceRecords {
 
     public boolean isInternal() {
         return m_isInternal;
+    }
+
+    @Override
+    public String toString() {
+        return "ResourceRecords [m_proto=" + m_proto + ", m_resource=" + m_resource + "]";
     }
 }

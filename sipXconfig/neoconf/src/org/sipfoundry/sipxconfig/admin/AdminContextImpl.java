@@ -23,10 +23,12 @@ import org.sipfoundry.sipxconfig.alarm.AlarmServerManager;
 import org.sipfoundry.sipxconfig.backup.ArchiveDefinition;
 import org.sipfoundry.sipxconfig.backup.ArchiveProvider;
 import org.sipfoundry.sipxconfig.backup.BackupManager;
+import org.sipfoundry.sipxconfig.backup.BackupPlan;
 import org.sipfoundry.sipxconfig.backup.BackupSettings;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.commserver.LocationsManager;
+import org.sipfoundry.sipxconfig.domain.DomainManager;
 import org.sipfoundry.sipxconfig.firewall.DefaultFirewallRule;
 import org.sipfoundry.sipxconfig.firewall.FirewallManager;
 import org.sipfoundry.sipxconfig.firewall.FirewallProvider;
@@ -34,6 +36,7 @@ import org.sipfoundry.sipxconfig.setting.BeanWithSettingsDao;
 import org.sipfoundry.sipxconfig.snmp.ProcessDefinition;
 import org.sipfoundry.sipxconfig.snmp.ProcessProvider;
 import org.sipfoundry.sipxconfig.snmp.SnmpManager;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 /**
@@ -42,13 +45,15 @@ import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 public class AdminContextImpl extends HibernateDaoSupport implements AdminContext, AddressProvider, ProcessProvider,
         AlarmProvider, FirewallProvider, ArchiveProvider {
     private static final Collection<AddressType> ADDRESSES = Arrays.asList(new AddressType[] {
-        HTTP_ADDRESS, HTTP_ADDRESS_AUTH, SIPXCDR_DB_ADDRESS
+        HTTP_ADDRESS, HTTP_ADDRESS_AUTH, HTTPS_ADDRESS_AUTH, SIPXCDR_DB_ADDRESS
     });
-    private StringBuilder m_backup = new StringBuilder("$(sipx.SIPX_BINDIR)/sipxconfig-archive --backup %s");
-    private StringBuilder m_restore = new StringBuilder(
-            "$(sipx.SIPX_BINDIR)/sipxconfig-archive --restore %s --ipaddress $(sipx.bind_ip)");
+    private static final String BACKUP_COMMAND = "sipxconfig-archive --backup %s";
+    private static final String RESTORE_COMMAND = "sipxconfig-archive --restore %s";
     private LocationsManager m_locationsManager;
+    private DomainManager m_domainManager;
     private BeanWithSettingsDao<AdminSettings> m_settingsDao;
+    private StringBuilder m_backup = new StringBuilder(BACKUP_COMMAND);
+    private StringBuilder m_restore = new StringBuilder(RESTORE_COMMAND);
 
     @Override
     public Collection<Address> getAvailableAddresses(AddressManager manager, AddressType type, Location requester) {
@@ -63,6 +68,8 @@ public class AdminContextImpl extends HibernateDaoSupport implements AdminContex
             address = new Address(HTTP_ADDRESS_AUTH, location.getAddress(), HTTP_ADDRESS_AUTH.getCanonicalPort());
         } else if (type.equals(SIPXCDR_DB_ADDRESS)) {
             address = new Address(SIPXCDR_DB_ADDRESS, location.getAddress());
+        } else if (type.equals(HTTPS_ADDRESS_AUTH)) {
+            address = new Address(HTTPS_ADDRESS_AUTH, location.getAddress());
         }
         return Collections.singleton(address);
     }
@@ -79,37 +86,46 @@ public class AdminContextImpl extends HibernateDaoSupport implements AdminContex
 
     @Override
     public Collection<AlarmDefinition> getAvailableAlarms(AlarmServerManager manager) {
-        return Collections.singleton(ALARM_LOGIN_FAILED);
+        return Arrays.asList(new AlarmDefinition[]{ALARM_LOGIN_FAILED, ALARM_DNS_LOOKUP});
     }
 
     @Override
     public Collection<DefaultFirewallRule> getFirewallRules(FirewallManager manager) {
-        return Arrays.asList(new DefaultFirewallRule(HTTP_ADDRESS), new DefaultFirewallRule(HTTP_ADDRESS_AUTH),
-                new DefaultFirewallRule(SIPXCDR_DB_ADDRESS));
+        return Arrays.asList(new DefaultFirewallRule(HTTP_ADDRESS),
+            new DefaultFirewallRule(HTTPS_ADDRESS_AUTH), new DefaultFirewallRule(SIPXCDR_DB_ADDRESS));
     }
 
     @Override
     public Collection<ArchiveDefinition> getArchiveDefinitions(BackupManager manager, Location location,
-            BackupSettings settings) {
+            BackupPlan plan, BackupSettings settings) {
         if (!location.isPrimary()) {
             return null;
         }
 
-        buildArchiveCommands(settings);
+        buildArchiveCommands(plan, settings);
         ArchiveDefinition def = new ArchiveDefinition(ARCHIVE, m_backup.toString(), m_restore.toString());
         return Collections.singleton(def);
     }
 
-    protected void buildArchiveCommands(BackupSettings settings) {
-        if (settings != null) {
-            if (!settings.isKeepDeviceFiles()) {
+    protected void initBaseCommands() {
+        m_backup = new StringBuilder(BACKUP_COMMAND);
+        m_restore = new StringBuilder(RESTORE_COMMAND);
+    }
+
+    protected void buildArchiveCommands(BackupPlan plan, BackupSettings settings) {
+        //Reset backup/restore commands to original values to avoid additional params to be added multiple times
+        initBaseCommands();
+        if (plan != null && settings != null) {
+            if (!plan.isIncludeDeviceFiles()) {
                 m_backup.append(" --no-device-files");
             }
             if (settings.isKeepDomain()) {
-                m_restore.append(" --domain $(sipx.domain)");
+                m_restore.append(" --domain ")
+                         .append(m_domainManager.getDomain().getName());
             }
             if (settings.isKeepFqdn()) {
-                m_restore.append(" --fqdn $(sipx.host).$(sipx.net_domain)");
+                m_restore.append(" --fqdn ")
+                         .append(m_locationsManager.getPrimaryLocation().getFqdn());
             }
             String resetPin = settings.getResetPin();
             String resetPassword = settings.getResetPassword();
@@ -190,5 +206,24 @@ public class AdminContextImpl extends HibernateDaoSupport implements AdminContex
     @Override
     public boolean isDelete() {
         return getSettings().isDelete();
+    }
+
+    @Override
+    public boolean isAuthAccName() {
+        return getSettings().isAuthAccName();
+    }
+
+    public boolean isAuthEmailAddress() {
+        return getSettings().isAuthEmailAddress();
+    }
+
+    @Required
+    public void setDomainManager(DomainManager domainManager) {
+        m_domainManager = domainManager;
+    }
+
+    @Override
+    public boolean isSystemAuditEnabled() {
+        return AdminSettings.isSystemAuditEnabled();
     }
 }

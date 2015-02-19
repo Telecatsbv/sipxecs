@@ -17,7 +17,7 @@ const char* gDatabaseName = "test.RegExpireThreadTest";
 typedef struct
 {
   const char* pContact;
-  unsigned int expirationTime;
+  int expirationTimeDelta;
   const char* pQValue;
   const char* pInstanceId;
   const char* pGruu;
@@ -64,12 +64,13 @@ public:
 
   void setUp()
   {
-    _timeNow = OsDateTime::getSecsSinceEpoch();
     _db = new RegDB(_info, NULL, _databaseName);
-    MongoDB::ScopedDbConnectionPtr pConn(mongo::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+    MongoDB::ScopedDbConnectionPtr pConn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
     //mongo::ScopedDbConnection conn(_info.getConnectionString().toString());
     pConn->get()->remove(_databaseName, mongo::Query());
     pConn->done();
+
+    _timeNow = OsDateTime::getSecsSinceEpoch();
   }
 
   void tearDown()
@@ -81,7 +82,7 @@ public:
   void updateRegBindingTestData(RegBinding::Ptr& binding, int index)
   {
     binding->setContact(regBindingTestData[index].pContact);
-    binding->setExpirationTime(_timeNow + regBindingTestData[index].expirationTime);
+    binding->setExpirationTime(_timeNow + regBindingTestData[index].expirationTimeDelta);
     binding->setQvalue(regBindingTestData[index].pQValue);
     binding->setInstanceId(regBindingTestData[index].pInstanceId);
     binding->setGruu(regBindingTestData[index].pGruu);
@@ -126,7 +127,7 @@ public:
   bool getAllOldBindings(int timeNow, RegDB::Bindings& bindings)
   {
     mongo::BSONObj query = BSON(RegBinding::expirationTime_fld() << BSON_LESS_THAN((long long)timeNow));
-    MongoDB::ScopedDbConnectionPtr pConn(mongo::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+    MongoDB::ScopedDbConnectionPtr pConn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
     auto_ptr<mongo::DBClientCursor> pCursor = pConn->get()->query(_databaseName, query);
     if (pCursor.get() && pCursor->more())
     {

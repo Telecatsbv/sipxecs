@@ -4,18 +4,15 @@ event_PKGS = \
 	commons-io \
 	commons-codec \
 	log4j \	
-	org.springframework.beans \
-	org.springframework.context \
-	org.springframework.aop \
-	org.springframework.asm \
-	org.springframework.core \
+	spring-beans \
+	spring-context \
+	spring-aop \
+	spring-core \
 	org.springframework.transaction \
-	org.springframework.expression \
-	org.springframework.web \
-	org.springframework.web.servlet \
+	spring-expression \
+	spring-web \
+	spring-webmvc \
 	mongo \
-	jetty-client \
-	jetty-continuation \
 	jetty-http \
 	jetty-io \
 	jetty-security \
@@ -24,9 +21,8 @@ event_PKGS = \
 	jetty-servlets \
 	jetty-util \
 	jetty-webapp \
-	jetty-websocket \
 	jetty-xml \
-	servlet-api \
+	javax.servlet-api \
 	sipxcommons \
 	spring-security-config \
 	spring-security-core \

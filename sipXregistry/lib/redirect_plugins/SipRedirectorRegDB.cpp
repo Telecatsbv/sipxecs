@@ -81,6 +81,7 @@ SipRedirectorRegDB::lookUp(
    ErrorDescriptor& errorDescriptor)
 {
    unsigned long timeNow = OsDateTime::getSecsSinceEpoch();
+   unsigned long adjustedTime = timeNow - SipRegistrar::getInstance(NULL)->getRegDB()->getExpireGracePeriod();
    
    // Local copy of requestUri
    Url requestUriCopy = requestUri;
@@ -129,13 +130,13 @@ SipRedirectorRegDB::lookUp(
          //   getUnexpiredContactsUserInstrument(requestUriCopy, instrumentp, timeNow, registrations);
          UtlString identity;
          requestUriCopy.getIdentity(identity);
-         regDb->getUnexpiredContactsUserInstrument(identity.str(), instrumentp, timeNow, registrations, true);
+         regDb->getUnexpiredContactsUserInstrument(identity.str(), instrumentp, adjustedTime, registrations);
       }
       else
       {
          // This is a ~~in~[instrument] URI.
          const char* instrumentp = user.data() + sizeof (URI_IN_PREFIX) - 1;
-         regDb->getUnexpiredContactsInstrument(instrumentp, timeNow, registrations, true);
+         regDb->getUnexpiredContactsInstrument(instrumentp, adjustedTime, registrations);
       }         
    }
    else
@@ -146,9 +147,10 @@ SipRedirectorRegDB::lookUp(
       // "identity" column of the database, which is the identity part of
       // the "uri" column which is stored in registration.xml.
 
+     
       UtlString identity;
      requestUriCopy.getIdentity(identity);
-     regDb->getUnexpiredContactsUser(identity.str(), timeNow, registrations, true);
+     regDb->getUnexpiredContactsUser(identity.str(), adjustedTime, registrations);
 
    }
 
@@ -165,10 +167,13 @@ SipRedirectorRegDB::lookUp(
 
    if (method.compareTo(SIP_INVITE_METHOD) == 0)
    {
-      UtlString noRoute;
-      requestUriCopy.getUrlParameter("sipx-noroute", noRoute);
+      UtlString userforwardParam;
+      requestUriCopy.getUrlParameter("sipx-userforward", userforwardParam);
+      
+      UtlString expiresParam;
+      requestUriCopy.getUrlParameter("sipx-expires", expiresParam);
 
-      if ((!noRoute.isNull()) && (noRoute.compareTo("Voicemail") == 0))
+      if ((!userforwardParam.isNull()) && (userforwardParam.compareTo("false", UtlString::ignoreCase) ) == 0)
       {
           // This is not a call scenerio controlled by this users "forward to voicemail" timer
       }
@@ -183,7 +188,16 @@ SipRedirectorRegDB::lookUp(
           if (foundUserCfwdTimer)
             userCfwdTimer << entity.callForwardTime();
       }
+      
+      if (userCfwdTimer.str().empty() && !expiresParam.isNull())
+      {
+        userCfwdTimer << expiresParam.data();
+        foundUserCfwdTimer = true;
+      }
    }
+
+   UtlString callGroupUser;
+   bool hasCallGroupParam = requestUriCopy.getUrlParameter("callgroup", callGroupUser);
 
    for (RegDB::Bindings::const_iterator iter = registrations.begin(); iter != registrations.end(); iter++)
    {
@@ -198,6 +212,11 @@ SipRedirectorRegDB::lookUp(
       if (foundUserCfwdTimer)
       {
           contactUri.setHeaderParameter("expires", userCfwdTimer.str().c_str());
+      }
+
+      if (hasCallGroupParam)
+      {
+        contactUri.setUrlParameter("callgroup", callGroupUser.data());
       }
 
       // If the contact URI is the same as the request URI, ignore it.

@@ -22,23 +22,25 @@ import java.util.Set;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.sipfoundry.sipxconfig.dialplan.config.Transform;
-import org.sipfoundry.sipxconfig.forwarding.Schedule;
 import org.sipfoundry.sipxconfig.cfgmgt.DeployConfigOnEdit;
 import org.sipfoundry.sipxconfig.common.BeanWithId;
 import org.sipfoundry.sipxconfig.common.DataCollectionUtil;
 import org.sipfoundry.sipxconfig.common.NamedObject;
 import org.sipfoundry.sipxconfig.commserver.Location;
+import org.sipfoundry.sipxconfig.dialplan.config.Transform;
 import org.sipfoundry.sipxconfig.feature.Feature;
+import org.sipfoundry.sipxconfig.forwarding.Schedule;
 import org.sipfoundry.sipxconfig.gateway.Gateway;
 import org.sipfoundry.sipxconfig.permission.Permission;
 import org.sipfoundry.sipxconfig.permission.PermissionManager;
 import org.sipfoundry.sipxconfig.permission.PermissionName;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
 /**
  * DialingRule At some point it will be replaced by the IDialingRule interface or made abstract.
  */
-public abstract class DialingRule extends BeanWithId implements NamedObject, IDialingRule, DeployConfigOnEdit {
+public abstract class DialingRule extends BeanWithId implements NamedObject,
+        IDialingRule, DeployConfigOnEdit, SystemAuditable {
     public static final String VALID_TIME_PARAM = "sipx-ValidTime=%s";
     public static final String GATEWAY_EXPIRES_PATTERN = "expires=%s";
     public static final String GATEWAY_EXPIRES_VALUE = "7200";
@@ -321,5 +323,14 @@ public abstract class DialingRule extends BeanWithId implements NamedObject, IDi
 
     public Collection<Feature> getAffectedFeaturesOnChange() {
         return Collections.singleton((Feature) DialPlanContext.FEATURE);
+    }
+
+    public String getEntityIdentifier() {
+        return getName();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return DialingRule.class.getSimpleName();
     }
 }

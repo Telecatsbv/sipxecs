@@ -33,6 +33,7 @@ import org.sipfoundry.sipxconfig.common.SipxHibernateDaoSupport;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.common.event.DaoEventListener;
+import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.domain.DomainManager;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -60,17 +61,19 @@ public class ConferenceBridgeContextImpl extends SipxHibernateDaoSupport impleme
     }
 
     public void saveBridge(Bridge bridge) {
-        getHibernateTemplate().saveOrUpdate(bridge);
         if (bridge.isNew()) {
+            getHibernateTemplate().save(bridge);
             // need to make sure that ID is set
             getHibernateTemplate().flush();
+        } else {
+            getHibernateTemplate().merge(bridge);
         }
     }
 
     public void saveConference(Conference conference) {
         validate(conference);
         if (conference.isNew()) {
-            getHibernateTemplate().saveOrUpdate(conference);
+            getHibernateTemplate().save(conference);
         } else {
             getHibernateTemplate().merge(conference);
         }
@@ -95,8 +98,8 @@ public class ConferenceBridgeContextImpl extends SipxHibernateDaoSupport impleme
             throw new UserException("&error.non.qs.no.mod");
         }
 
-        if (!conference.isQuickstart() && StringUtils.equals(conference.getModeratorAccessCode(),
-                conference.getParticipantAccessCode())) {
+        if (!conference.isQuickstart()
+                && StringUtils.equals(conference.getModeratorAccessCode(), conference.getParticipantAccessCode())) {
             throw new UserException("&error.moderator.eq.participant");
         }
 
@@ -115,11 +118,11 @@ public class ConferenceBridgeContextImpl extends SipxHibernateDaoSupport impleme
     }
 
     public Bridge newBridge() {
-        return (Bridge) m_beanFactory.getBean(Bridge.BEAN_NAME, Bridge.class);
+        return m_beanFactory.getBean(Bridge.BEAN_NAME, Bridge.class);
     }
 
     public Conference newConference() {
-        Conference conference = (Conference) m_beanFactory.getBean(Conference.BEAN_NAME, Conference.class);
+        Conference conference = m_beanFactory.getBean(Conference.BEAN_NAME, Conference.class);
         conference.generateAccessCodes();
         return conference;
     }
@@ -147,7 +150,7 @@ public class ConferenceBridgeContextImpl extends SipxHibernateDaoSupport impleme
     }
 
     public Bridge loadBridge(Serializable id) {
-        return (Bridge) getHibernateTemplate().load(Bridge.class, id);
+        return getHibernateTemplate().load(Bridge.class, id);
     }
 
     public Bridge getBridgeByServer(String hostname) {
@@ -174,13 +177,13 @@ public class ConferenceBridgeContextImpl extends SipxHibernateDaoSupport impleme
     }
 
     public Conference loadConference(Serializable id) {
-        return (Conference) getHibernateTemplate().load(Conference.class, id);
+        return getHibernateTemplate().load(Conference.class, id);
     }
 
     public Conference findConferenceByName(String name) {
         List<Conference> conferences = getHibernateTemplate().findByNamedQueryAndNamedParam(CONFERENCE_BY_NAME,
                 VALUE, name);
-        return (Conference) DataAccessUtils.singleResult(conferences);
+        return DataAccessUtils.singleResult(conferences);
     }
 
     public void clear() {
@@ -268,7 +271,7 @@ public class ConferenceBridgeContextImpl extends SipxHibernateDaoSupport impleme
             }
         };
         List list = getHibernateTemplate().executeFind(callback);
-        Integer count = (Integer) list.get(0);
+        Long count = (Long) list.get(0);
         return count.intValue();
     }
 
@@ -300,7 +303,7 @@ public class ConferenceBridgeContextImpl extends SipxHibernateDaoSupport impleme
         List<Bridge> servers = hibernate.findByNamedQueryAndNamedParam("bridgeForLocationId", "locationId",
                 locationId);
 
-        return (Bridge) DataAccessUtils.singleResult(servers);
+        return DataAccessUtils.singleResult(servers);
     }
 
     @Required
@@ -318,6 +321,13 @@ public class ConferenceBridgeContextImpl extends SipxHibernateDaoSupport impleme
         if (entity instanceof User) {
             User u = (User) entity;
             removeConferences(findConferencesByOwner(u));
+        }
+        if (entity instanceof Location) {
+            Location l = (Location) entity;
+            Bridge b = getBridgeForLocationId(l.getId());
+            if (b != null) {
+                removeBridge(b);
+            }
         }
     }
 

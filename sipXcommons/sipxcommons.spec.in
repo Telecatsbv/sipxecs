@@ -13,7 +13,7 @@ Url: http://www.sipfoundry.org/sipXcommons
 %if %{_vendor} == suse
 BuildRequires: java-1_6_0-sun-devel
 %else
-BuildRequires: java-devel >= 1.6
+BuildRequires: java-1.7.0-openjdk-devel
 %endif
 BuildRequires: automake
 %if %{_vendor} == redhat
@@ -40,7 +40,7 @@ Requires: shadow-utils
 Requires: java-ibm >= 1.6
 Requires: java-ibm-unrestricted
 %else
-Requires: java >= 1.6
+Requires: java-1.7.0-openjdk
 %endif
 
 %if %{_vendor} == suse
@@ -95,6 +95,12 @@ fi
 %{_datadir}/sipxecs/schema/spring-beans-2.0.xsd
 %{_datadir}/sipxecs/schema/spring-util-2.0.xsd
 %{_datadir}/sipxecs/schema/spring-security-3.1.xsd
+%{_datadir}/sipxecs/schema/spring-task-3.1.xsd
+%{_datadir}/sipxecs/schema/jaxrs.xsd
+%{_datadir}/sipxecs/schema/spring-context.xsd
+%{_datadir}/sipxecs/schema/spring-mvc.xsd
+%{_datadir}/sipxecs/schema/spring-websocket-4.0.xsd
+%{_datadir}/sipxecs/schema/core.xsd
 %{_datadir}/sipxecs/schema/spring-all.xsd
 
 %changelog

@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2011 eZuce, Inc. All rights reserved.
  * Contributed to SIPfoundry under a Contributor Agreement
@@ -19,10 +18,19 @@
 
 #include <queue>
 #include <vector>
+#include <os/OsTime.h>
+#include <boost/circular_buffer.hpp>
+#include <boost/thread.hpp>
 
 // Avoids this error
 //   /usr/include/mongo/client/../pch.h:116:15: error: expected unqualified-id before string constant
 #undef VERSION
+
+// Avoids this error
+//.../usr/include/mongo/util/net/sock.h:62:15: error: expected unqualified-id before '-' token
+#ifdef INVALID_SOCKET
+#undef INVALID_SOCKET
+#endif
 
 #include <mongo/client/dbclient.h>
 
@@ -36,7 +44,6 @@
 #include <boost/shared_array.hpp>
 #include <exception>
 #include <boost/function.hpp>
-#include "sipdb/CustomConnPool.h"
 
 
 // is assert is undefined, just include it again
@@ -55,12 +62,10 @@
 
 typedef boost::error_info<struct tag_errmsg, std::string> errmsg_info;
 
-using namespace mongoMod;
-
 namespace MongoDB
 {
    //typedef boost::scoped_ptr<mongo::ScopedDbConnection> ScopedDbConnectionPtr;
-   typedef boost::scoped_ptr<mongoMod::ScopedDbConnection> ScopedDbConnectionPtr;
+   typedef boost::scoped_ptr<mongo::ScopedDbConnection> ScopedDbConnectionPtr;
 
 class ConfigError: public boost::exception, public std::exception {
 public:
@@ -71,30 +76,21 @@ public:
 class ConnectionInfo
 {
 public:
-	ConnectionInfo(const ConnectionInfo& rhs) :
-                 _connectionString(rhs._connectionString), _shard(rhs._shard), _useReadTags(rhs._useReadTags)
-	{
-	}
-	;
-
-	ConnectionInfo(const mongo::ConnectionString& connectionString) :
-		 _connectionString(connectionString), _shard(0), _useReadTags(false)
-	{
-	}
-	;
-
-	ConnectionInfo(const mongo::ConnectionString& connectionString, const int shard) :
-		 _connectionString(connectionString), _shard(shard), _useReadTags(false)
-	{
-	}
-	;
+  ConnectionInfo();
+  
+	ConnectionInfo(const ConnectionInfo& rhs);
+  
+  ConnectionInfo(const mongo::ConnectionString& connectionString);
 
 	ConnectionInfo(std::ifstream& configFile);
 
-	virtual ~ConnectionInfo()
+	~ConnectionInfo()
 	{
 	}
-	;
+	
+  ConnectionInfo& operator=(const ConnectionInfo& conn);
+  
+
 
 	/**
 	 * Read just the connection string from a file.
@@ -112,8 +108,8 @@ public:
 	 * sipxecs/localhost:27017,localhost:27018
 	 * ======================
 	 */
-	static const ConnectionInfo globalInfo();
-	static const ConnectionInfo localInfo();
+	static ConnectionInfo globalInfo();
+	static ConnectionInfo localInfo();
 
 	static bool	testConnection(const mongo::ConnectionString &connectionString, std::string& errmsg);
 
@@ -145,21 +141,53 @@ public:
 		return !_connectionString.isValid();
 	}
 	;
+  
+  const std::string& getClusterId() const
+  {
+    return _clusterId;
+  }
+
+  const unsigned int getReadQueryTimeoutMs() const
+  {
+    return _readQueryTimeoutMs;
+  }
+
+  const unsigned int getWriteQueryTimeoutMs() const
+  {
+    return _writeQueryTimeoutMs;
+  }
+
+  const double getReadQueryTimeout() const
+  {
+    double readQueryTimeout = _readQueryTimeoutMs;
+    return readQueryTimeout/1000;
+  }
+
+  const double getWriteQueryTimeout() const
+  {
+    double writeQueryTimeout = _writeQueryTimeoutMs;
+    return writeQueryTimeout/1000;
+  }
+
 
 private:
 
- ConnectionInfo() : _connectionString(), _shard(0), _useReadTags(false) {
-	}
-
-	mongo::ConnectionString _connectionString;
-	int _shard;
-        bool _useReadTags; 
+  mongo::ConnectionString _connectionString;
+  int _shard;
+  bool _useReadTags; 
+  std::string _clusterId;
+  unsigned int _readQueryTimeoutMs;
+  unsigned int _writeQueryTimeoutMs;
+  std::string _rawConnectionString;
 };
+
+class UpdateTimer;
+class ReadTimer;
 
 class BaseDB
 {
 public:
-	BaseDB(const ConnectionInfo& info);
+	BaseDB(const ConnectionInfo& info, const std::string& ns);
 
 	virtual ~BaseDB()
 	{
@@ -197,13 +225,65 @@ public:
 	const int getShardId() const { return _info.getShardId(); };
 
 	const bool useReadTags() const { return _info.useReadTags(); };
+  
+  const std::string& getClusterId() const { return _info.getClusterId(); }
+
+  void registerTimer(const UpdateTimer* pTimer);
+  
+  void registerTimer(const ReadTimer* pTimer);
+  
+  Int64 getUpdateAverageSpeed() const;
+  
+  Int64 getLastUpdateSpeed() const;
+  
+  Int64 getReadAverageSpeed() const;
+  
+  Int64 getLastReadSpeed() const;
+  
+  const double getReadQueryTimeout() const { double readQueryTimeout = _info.getReadQueryTimeoutMs(); return readQueryTimeout/1000; }
+
+  const double getWriteQueryTimeout() const { double writeQueryTimeout = _info.getWriteQueryTimeoutMs(); return writeQueryTimeout/1000; }
 
 protected:
+  std::string _ns;
 	mutable ConnectionInfo _info;
+  boost::circular_buffer<Int64> _updateTimerSamples;
+  boost::circular_buffer<Int64> _readTimerSamples;
+  mutable boost::mutex _updateTimerSamplesMutex; 
+  mutable boost::mutex _readTimerSamplesMutex; 
+  Int64 _lastReadSpeed;
+  Int64 _lastUpdateSpeed;
+  long _lastAlarmLog;
 };
 
-}
-;
+class UpdateTimer
+{
+public:
+  UpdateTimer(BaseDB& db);
+  ~UpdateTimer();
+  
+protected:
+  Int64 _start;
+  Int64 _end;
+  BaseDB& _db;
+  friend class BaseDB;
+};
+
+class ReadTimer
+{
+public:
+  ReadTimer(BaseDB& db);
+  ~ReadTimer();
+  
+protected:
+  Int64 _start;
+  Int64 _end;
+  BaseDB& _db;
+  friend class BaseDB;  
+};
+
+
+} // namespace MongoDB
 
 #endif	/* MONGODB_H */
 

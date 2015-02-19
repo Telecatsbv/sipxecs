@@ -21,6 +21,7 @@ import static org.sipfoundry.commons.mongo.MongoConstants.CONF_PIN;
 import static org.sipfoundry.commons.mongo.MongoConstants.CONF_PUBLIC;
 import static org.sipfoundry.commons.mongo.MongoConstants.CONF_URI;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -42,14 +43,17 @@ import org.sipfoundry.sipxconfig.commserver.imdb.AliasMapping;
 import org.sipfoundry.sipxconfig.commserver.imdb.DataSet;
 import org.sipfoundry.sipxconfig.feature.Feature;
 import org.sipfoundry.sipxconfig.freeswitch.FreeswitchFeature;
+import org.sipfoundry.sipxconfig.localization.LocalizationContext;
+import org.sipfoundry.sipxconfig.localization.LocalizationContextImpl;
 import org.sipfoundry.sipxconfig.setting.BeanWithSettings;
 import org.sipfoundry.sipxconfig.setting.ProfileNameHandler;
 import org.sipfoundry.sipxconfig.setting.Setting;
 import org.sipfoundry.sipxconfig.setting.SettingEntry;
 import org.sipfoundry.sipxconfig.setting.SettingValue;
 import org.sipfoundry.sipxconfig.setting.SettingValueImpl;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
-public class Conference extends BeanWithSettings implements Replicable, DeployConfigOnEdit {
+public class Conference extends BeanWithSettings implements Replicable, DeployConfigOnEdit, SystemAuditable {
     public static final String BEAN_NAME = "conferenceConference";
 
     /**
@@ -61,6 +65,7 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
     // settings names
     public static final String ORGANIZER_CODE = "fs-conf-conference/organizer-code";
     public static final String PARTICIPANT_CODE = "fs-conf-conference/participant-code";
+    public static final String LANGUAGE = "conference/language";
     public static final String REMOTE_ADMIT_SECRET = "fs-conf-conference/remote-admin-secret";
     public static final String AUTO_RECORDING = "fs-conf-conference/autorecord";
     public static final String AOR_RECORD = "fs-conf-conference/AOR";
@@ -72,12 +77,14 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
     public static final String TERMINATE_ON_MODERATOR_EXIT = "fs-conf-conference/terminate-on-moderator-exit";
     public static final String QUICKSTART = "fs-conf-conference/quickstart";
     public static final String VIDEO = "fs-conf-conference/video";
+    public static final String VIDEO_TOGGLE_FLOOR = "fs-conf-conference/video-toogle-floor";
+    public static final String MODERATED_ROOM = "chat-meeting/moderated";
+    public static final String PUBLIC_ROOM = "chat-meeting/public";
 
     private static final String ALIAS_RELATION = "conference";
     private boolean m_enabled;
     private String m_name;
     private String m_description;
-    private String m_identity;
     private String m_extension;
     private String m_did;
     private Bridge m_bridge;
@@ -86,6 +93,23 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
     private String m_remoteSecretAgent;
     private String m_participantCode;
     private AddressManager m_addressManager;
+    private final boolean m_aloneSound = true;
+
+    private String m_audioDirectory;
+    private LocalizationContext m_localizationContext;
+    private String m_promptsDir;
+
+    public void setLocalizationContext(LocalizationContext localizationContext) {
+        m_localizationContext = localizationContext;
+    }
+
+    public void setPromptsDir(String promptsDir) {
+        m_promptsDir = promptsDir;
+    }
+
+    public void setAudioDirectory(String audioDirectory) {
+        m_audioDirectory = audioDirectory;
+    }
 
     @Override
     public void initialize() {
@@ -114,10 +138,12 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
         m_enabled = enabled;
     }
 
+    @Override
     public String getName() {
         return m_name;
     }
 
+    @Override
     public void setName(String name) {
         m_name = name;
     }
@@ -146,7 +172,7 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
         return (Boolean) getSettingTypedValue(AUTO_RECORDING);
     }
 
-    public void setAutorecorded(boolean autorecord) {
+    public void setAutorecorded(Boolean autorecord) {
         setSettingTypedValue(AUTO_RECORDING, autorecord);
     }
 
@@ -166,12 +192,32 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
         return getSettingValue(PARTICIPANT_CODE);
     }
 
+    public void setParticipantAccessCode(String code) {
+        setSettingTypedValue(PARTICIPANT_CODE, code);
+    }
+
     public String getModeratorAccessCode() {
         return getSettingValue(MODERATOR_CODE);
     }
 
+    public void setModeratorAccessCode(String code) {
+        setSettingTypedValue(MODERATOR_CODE, code);
+    }
+
     public boolean isQuickstart() {
         return (Boolean) getSettingTypedValue(QUICKSTART);
+    }
+
+    public void setQuickstart(Boolean quickstart) {
+        setSettingTypedValue(QUICKSTART, quickstart);
+    }
+
+    public String getMohSource() {
+        return (String) getSettingTypedValue(MOH);
+    }
+
+    public void setMohSource(String source) {
+        setSettingTypedValue(MOH, source);
     }
 
     public boolean isMohPortAudioEnabled() {
@@ -182,12 +228,48 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
         return (Boolean) getSettingTypedValue(VIDEO);
     }
 
+    public void setVideoConference(Boolean video) {
+        setSettingTypedValue(VIDEO, video);
+    }
+
+    public boolean isVideoToggleFloor() {
+        return (Boolean) getSettingTypedValue(VIDEO_TOGGLE_FLOOR);
+    }
+
+    public void setVideoToggleFloor(Boolean videoToggleFloor) {
+        setSettingTypedValue(VIDEO_TOGGLE_FLOOR, videoToggleFloor);
+    }
+
     public boolean isMohFilesSrcEnabled() {
         return getSettingValue(MOH).equals(MOH_FILES_SOURCE);
     }
 
+    public boolean isModeratedRoom() {
+        return (Boolean) getSettingTypedValue(MODERATED_ROOM);
+    }
+
+    public void setModeratedRoom(Boolean moderatedRoom) {
+        setSettingTypedValue(MODERATED_ROOM, moderatedRoom);
+    }
+
+    public boolean isPublicRoom() {
+        return (Boolean) getSettingTypedValue(PUBLIC_ROOM);
+    }
+
+    public void setPublicRoom(Boolean publicRoom) {
+        setSettingTypedValue(PUBLIC_ROOM, publicRoom);
+    }
+
     public String getUri() {
         return getSettingValue(AOR_RECORD);
+    }
+
+    public String getLanguage() {
+        return getSettingValue(LANGUAGE);
+    }
+
+    public void setLanguage(String language) {
+        setSettingValue(LANGUAGE, language);
     }
 
     public boolean hasOwner() {
@@ -202,15 +284,21 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
         StringBuilder flags = new StringBuilder();
         flags.append("waste-bandwidth");
         if (isVideoConference()) {
-            flags.append(" | video-bridge");
-        }
-        if ((Boolean) getSettingTypedValue("fs-conf-conference/video-toogle-floor")) {
-            flags.append(" | video-floor-only");
+            flags.append(" | ");
+            flags.append(getVideoFlag());
         }
         if (!(Boolean) getSettingTypedValue(QUICKSTART)) {
             flags.append(" | wait-mod");
         }
         return flags.toString();
+    }
+
+    public String getVideoFlag() {
+        if ((Boolean) getSettingTypedValue(VIDEO_TOGGLE_FLOOR)) {
+            return "video-floor-only";
+        } else {
+            return "video-bridge";
+        }
     }
 
     /**
@@ -270,6 +358,18 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
         return m_remoteSecretAgent;
     }
 
+    public boolean isAloneSound() {
+        return m_aloneSound;
+    }
+
+    public Integer getConfMaxMembers() {
+        return (Integer) getSettingTypedValue(MAX_LEGS);
+    }
+
+    public void setConfMaxMembers(Integer maxMembers) {
+        setSettingTypedValue(MAX_LEGS, maxMembers);
+    }
+
     public static class ConferenceProfileName implements ProfileNameHandler {
         private static final char SEPARATOR = '.';
         private final Conference m_conference;
@@ -278,6 +378,7 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
             m_conference = conference;
         }
 
+        @Override
         public SettingValue getProfileName(Setting setting) {
             String nameToken = SEPARATOR + m_conference.getName();
             String profileName = setting.getProfileName();
@@ -304,7 +405,7 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
      */
     private Collection<AliasMapping> generateAliases(String domainName) {
         if (!isEnabled()) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         Collection<AliasMapping> aliases = new ArrayList<AliasMapping>();
         if (StringUtils.isNotBlank(m_extension) && !m_extension.equals(m_name)) {
@@ -319,11 +420,11 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
             AliasMapping didAlias = new AliasMapping(m_did, identityUri, ALIAS_RELATION);
             aliases.add(didAlias);
         }
-        aliases.add(createFreeSwitchAlias(domainName));
+        aliases.add(createFreeSwitchAlias());
         return aliases;
     }
 
-    private AliasMapping createFreeSwitchAlias(String domainName) {
+    private AliasMapping createFreeSwitchAlias() {
         String freeswitchUri = getUri();
         return new AliasMapping(m_name, freeswitchUri, ALIAS_RELATION);
     }
@@ -372,8 +473,8 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
             props.put(CONF_OWNER, StringUtils.EMPTY);
         }
         props.put(CONF_PIN, getParticipantAccessCode());
-        props.put(CONF_MODERATED, getSettingValue("chat-meeting/moderated"));
-        props.put(CONF_PUBLIC, getSettingValue("chat-meeting/public"));
+        props.put(CONF_MODERATED, getSettingValue(MODERATED_ROOM));
+        props.put(CONF_PUBLIC, getSettingValue(PUBLIC_ROOM));
         props.put(CONF_MEMBERS_ONLY, getSettingValue("chat-meeting/members-only"));
         props.put(CONF_AUTORECORD, isAutorecorded());
         props.put(CONF_URI, getUri());
@@ -392,5 +493,41 @@ public class Conference extends BeanWithSettings implements Replicable, DeployCo
     @Override
     public String getEntityName() {
         return getClass().getSimpleName();
+    }
+
+    /**
+     * Conference entity must be replicated only when m_enabled is set to true
+     */
+    @Override
+    public boolean isReplicationEnabled() {
+        return isEnabled();
+    }
+
+    public String getAudioDirectory() {
+        String languageDir = this.getLanguage();
+        if (languageDir == null || languageDir.isEmpty()) {
+            languageDir = m_localizationContext.getCurrentLanguageDir();
+        } else {
+            languageDir = LocalizationContextImpl.PROMPTS_PREFIX + languageDir;
+        }
+        String path = m_promptsDir + Bridge.SLASH + languageDir;
+        String tmpPath = path + Bridge.SLASH + Bridge.CONFERENCE;
+        File testFile = new File(tmpPath);
+        if (testFile.exists()) {
+            m_audioDirectory = path;
+        } else {
+            m_bridge.getAudioDirectory();
+        }
+        return m_audioDirectory;
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getName();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return Conference.class.getSimpleName();
     }
 }

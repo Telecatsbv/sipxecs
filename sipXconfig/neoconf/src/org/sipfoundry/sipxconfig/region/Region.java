@@ -30,9 +30,10 @@ import org.sipfoundry.sipxconfig.common.BeanWithId;
 import org.sipfoundry.sipxconfig.common.NamedObject;
 import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.feature.Feature;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
 @JsonPropertyOrder(alphabetic = true)
-public class Region extends BeanWithId implements NamedObject, DeployConfigOnEdit {
+public class Region extends BeanWithId implements NamedObject, DeployConfigOnEdit, SystemAuditable {
     public static final Region DEFAULT = new Region("default");
     private String m_name;
     private String[] m_addresses;
@@ -60,11 +61,6 @@ public class Region extends BeanWithId implements NamedObject, DeployConfigOnEdi
         return map;
     }
 
-    @JsonIgnore
-    public String getConfigFriendlyName() {
-        return m_name.replaceAll("\\W+", "_");
-    }
-
     public String getName() {
         return m_name;
     }
@@ -90,5 +86,15 @@ public class Region extends BeanWithId implements NamedObject, DeployConfigOnEdi
 
     public void setAddresses(String[] addresses) {
         m_addresses = addresses;
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getName();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return Region.class.getSimpleName();
     }
 }

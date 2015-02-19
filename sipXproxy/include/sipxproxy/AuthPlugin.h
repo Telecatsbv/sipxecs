@@ -14,6 +14,7 @@
 #include "utl/UtlString.h"
 #include "utl/Plugin.h"
 #include <sipxproxy/RouteState.h>
+#include <net/SipTransaction.h>
 
 // DEFINES
 // CONSTANTS
@@ -186,6 +187,28 @@ class AuthPlugin : public Plugin
    /// Provide a string version of an AuthResult value for logging. 
    static const char* AuthResultStr(AuthResult result);
    
+   /// Boolean indicator that returns true if the plugin wants to process requests
+   /// that requires no authentication
+   virtual bool willModifyTrustedRequest() const;
+   
+   /// This method is called by the proxy if willModifyRequest() flag is set to true
+   /// giving this plugin the opportunity to modify the request even if it requires
+   /// no authentication
+   virtual void modifyTrustedRequest(
+                                    const Url&  requestUri,  ///< parsed target Uri
+                                    SipMessage& request,     ///< see below regarding modifying this
+                                    bool bSpiralingRequest  ///< true if request is still spiraling through pr
+                                    );
+   /// This method is called by the proxy if willModifyResponse is set to true
+   /// giving the plugin to modify responses before they get relayed
+   virtual void modifyFinalResponse(
+     SipTransaction* pTransaction, 
+     const SipMessage& request, 
+     SipMessage& finalResponse);
+   
+   /// Boolean indicator that returns true if the plugin wants to process final responses
+   virtual bool willModifyFinalResponse() const;
+  
   protected:
 
    /// constructor
@@ -207,5 +230,35 @@ class AuthPlugin : public Plugin
 // @endcond INCLUDENOCOPY
 
 };
+
+//
+// Inlines
+//
+
+inline bool AuthPlugin::willModifyTrustedRequest() const
+{
+  return false;
+}
+
+inline void AuthPlugin::modifyTrustedRequest(
+                                    const Url&  requestUri,  ///< parsed target Uri
+                                    SipMessage& request,     ///< see below regarding modifying this
+                                    bool bSpiralingRequest  ///< true if request is still spiraling through pr
+                                    )
+{
+}
+
+inline void AuthPlugin::modifyFinalResponse(
+     SipTransaction* pTransaction, 
+     const SipMessage& request, 
+     SipMessage& finalResponse)
+{
+}
+   
+   /// Boolean indicator that returns true if the plugin wants to process final responses
+inline bool AuthPlugin::willModifyFinalResponse() const
+{
+  return false;
+}
 
 #endif // _AUTHPLUGIN_H_

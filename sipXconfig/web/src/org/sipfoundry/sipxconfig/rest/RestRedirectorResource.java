@@ -20,14 +20,17 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -41,6 +44,7 @@ import org.restlet.resource.InputRepresentation;
 import org.restlet.resource.Representation;
 import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
+import org.sipfoundry.commons.ivr.MimeType;
 import org.sipfoundry.sipxconfig.address.Address;
 import org.sipfoundry.sipxconfig.address.AddressManager;
 import org.sipfoundry.sipxconfig.ivr.Ivr;
@@ -108,7 +112,7 @@ public class RestRedirectorResource extends UserResource {
         String mailboxRelativeUrl = StringUtils.substringAfter(url, MAILBOX);
 
         if (!StringUtils.isEmpty(mailboxRelativeUrl)) {
-            invokeIvrFallback(PUT, MAILBOX + mailboxRelativeUrl);
+            invokeIvrFallback(PUT, MAILBOX + mailboxRelativeUrl, entity);
         }
     }
 
@@ -121,25 +125,38 @@ public class RestRedirectorResource extends UserResource {
         String mediaRelativeUrl = StringUtils.substringAfter(url, MEDIA);
         byte[] result = null;
         if (!StringUtils.isEmpty(cdrRelativeUrl)) {
-            result = m_httpInvoker.invokeGet(m_addressManager.getSingleAddress(RestServer.HTTP_API)
-                    + CDR + cdrRelativeUrl);
+            result = m_httpInvoker.invokeGet(m_addressManager.getSingleAddress(RestServer.HTTP_API) + CDR
+                    + cdrRelativeUrl);
         } else if (!StringUtils.isEmpty(mailboxRelativeUrl)) {
             result = invokeIvrFallback(GET, MAILBOX + mailboxRelativeUrl);
         } else if (!StringUtils.isEmpty(callcontrollerRelativeUrl)) {
-            result = m_httpInvoker.invokeGet(m_addressManager.getSingleAddress(RestServer.HTTP_API)
-                    + CALLCONTROLLER + callcontrollerRelativeUrl);
+            result = m_httpInvoker.invokeGet(m_addressManager.getSingleAddress(RestServer.HTTP_API) + CALLCONTROLLER
+                    + callcontrollerRelativeUrl);
         } else if (!StringUtils.isEmpty(mediaRelativeUrl)) {
             result = invokeIvrFallback(GET, MEDIA + mediaRelativeUrl);
+        } else {
+            throw new ResourceException(Status.CLIENT_ERROR_NOT_FOUND, "No known resource was requested");
         }
-        return new InputRepresentation(new ByteArrayInputStream(result), MediaType.ALL);
+        MediaType mType = MediaType.ALL;
+        for (Variant v : getVariants()) {
+            if (v.getMediaType() != null) {
+                mType = v.getMediaType();
+            }
+        }
+        return new InputRepresentation(new ByteArrayInputStream(result), mType);
     }
 
-    private byte [] invokeIvrFallback(String methodType, String relativeUri) throws ResourceException {
+    private byte[] invokeIvrFallback(String methodType, String relativeUri) throws ResourceException {
+        return invokeIvrFallback(methodType, relativeUri, null);
+    }
+
+    private byte[] invokeIvrFallback(String methodType, String relativeUri, Representation entity)
+            throws ResourceException {
         byte[] result = null;
         Address ivrGoodAddress = m_mailboxManager.getLastGoodIvrNode();
         if (ivrGoodAddress != null) {
             try {
-                result = invokeMethod(ivrGoodAddress, methodType, relativeUri);
+                result = invokeMethod(ivrGoodAddress, methodType, relativeUri, entity);
                 return result;
             } catch (ResourceException ex) {
                 // do not throw exception as we want to iterate through all ivr nodes
@@ -152,7 +169,7 @@ public class RestRedirectorResource extends UserResource {
                 if (ivrGoodAddress != null && address.equals(ivrGoodAddress)) {
                     continue;
                 }
-                result = invokeMethod(address, methodType, relativeUri);
+                result = invokeMethod(address, methodType, relativeUri, entity);
                 m_mailboxManager.setLastGoodIvrNode(address);
                 return result;
             } catch (ResourceException ex) {
@@ -163,14 +180,23 @@ public class RestRedirectorResource extends UserResource {
         throw new ResourceException(Status.CONNECTOR_ERROR_COMMUNICATION, "No IVR node is running");
     }
 
-    private byte[] invokeMethod(Address address, String methodType, String relativeUri) throws ResourceException {
+    private byte[] invokeMethod(Address address, String methodType, String relativeUri, Representation entity)
+            throws ResourceException {
         if (StringUtils.equals(methodType, GET)) {
             return m_httpInvoker.invokeGet(address.toString() + relativeUri);
         } else if (StringUtils.equals(methodType, POST)) {
             m_httpInvoker.invokePost(address.toString() + relativeUri);
             return null;
         } else if (StringUtils.equals(methodType, PUT)) {
-            m_httpInvoker.invokePut(address.toString() + relativeUri);
+            String payload = null;
+            if (entity != null) {
+                try {
+                    payload = IOUtils.toString(entity.getReader());
+                } catch (Exception ex) {
+                    payload = null;
+                }
+            }
+            m_httpInvoker.invokePut(address.toString() + relativeUri, payload);
             return null;
         } else if (StringUtils.equals(methodType, DELETE)) {
             m_httpInvoker.invokeDelete(address.toString() + relativeUri);
@@ -191,8 +217,11 @@ public class RestRedirectorResource extends UserResource {
 
     public interface HttpInvoker {
         public byte[] invokeGet(String address) throws ResourceException;
-        public void invokePut(String address) throws ResourceException;
+
+        public void invokePut(String address, String payload) throws ResourceException;
+
         public void invokePost(String address) throws ResourceException;
+
         public void invokeDelete(String address) throws ResourceException;
     }
 
@@ -205,8 +234,11 @@ public class RestRedirectorResource extends UserResource {
         }
 
         @Override
-        public void invokePut(String address) throws ResourceException {
-            HttpMethodBase method = new PutMethod(address.toString());
+        public void invokePut(String address, String payload) throws ResourceException {
+            PutMethod method = new PutMethod(address.toString());
+            if (payload != null) {
+                method.setRequestEntity(new StringRequestEntity(payload));
+            }
             invokeRestService(method);
         }
 
@@ -231,6 +263,17 @@ public class RestRedirectorResource extends UserResource {
                 method.setRequestHeader("sipx-user", getUser().getUserName());
                 int status = client.executeMethod(method);
                 stream = method.getResponseBodyAsStream();
+                Header[] headers = method.getResponseHeaders();
+                for (Header header : headers) {
+                    if (StringUtils.equalsIgnoreCase(header.getName(),"Content-Type")) {
+                        MediaType m = MimeType.getMediaTypeByMime(header.getValue());
+                        if (m != null) {
+                            Variant variant = new Variant(m);
+                            getVariants().clear();
+                            getVariants().add(variant);
+                        }
+                    }
+                }
                 outputStream = new ByteArrayOutputStream();
                 int n;
                 byte[] buffer = new byte[1024];

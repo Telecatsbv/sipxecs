@@ -10,6 +10,8 @@
 
 #include <boost/format.hpp>
 
+#include "MongoDbVerifier.h"
+
 
 using namespace std;
 
@@ -78,7 +80,7 @@ SubscriptionTestData subscriptionTestData[] =
       1067,
       1067,
       20,
-      1
+      2
   }
 };
 
@@ -92,6 +94,7 @@ class SubscribeExpireThreadTest: public CppUnit::TestCase
   const MongoDB::ConnectionInfo _info;
   int _timeNow;
   const std::string _databaseName;
+  int MAX_SECONDS_TO_WAIT;
 public:
   SubscribeExpireThreadTest() : _info(MongoDB::ConnectionInfo(mongo::ConnectionString(mongo::HostAndPort(gLocalHostAddr)))),
                                 _databaseName(gDatabaseName)
@@ -100,12 +103,18 @@ public:
 
   void setUp()
   {
-    _timeNow = (int) OsDateTime::getSecsSinceEpoch();
+    MAX_SECONDS_TO_WAIT = 10;
 
     _db = new SubscribeDB(_info, NULL, _databaseName);
-    MongoDB::ScopedDbConnectionPtr pConn(mongo::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
+    MongoDB::ScopedDbConnectionPtr pConn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
     pConn->get()->remove(_databaseName, mongo::Query());
+
+    MongoDbVerifier _mongoDbVerifier(pConn, _databaseName, MAX_SECONDS_TO_WAIT * 1000);
+    _mongoDbVerifier.waitUntilEmpty();
+
     pConn->done();
+
+    _timeNow = (int) OsDateTime::getSecsSinceEpoch();
   }
 
   void tearDown()
@@ -148,11 +157,19 @@ public:
   {
     upsertSubscriptionTestData(0);
 
-    // create a new Subscription entry that will expire in 1 second
+    // create a new Subscription entry that will expire in 2 seconds
     upsertSubscriptionTestData(1);
 
     SubscribeDB::Subscriptions subscriptions;
-    _db->getAll(subscriptions);
+
+    int seconds = 0;
+    while (subscriptions.size() < 2 && seconds < MAX_SECONDS_TO_WAIT)
+    {
+      subscriptions.clear();
+      _db->getAll(subscriptions);
+      sleep(1);
+      seconds++;
+    }
 
     // TEST: Check that the number of entries in test.RegExpireThreadTest database is two
     CPPUNIT_ASSERT(subscriptions.size() == 2);
@@ -162,12 +179,15 @@ public:
     // start subscribe Expire thread that will run every two second and will remove all expired records
     subscribeExpireThread.run(_db, 2);
 
-    // wait 3 seconds to be sure that the thread removed all expired records
-    sleep(3);
-
-    //_db->removeExpired("component_1", _timeNow + 1802);
-    subscriptions.clear();
-    _db->getAll(subscriptions);
+    // wait until 10 seconds to be sure that the thread removed all expired records
+    seconds = 0;
+    while (subscriptions.size() != 1  && seconds < MAX_SECONDS_TO_WAIT)
+    {
+      subscriptions.clear();
+      _db->getAll(subscriptions);
+      sleep(1);
+      seconds++;
+    }
 
     // TEST: Check that the number of entries in test.RegExpireThreadTest database is one
     CPPUNIT_ASSERT(subscriptions.size() == 1);

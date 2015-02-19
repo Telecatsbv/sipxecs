@@ -24,7 +24,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 public class UserTestIntegration extends ImdbTestCase {
     private CoreContext m_coreContext;
     private SettingDao m_settingDao;
-    private Integer userId = new Integer(1000);
+    private final Integer userId = new Integer(1000);
     private ValidUsers m_validUsers;
 
     @Override
@@ -92,7 +92,7 @@ public class UserTestIntegration extends ImdbTestCase {
         User user = m_coreContext.loadUser(id);
         user.setAliasesString("bongo, kuku");
         m_coreContext.saveUser(user);
-
+        flush();
         assertEquals(2, getConnection().getRowCount("user_alias", "where user_id = 1000"));
     }
 
@@ -165,7 +165,7 @@ public class UserTestIntegration extends ImdbTestCase {
         user.addSupervisorForGroup(group);
 
         m_coreContext.saveUser(user);
-
+        flush();
         assertEquals(1, db().queryForLong("select count(*) from supervisor where user_id = 1001"));
     }
 
@@ -259,12 +259,12 @@ public class UserTestIntegration extends ImdbTestCase {
 
         Long now = System.currentTimeMillis();
         assertTrue(m_validUsers.getUsersUpdatedAfter(now).isEmpty());
-
         m_coreContext.saveUser(u1);
         assertTrue(!m_validUsers.getUsersUpdatedAfter(now).isEmpty());
 
     }
 
+    @Override
     public void setCoreContext(CoreContext coreContext) {
         m_coreContext = coreContext;
     }

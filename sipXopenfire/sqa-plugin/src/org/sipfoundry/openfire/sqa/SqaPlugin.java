@@ -24,6 +24,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,6 +35,7 @@ import javax.xml.bind.JAXBException;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
+import org.jivesoftware.util.JiveProperties;
 import org.sipfoundry.commons.util.UnfortunateLackOfSpringSupportFactory;
 import org.sipfoundry.sqaclient.SQAEvent;
 import org.sipfoundry.sqaclient.SQAWatcher;
@@ -42,49 +44,56 @@ import org.slf4j.LoggerFactory;
 
 public class SqaPlugin implements Plugin {
     Map<String, SipPresenceBean> m_presenceCache = new HashMap<String, SipPresenceBean>();
+    Map<String, List<String>> m_callMap = new HashMap<String, List<String>>();
 
     private static final String INITALIZATION_EXCEPTION = "SqaPlugin initialization exception";
     private static final Logger logger = LoggerFactory.getLogger(SqaPlugin.class);
     @Override
     public void initializePlugin(PluginManager manager, File pluginDirectory) {
-        try {
-            String configurationPath = System.getProperty("conf.dir");
-            String libPath = System.getProperty("lib.dir");
-            String presence = System.getProperty("openfire.presence");
-            if (isBlank(configurationPath) || isBlank(libPath) || isBlank(presence)) {
-                System.getProperties().load(new FileInputStream(new File("/tmp/sipx.properties")));
-                configurationPath = System.getProperty("conf.dir", "/etc/sipxpbx");
-                libPath = System.getProperty("lib.dir", "/lib");
-                presence = System.getProperty("openfire.presence", "true");
+        String configNode = System.getProperty("confignode", "true");
+        boolean isConfigNode = Boolean.parseBoolean(configNode);
+        if (!isConfigNode) {
+            logger.warn("SqaPlugin: not a config node, sqa thread won't be started");
+        } else {
+            logger.warn("SqaPlugin: config node, initialize sqa plugin");
+            try {
+                String configurationPath = System.getProperty("conf.dir");
+                String libPath = System.getProperty("lib.dir");
+                String presence = JiveProperties.getInstance().getProperty("openfire.presence", "true");
+                if (isBlank(configurationPath) || isBlank(libPath) || isBlank(presence)) {
+                    System.getProperties().load(new FileInputStream(new File("/tmp/sipx.properties")));
+                    configurationPath = System.getProperty("conf.dir", "/etc/sipxpbx");
+                    libPath = System.getProperty("lib.dir", "/lib");
+                }
+
+                UnfortunateLackOfSpringSupportFactory.initialize();
+
+                if (Boolean.valueOf(presence)) {
+                    System.load(libPath + "/libsqaclient.so");
+                    SQAWatcher watcher = new SQAWatcher("openfire", "sswdata", 1, 100, 100);
+                    logger.info("Connected: " + watcher.isConnected());
+
+                    JAXBContext context = JAXBContext.newInstance(DialogInfo.class);
+
+                    new SqaSubscriberThread(watcher, context, m_presenceCache, m_callMap).start();
+
+                    PresenceEventDispatcher.addListener(new PresenceEventListenerImpl(m_presenceCache));
+
+                    logger.info("SQA subscriber started...");
+                } else {
+                    logger.info("XMPP presence not enabled");
+                }
+            } catch (SecurityException e) {
+                logger.error(INITALIZATION_EXCEPTION, e);
+            } catch (IllegalArgumentException e) {
+                logger.error(INITALIZATION_EXCEPTION, e);
+            } catch (FileNotFoundException e) {
+                logger.error(INITALIZATION_EXCEPTION, e);
+            } catch (IOException e) {
+                logger.error(INITALIZATION_EXCEPTION, e);
+            } catch (JAXBException e) {
+                logger.error(INITALIZATION_EXCEPTION, e);
             }
-
-            UnfortunateLackOfSpringSupportFactory.initialize();
-
-            if (Boolean.valueOf(presence)) {
-                System.load(libPath + "/libsqaclient.so");
-                SQAWatcher watcher = new SQAWatcher("openfire", "sswdata", 1, 100, 100);
-                logger.info("Connected: " + watcher.isConnected());
-
-                JAXBContext context = JAXBContext.newInstance(DialogInfo.class);
-
-                new SqaSubscriberThread(watcher, context, m_presenceCache).start();
-
-                PresenceEventDispatcher.addListener(new PresenceEventListenerImpl(m_presenceCache));
-
-                logger.info("SQA subscriber started...");
-            } else {
-                logger.info("XMPP presence not enabled");
-            }
-        } catch (SecurityException e) {
-            logger.error(INITALIZATION_EXCEPTION, e);
-        } catch (IllegalArgumentException e) {
-            logger.error(INITALIZATION_EXCEPTION, e);
-        } catch (FileNotFoundException e) {
-            logger.error(INITALIZATION_EXCEPTION, e);
-        } catch (IOException e) {
-            logger.error(INITALIZATION_EXCEPTION, e);
-        } catch (JAXBException e) {
-            logger.error(INITALIZATION_EXCEPTION, e);
         }
     }
 
@@ -97,11 +106,13 @@ public class SqaPlugin implements Plugin {
         SQAWatcher m_watcher;
         JAXBContext m_context;
         Map<String, SipPresenceBean> m_presenceCache = null;
+        Map<String, List<String>> m_callMap;
 
-        public SqaSubscriberThread(SQAWatcher watcher, JAXBContext context, Map<String, SipPresenceBean> presenceCache) {
+        public SqaSubscriberThread(SQAWatcher watcher, JAXBContext context, Map<String, SipPresenceBean> presenceCache, Map<String, List<String>> callMap) {
             m_watcher = watcher;
             m_context = context;
             m_presenceCache = presenceCache;
+            m_callMap = callMap;
         }
         @Override
         public void run() {
@@ -110,7 +121,7 @@ public class SqaPlugin implements Plugin {
             while (true) {
                 SQAEvent event = m_watcher.watch();
                 logger.debug("Execute event handler "+event.getId());
-                executor.execute(new SqaEventHandler(event, m_context, m_presenceCache));
+                executor.execute(new SqaEventHandler(event, m_context, m_presenceCache, m_callMap));
             }
         }
     }

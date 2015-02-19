@@ -3,14 +3,14 @@ cmcprov_PKGS = \
 	commons-lang \
 	commons-io \
 	commons-logging \
-	javax.servlet \
+	javax.servlet-api \
 	commons-collections \
 	spring-security-config \
 	spring-security-core \
-	org.springframework.beans \
-	org.springframework.web \
-	org.springframework.context \
-	org.springframework.core \
+	spring-beans \
+	spring-web \
+	spring-context \
+	spring-core \
 	sipxcommons \
 	sipxconfig-neoconf \
 	velocity \

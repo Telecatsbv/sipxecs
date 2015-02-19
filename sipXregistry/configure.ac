@@ -1,5 +1,5 @@
 AC_PREREQ(2.57)
-AC_INIT(sipXregistry, 4.6.0, sipx-dev@list.sipfoundry.org)
+AC_INIT(sipXregistry, 15.04, sipx-dev@list.sipfoundry.org)
 AC_CONFIG_AUX_DIR(config)
 m4_include([config/general.m4])
 m4_include([config/sipXlib.m4])
@@ -21,8 +21,8 @@ SFAC_FEATURE_SIP_TLS
 CHECK_GIPSNEQ
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([src/Makefile])
-AC_CONFIG_FILES([src/test/Makefile])
 AC_CONFIG_FILES([src/sipXregTool/Makefile])
+AC_CONFIG_FILES([src/test/Makefile])
 AC_CONFIG_FILES([bin/Makefile])
 AC_CONFIG_FILES([meta/Makefile])
 AC_CONFIG_FILES([etc/Makefile])

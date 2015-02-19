@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" 
-	"http://www.springframework.org/dtd/spring-beans.dtd" 
+	"classpath:org/sipfoundry/sipxconfig/site/spring-beans.dtd" 
 [
   <!-- Regexp fragments that are not atoms should be in (...), so that
        modifiers ('?', '{...}', etc.) can be applied to them directly. -->
@@ -193,6 +193,15 @@
     <property name="pattern" value="[A-Za-z0-9-_]{1,255}"/>
     <property name="message">
       <value>Spaces and some special characters are not allowed</value>
+    </property>
+  </bean>
+
+  <bean name="maxOneDecimalValue" class="org.apache.tapestry.form.validator.Pattern">
+    <property name="pattern">
+      <value>\d{1,10}(\.\d{1})?</value>
+    </property>
+    <property name="message">
+      <value>Please enter a positive number having up to 1 decimal digit. For example: 1, 0.7, 1.1, 16.8, but not 2.34</value>
     </property>
   </bean>
 

@@ -73,9 +73,7 @@ public class OpenfireConfigurationFile {
     private static void writePropertyConfig(Writer w, OpenfireSettings settings,
             SortedMap<String, Object> map) throws IOException {
         KeyValueConfiguration config = KeyValueConfiguration.equalsSeparated(w);
-
         config.writeSettings(settings.getOfProperty());
-
         for (Map.Entry<String, Object> property : map.entrySet()) {
             config.write(property.getKey(), property.getValue());
         }
@@ -137,6 +135,8 @@ public class OpenfireConfigurationFile {
         }
         props.put("locale", m_localizationContext.getCurrentLanguage());
         props.put("log.debug.enabled", false);
+        props.put("enable.presence", settings.isPresenceEnabled());
+
 
         addBoshProps(props, settings);
 
@@ -150,13 +150,18 @@ public class OpenfireConfigurationFile {
      * LDAP-Openfire configured different other users can be added with admin rights.
      */
     protected String getAuthorizedUsernames() {
+        String domainName = m_coreContext.getDomainName();
         List<User> admins = m_coreContext.loadUserByAdmin();
         Set<String> authorizedList = new TreeSet<String>();
-        authorizedList.add(AbstractUser.SUPERADMIN);
+        authorizedList.add(getUserWithDomain(AbstractUser.SUPERADMIN, domainName));
         for (User user : admins) {
-            authorizedList.add(user.getUserName());
+            authorizedList.add(getUserWithDomain(user.getUserName(), domainName));
         }
         return StringUtils.join(authorizedList, SEPARATOR);
+    }
+
+    private String getUserWithDomain(String user, String domainName) {
+        return user + "@" + domainName;
     }
 
     private static void addBoshProps(Map<String, Object> props, OpenfireSettings settings) {

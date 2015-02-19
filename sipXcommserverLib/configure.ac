@@ -1,5 +1,5 @@
 AC_PREREQ(2.57)
-AC_INIT(sipXcommserverLib, 4.6.0, sipx-dev@list.sipfoundry.org)
+AC_INIT(sipXcommserverLib, 15.04, sipx-dev@list.sipfoundry.org)
 AC_CONFIG_AUX_DIR(config)
 m4_include([config/general.m4])
 m4_include([config/sipXlib.m4])
@@ -9,11 +9,9 @@ AC_DISABLE_STATIC
 AC_CONFIG_SRCDIR([src/sipdb/EntityDB.cpp])
 AM_CONFIG_HEADER([src/config.h])
 AC_PROG_LIBTOOL
-
 #if test -z $CXXFLAGS; then
 #    CXXFLAGS='-g'
 #fi
-
 AC_PROG_CXX
 AX_COMPILER_VENDOR
 AC_PATH_PROG([BASH], [bash])
@@ -48,6 +46,7 @@ AC_CONFIG_FILES([
   src/xsdvalid/Makefile
   src/test/Makefile
   src/test/sipdb/Makefile
+  src/test/sipXecsService/Makefile
   meta/Makefile
   src/sipxpackage/Makefile
   src/sipxswadmin/Makefile

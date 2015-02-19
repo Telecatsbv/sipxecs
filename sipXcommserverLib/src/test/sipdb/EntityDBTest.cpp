@@ -9,6 +9,8 @@
 
 #include <boost/format.hpp>
 
+#include "MongoDbVerifier.h"
+
 
 using namespace std;
 
@@ -189,107 +191,117 @@ class EntityDBTest: public CppUnit::TestCase
   CPPUNIT_TEST(testEntityDB_tailFunction);
   CPPUNIT_TEST_SUITE_END();
 
-  EntityDB* _db;
-  EntityRecord _entityRecord;
+  typedef boost::scoped_ptr<EntityRecord> EntityRecordPtr;
+  typedef boost::scoped_ptr<EntityDB> EntityDBPtr;
+
   const MongoDB::ConnectionInfo _info;
   std::string _entityDbName;
   std::string _oplogDbName;
+  EntityRecordPtr _entityRecord;
+  MongoDB::ScopedDbConnectionPtr _conn;
+  EntityDBPtr _db;
+  int MAX_SECONDS_TO_WAIT;
+  MongoDbVerifier _mongoDbVerifier;
 public:
   EntityDBTest() : _info(MongoDB::ConnectionInfo(mongo::ConnectionString(mongo::HostAndPort(gLocalHostAddr)))),
               _entityDbName(gTestEntityDbName),
-              _oplogDbName(gLocalOplogDbName)
+              _oplogDbName(gLocalOplogDbName),
+              _entityRecord(new EntityRecord),
+              _conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString())),
+              _db(new EntityDB(_info, _entityDbName)),
+              _mongoDbVerifier(_conn, _entityDbName, MAX_SECONDS_TO_WAIT * 1000)
   {
+    MAX_SECONDS_TO_WAIT = 10;
+
+    _conn->get()->dropCollection(_oplogDbName);
+    _conn->get()->remove(_entityDbName, mongo::Query());
+
+    _mongoDbVerifier.waitUntilEmpty();
+
+    // Initialise Entity record structure
+    setEntityRecord(*_entityRecord);
+
+    // Insert Entity record entry in test.EntityDBTest
+    updateEntityRecord(*_entityRecord);
+
+    _mongoDbVerifier.waitUntilHaveOneEntry();
+  }
+
+  ~EntityDBTest()
+  {
+    _conn->done();
   }
 
   // this function is called before the run of each test
   void setUp()
   {
-    MongoDB::ScopedDbConnectionPtr pOpLogConn(mongo::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
-    pOpLogConn->get()->dropCollection(_oplogDbName);
-    pOpLogConn->done();
 
-    _db = new EntityDB(_info, _entityDbName);
-    MongoDB::ScopedDbConnectionPtr pConn(mongo::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
-    //mongo::ScopedDbConnection conn(_info.getConnectionString().toString());
-    pConn->get()->remove(_entityDbName, mongo::Query());
-    pConn->done();
-
-    // Initialise Entity record structure
-    setEntityRecord();
-
-    // Insert Entity record entry in test.EntityDBTest
-    updateEntityRecord();
   }
 
   void tearDown()
   {
-    delete _db;
-    _db = 0;
   }
 
-  void updateEntityRecord()
+  void updateEntityRecord(EntityRecord& entityRecord)
   {
 
-    mongo::BSONObj query = BSON(_entityRecord.identity_fld() << _entityRecord.identity());
+    mongo::BSONObj query = BSON(entityRecord.identity_fld() << entityRecord.identity());
 
 
     mongo::BSONObjBuilder bsonObjBuilder;
-    bsonObjBuilder << _entityRecord.userId_fld() << _entityRecord.userId() <<                                           // "uid"
-        _entityRecord.identity_fld() << _entityRecord.identity() <<                                       // "ident"
-        _entityRecord.realm_fld() << _entityRecord.realm() <<                                             // "rlm"
-        _entityRecord.password_fld() << _entityRecord.password() <<                                       // "pstk"
-        _entityRecord.pin_fld() << _entityRecord.pin() <<                                                 // "pntk"
-        _entityRecord.authType_fld() << _entityRecord.authType() <<                                       // "authtp"
-        _entityRecord.location_fld() << _entityRecord.location() <<                                       // "loc"
+    bsonObjBuilder << entityRecord.userId_fld() << entityRecord.userId() <<                                           // "uid"
+        entityRecord.identity_fld() << entityRecord.identity() <<                                       // "ident"
+        entityRecord.realm_fld() << entityRecord.realm() <<                                             // "rlm"
+        entityRecord.password_fld() << entityRecord.password() <<                                       // "pstk"
+        entityRecord.pin_fld() << entityRecord.pin() <<                                                 // "pntk"
+        entityRecord.authType_fld() << entityRecord.authType() <<                                       // "authtp"
+        entityRecord.location_fld() << entityRecord.location() <<                                       // "loc"
 
-        _entityRecord.callerId_fld() << _entityRecord.callerId().id <<                                    // "clrid"
-        _entityRecord.callerIdEnforcePrivacy_fld() << _entityRecord.callerId().enforcePrivacy <<          // "blkcid"
-        _entityRecord.callerIdIgnoreUserCalleId_fld() << _entityRecord.callerId().ignoreUserCalleId <<    // "ignorecid"
-        _entityRecord.callerIdTransformExtension_fld() << _entityRecord.callerId().transformExtension <<  // "trnsfrmext"
-        _entityRecord.callerIdExtensionLength_fld() << _entityRecord.callerId().extensionLength <<        // "kpdgts"
-        _entityRecord.callerIdExtensionPrefix_fld() << _entityRecord.callerId().extensionPrefix <<        // "pfix"
-        _entityRecord.callForwardTime_fld() << _entityRecord.callForwardTime() <<                         // "cfwdtm"
+        entityRecord.callerId_fld() << entityRecord.callerId().id <<                                    // "clrid"
+        entityRecord.callerIdEnforcePrivacy_fld() << entityRecord.callerId().enforcePrivacy <<          // "blkcid"
+        entityRecord.callerIdIgnoreUserCalleId_fld() << entityRecord.callerId().ignoreUserCalleId <<    // "ignorecid"
+        entityRecord.callerIdTransformExtension_fld() << entityRecord.callerId().transformExtension <<  // "trnsfrmext"
+        entityRecord.callerIdExtensionLength_fld() << entityRecord.callerId().extensionLength <<        // "kpdgts"
+        entityRecord.callerIdExtensionPrefix_fld() << entityRecord.callerId().extensionPrefix <<        // "pfix"
+        entityRecord.callForwardTime_fld() << entityRecord.callForwardTime() <<                         // "cfwdtm"
 
-        _entityRecord.permission_fld() << _entityRecord.permissions();                                    // "prm"
+        entityRecord.permission_fld() << entityRecord.permissions();                                    // "prm"
 
 
     // build aliases
     mongo::BSONArrayBuilder bsonArrayBuilderAliases;
-    for (std::vector<EntityRecord::Alias>::iterator iter = _entityRecord._aliases.begin();
-      iter != _entityRecord._aliases.end(); iter++)
+    for (std::vector<EntityRecord::Alias>::iterator iter = entityRecord._aliases.begin();
+      iter != entityRecord._aliases.end(); iter++)
     {
       mongo::BSONObjBuilder bsonObjBuilderAlias;
 
-      bsonObjBuilderAlias << _entityRecord.aliasesId_fld() << iter->id;                                // "id"
-      bsonObjBuilderAlias << _entityRecord.aliasesContact_fld() << iter->contact;                      // "cnt"
-      bsonObjBuilderAlias << _entityRecord.aliasesRelation_fld() << iter->relation;                    // "rln"
+      bsonObjBuilderAlias << entityRecord.aliasesId_fld() << iter->id;                                // "id"
+      bsonObjBuilderAlias << entityRecord.aliasesContact_fld() << iter->contact;                      // "cnt"
+      bsonObjBuilderAlias << entityRecord.aliasesRelation_fld() << iter->relation;                    // "rln"
 
       bsonArrayBuilderAliases.append(bsonObjBuilderAlias.obj());
     }
-    bsonObjBuilder.append(_entityRecord.aliases_fld(), bsonArrayBuilderAliases.arr());                   // "als"
+    bsonObjBuilder.append(entityRecord.aliases_fld(), bsonArrayBuilderAliases.arr());                   // "als"
 
     mongo::BSONObj update;
     update = BSON(gMongoSetOperator << bsonObjBuilder.obj());
 
-    MongoDB::ScopedDbConnectionPtr conn(mongo::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
-    mongo::DBClientBase* client = conn->get();
+    mongo::DBClientBase* client = _conn->get();
 
     //client->insert(_info.getNS(), update);
     client->update(_entityDbName, query, update, true, false);
-    client->ensureIndex(_entityDbName, BSON( _entityRecord.identity_fld() << 1 ));
-
-    conn->done();
+    client->ensureIndex(_entityDbName, BSON(entityRecord.identity_fld() << 1 ));
   }
 
-  void setEntityRecord()
+  void setEntityRecord(EntityRecord& entityRecord)
   {
-    _entityRecord._userId = entityRecordTestData[0].pUserId;
-    _entityRecord._identity = entityRecordTestData[0].pIdentity;
-    _entityRecord._realm = entityRecordTestData[0].pRealm;
-    _entityRecord._password = entityRecordTestData[0].pPassword;
-    _entityRecord._pin = entityRecordTestData[0].pPin;
-    _entityRecord._authType = entityRecordTestData[0].pAuthType;
-    _entityRecord._location = entityRecordTestData[0].pLocation;
+    entityRecord._userId = entityRecordTestData[0].pUserId;
+    entityRecord._identity = entityRecordTestData[0].pIdentity;
+    entityRecord._realm = entityRecordTestData[0].pRealm;
+    entityRecord._password = entityRecordTestData[0].pPassword;
+    entityRecord._pin = entityRecordTestData[0].pPin;
+    entityRecord._authType = entityRecordTestData[0].pAuthType;
+    entityRecord._location = entityRecordTestData[0].pLocation;
 
     for (int i = 0; i < 3; i++)
     {
@@ -298,7 +310,7 @@ public:
       alias.relation = entityRecordAliasTestData[i].pRelation;
       alias.contact = entityRecordAliasTestData[i].pContact;
 
-      _entityRecord._aliases.push_back(alias);
+      entityRecord._aliases.push_back(alias);
     }
   }
 
@@ -316,9 +328,12 @@ public:
   void testEntityDB_getAll()
   {
     EntityRecord entityRecord;
+    std::string identity(entityRecordTestData[0].pIdentity);
 
     // find the Entity Record in test.EntityDBTest database filtered by the given identity
-    _db->findByIdentity(std::string(entityRecordTestData[0].pIdentity), entityRecord);
+    bool ret = _db->findByIdentity(identity, entityRecord);
+    // TEST: check that return code is true
+    CPPUNIT_ASSERT(true == ret);
 
     // TEST: Check entity record parameters
     testEntityRecordParameters(entityRecord);
@@ -327,9 +342,13 @@ public:
   void testEntityDB_findByUserId()
   {
     EntityRecord entityRecord;
+    std::string userId(entityRecordTestData[0].pUserId);
 
     // find the Entity Record in test.EntityDBTest database filtered by the given user id
-    _db->findByUserId(std::string(entityRecordTestData[0].pUserId), entityRecord);
+    bool ret = _db->findByUserId(userId, entityRecord);
+    // TEST: check that return code is true
+    CPPUNIT_ASSERT(true == ret);
+
 
     // TEST: Check entity record parameters
     testEntityRecordParameters(entityRecord);
@@ -339,8 +358,12 @@ public:
   {
     EntityRecord entityRecord;
 
+    Url uri(gEntityRecordTestUri);
+
     // find the Entity Record in test.EntityDBTest database filtered by the given url
-    _db->findByIdentityOrAlias(Url(gEntityRecordTestUri), entityRecord);
+    bool ret = _db->findByIdentityOrAlias(uri, entityRecord);
+    // TEST: check that return code is true
+    CPPUNIT_ASSERT(true == ret);
 
     // TEST: Check entity record parameters
     testEntityRecordParameters(entityRecord);
@@ -352,8 +375,10 @@ public:
     EntityDB::Aliases aliases;
     bool isUserIdentity = false;
 
+    Url aliasIdentity(gEntityRecordTestUri);
+
     // find the alias contacts in test.EntityDBTest database filtered by the given url
-    _db->getAliasContacts(Url(gEntityRecordTestUri), aliases, isUserIdentity);
+    _db->getAliasContacts(aliasIdentity, aliases, isUserIdentity);
 
     // TEST: Check that aliases size is 1
     CPPUNIT_ASSERT(aliases.size() == 1);
@@ -377,15 +402,12 @@ public:
     mongo::BSONObj update;
     update = BSON(gMongoSetOperator << bsonObjBuilder.obj());
 
-    MongoDB::ScopedDbConnectionPtr conn(mongo::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString()));
-    mongo::DBClientBase* client = conn->get();
+    mongo::DBClientBase* client = _conn->get();
 
     // create a capped collect in order to work with tailer cursor
     client->createCollection(_oplogDbName, 1024*1024, true, 0, 0);
     client->update(_oplogDbName, query, update, true, false);
     client->ensureIndex(_oplogDbName, BSON(opLog.id_fld() << 1 ));
-
-    conn->done();
   }
 
   void testEntityDB_tailFunction()

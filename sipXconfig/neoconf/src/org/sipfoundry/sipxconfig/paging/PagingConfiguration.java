@@ -23,8 +23,10 @@ import org.sipfoundry.sipxconfig.cfgmgt.ConfigManager;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigProvider;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigRequest;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigUtils;
-import org.sipfoundry.sipxconfig.cfgmgt.KeyValueConfiguration;
+import org.sipfoundry.sipxconfig.cfgmgt.LoggerKeyValueConfiguration;
 import org.sipfoundry.sipxconfig.commserver.Location;
+import org.sipfoundry.sipxconfig.setting.Setting;
+import org.sipfoundry.sipxconfig.setting.SettingUtil;
 
 public class PagingConfiguration implements ConfigProvider {
     private PagingContext m_pagingContext;
@@ -38,6 +40,7 @@ public class PagingConfiguration implements ConfigProvider {
 
         Set<Location> locations = request.locations(manager);
         PagingSettings settings = m_pagingContext.getSettings();
+        Setting pagingSettings = settings.getSettings().getSetting("page-config");
         String domainName = manager.getDomainManager().getDomainName();
         List<PagingGroup> groups = m_pagingContext.getPagingGroups();
         for (Location location : locations) {
@@ -47,6 +50,11 @@ public class PagingConfiguration implements ConfigProvider {
             if (!enabled) {
                 continue;
             }
+
+            String log4jFileName = "log4j-page.properties.part";
+            String[] logLevelKeys = {"log4j.logger.org.sipfoundry.sipxpage"};
+            SettingUtil.writeLog4jSetting(pagingSettings, dir, log4jFileName, logLevelKeys);
+
             FileWriter writer = new FileWriter(new File(dir, "sipxpage.properties.part"));
             try {
                 write(writer, location, groups, settings, domainName);
@@ -58,14 +66,13 @@ public class PagingConfiguration implements ConfigProvider {
 
     void write(Writer writer, Location location, List<PagingGroup> groups, PagingSettings settings, String domainName)
         throws IOException {
-        KeyValueConfiguration config = KeyValueConfiguration.colonSeparated(writer);
+        LoggerKeyValueConfiguration config = LoggerKeyValueConfiguration.colonSeparated(writer);
         config.write("sip.address", location.getAddress());
         config.write("rtp.port", settings.getRtpPort());
         config.write("sip.tlsPort", settings.getSipTlsPort());
         config.write("sip.udpPort", settings.getSipUdpPort());
         config.write("sip.tcpPort", settings.getSipTcpPort());
         config.write("sip.trace", settings.getSipTraceLevel());
-        config.write("log.level", settings.getLogLevel());
         for (int i = 0; i < groups.size(); i++) {
             PagingGroup g = groups.get(i);
             if (g.isEnabled()) {

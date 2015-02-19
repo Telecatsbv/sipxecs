@@ -24,11 +24,14 @@ import org.apache.commons.io.IOUtils;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigManager;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigProvider;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigRequest;
-import org.sipfoundry.sipxconfig.cfgmgt.KeyValueConfiguration;
+import org.sipfoundry.sipxconfig.cfgmgt.LoggerKeyValueConfiguration;
 import org.sipfoundry.sipxconfig.commserver.Location;
+import org.sipfoundry.sipxconfig.setting.Setting;
+import org.sipfoundry.sipxconfig.setting.SettingUtil;
 
 public class AdminConfig implements ConfigProvider {
     private AdminContext m_adminContext;
+    private String m_adminSettingsKey = "configserver-config";
 
     @Override
     public void replicate(ConfigManager manager, ConfigRequest request) throws IOException {
@@ -37,14 +40,20 @@ public class AdminConfig implements ConfigProvider {
         }
 
         Set<Location> locations = request.locations(manager);
+        AdminSettings settings = m_adminContext.getSettings();
+        Setting adminSettings = settings.getSettings().getSetting(m_adminSettingsKey);
         for (Location l : locations) {
             if (!l.isPrimary()) {
                 continue;
             }
             File dir = manager.getLocationDataDirectory(l);
+
+            String log4jFileName = "log4j.properties.part";
+            String[] logLevelKeys = settings.getLogLevelKeys();
+            SettingUtil.writeLog4jSetting(adminSettings, dir, log4jFileName, logLevelKeys);
+
             Writer w = new FileWriter(new File(dir, "sipxconfig.properties.ui"));
             try {
-                AdminSettings settings = m_adminContext.getSettings();
                 writeConfig(w, settings);
             } finally {
                 IOUtils.closeQuietly(w);
@@ -53,8 +62,8 @@ public class AdminConfig implements ConfigProvider {
     }
 
     void writeConfig(Writer w, AdminSettings settings) throws IOException {
-        KeyValueConfiguration config = KeyValueConfiguration.equalsSeparated(w);
-        config.writeSettings(settings.getSettings().getSetting("configserver-config"));
+        LoggerKeyValueConfiguration config = LoggerKeyValueConfiguration.equalsSeparated(w);
+        config.writeSettings(settings.getSettings().getSetting(m_adminSettingsKey));
     }
 
     public void setAdminContext(AdminContext adminContext) {

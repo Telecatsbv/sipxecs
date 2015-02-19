@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="config-plugin/src"/>
+	<classpathentry kind="src" path="mongo-lib/test/java"/>
+	<classpathentry excluding="test/java/" kind="src" path="mongo-lib/src"/>
+	<classpathentry kind="src" path="mongo-sync-plugin/src"/>
 	<classpathentry kind="src" path="sqa-plugin/src"/>
-	<classpathentry kind="src" path="vcard-provider/src"/>
 	<classpathentry kind="src" path="presence-plugin/test"/>
 	<classpathentry kind="src" path="presence-plugin/src"/>
 	<classpathentry kind="src" path="ws-plugin/src"/>
@@ -13,6 +15,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/sipxcommons"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sipXconfig-web"/>
 	<classpathentry kind="var" path="SIPX_JAVADIR/sipXecs/sipXcommons/sipxsqaclient.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/openfire"/>
+	<classpathentry kind="var" path="OPENFIRE_ROOT/lib/openfire.jar"/>
 	<classpathentry kind="output" path="bin.eclipse"/>
 </classpath>

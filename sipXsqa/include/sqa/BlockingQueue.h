@@ -66,20 +66,43 @@ public:
     return true;
   }
   
-  void enqueue(const T& data)
+  bool dequeueAll(std::vector<T>& dataVec)
+  {
+    mutex_lock lock(_mutex);
+    if (_queue.empty() || _terminating)
+      return false;
+
+    while (!_queue.empty())
+    {
+      dataVec.push_back(_queue.front());
+      _queue.pop();
+    }
+
+    return true;
+  }
+
+  bool enqueue(const T& data)
   {
     _mutex.lock();
     if (_maxQueueSize && _queue.size() > _maxQueueSize)
     {
       _mutex.unlock();
-      return;
+      return false;
     }
     _queue.push(data);
     _mutex.unlock();
     _semaphore.signal();
+
+    return true;
   }
 
+  void clear()
+  {
+    std::queue<T> empty;
 
+    mutex_lock lock(_mutex);
+    std::swap(_queue, empty);
+  }
 
 };
 

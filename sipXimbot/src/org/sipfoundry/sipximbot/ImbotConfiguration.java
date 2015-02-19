@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.util.Properties;
 
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 import org.sipfoundry.commons.freeswitch.FreeSwitchConfigurationInterface;
+import org.sipfoundry.commons.log4j.SipFoundryLayout;
 import org.sipfoundry.commons.util.DomainConfiguration;
 
 /**
@@ -25,7 +27,6 @@ import org.sipfoundry.commons.util.DomainConfiguration;
 public class ImbotConfiguration implements FreeSwitchConfigurationInterface {
 
 	private static final Logger LOG = Logger.getLogger("org.sipfoundry.sipximbot");
-    private String m_logLevel; // The desired logging level in SipFoundry format (not log4j!)
     private String m_logFile; // The file to log into
     private String m_docDirectory; // File path to DOC Directory (usually /usr/share/www/doc)
     private String m_configDirectory;
@@ -36,7 +37,6 @@ public class ImbotConfiguration implements FreeSwitchConfigurationInterface {
     private String m_cdrSecureURL;
     private String m_openfireHost; // The host name where the Openfire service runs
     private int    m_openfireXmlRpcPort; // The port number to use for XML-RPC Openfire requests
-    private int    m_httpPort;
     private String m_myAsstAcct;
     private String m_myAsstPswd;
     private String m_voicemailRootUrl;
@@ -75,7 +75,11 @@ public class ImbotConfiguration implements FreeSwitchConfigurationInterface {
     }
 
     void properties() {
-        m_configDirectory = System.getProperty("conf.dir");
+        // Configure log4j
+        String m_configDirectory = System.getProperty("conf.dir");
+        PropertyConfigurator.configureAndWatch(m_configDirectory+"/sipximbot/log4j.properties",
+                SipFoundryLayout.LOG4J_MONITOR_FILE_DELAY);
+
         if (m_configDirectory == null) {
             System.err.println("Cannot get System Property conf.dir!  Check jvm argument -Dconf.dir=") ;
             System.exit(1);
@@ -120,7 +124,6 @@ public class ImbotConfiguration implements FreeSwitchConfigurationInterface {
 
         String prop = null;
         try {
-            m_logLevel = props.getProperty(prop = "log.level");
             m_logFile = props.getProperty(prop = "log.file");
 
             m_docDirectory = props.getProperty(prop = "imbot.docDirectory") ;
@@ -132,7 +135,6 @@ public class ImbotConfiguration implements FreeSwitchConfigurationInterface {
 
             m_openfireHost = props.getProperty(prop = "imbot.openfireHost");
             m_openfireXmlRpcPort = Integer.parseInt(props.getProperty(prop = "imbot.openfireXmlRpcPort"));
-            m_httpPort = Integer.parseInt(props.getProperty(prop = "imbot.httpport"));
 
             m_myAsstAcct =  props.getProperty(prop = "imbot.paUserName");
             m_myAsstPswd =  props.getProperty(prop = "imbot.paPassword");
@@ -157,17 +159,12 @@ public class ImbotConfiguration implements FreeSwitchConfigurationInterface {
 
     @Override
     public String getLogLevel() {
-        return m_logLevel;
+        return Logger.getRootLogger().getLevel().toString();
     }
 
     @Override
     public String getLogFile() {
         return m_logFile;
-    }
-
-
-    public int getHttpPort() {
-        return m_httpPort;
     }
 
     @Override

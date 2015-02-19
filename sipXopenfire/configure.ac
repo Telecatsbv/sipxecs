@@ -1,5 +1,5 @@
 AC_PREREQ(2.57)
-AC_INIT(sipXopenfire, 4.6.0, sipx-dev@list.sipfoundry.org)
+AC_INIT(sipXopenfire, 15.04, sipx-dev@list.sipfoundry.org)
 AC_CONFIG_AUX_DIR(config)
 m4_include([config/general.m4])
 m4_include([config/sipXlib.m4])
@@ -19,8 +19,9 @@ AC_CONFIG_FILES([
   presence-plugin/Makefile
   sqa-plugin/Makefile
   vcard-synchserver/Makefile  
-  vcard-provider/Makefile
   config-plugin/Makefile
   ws-plugin/Makefile
+  mongo-lib/Makefile
+  mongo-sync-plugin/Makefile
 ])
 AC_OUTPUT

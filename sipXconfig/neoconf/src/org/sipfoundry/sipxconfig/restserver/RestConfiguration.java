@@ -33,10 +33,13 @@ import org.sipfoundry.sipxconfig.cfgmgt.ConfigRequest;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigUtils;
 import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.domain.Domain;
+import org.sipfoundry.sipxconfig.setting.Setting;
+import org.sipfoundry.sipxconfig.setting.SettingUtil;
 
 public class RestConfiguration implements ConfigProvider {
     private RestServer m_restServer;
     private VelocityEngine m_velocityEngine;
+    private String m_restSettingKey = "rest-config";
 
     @Override
     public void replicate(ConfigManager manager, ConfigRequest request) throws IOException {
@@ -46,6 +49,7 @@ public class RestConfiguration implements ConfigProvider {
         }
 
         RestServerSettings settings = m_restServer.getSettings();
+        Setting restSettings = settings.getSettings().getSetting(m_restSettingKey);
         Address sipxcdrApi = manager.getAddressManager().getSingleAddress(AdminContext.SIPXCDR_DB_ADDRESS);
         for (Location location : locations) {
             File dir = manager.getLocationDataDirectory(location);
@@ -54,6 +58,12 @@ public class RestConfiguration implements ConfigProvider {
             if (!enabled) {
                 continue;
             }
+
+            String log4jFileName = "log4j-rest.properties.part";
+            String[] logLevelKeys = {"log4j.logger.org",
+                                     "log4j.logger.com"};
+            SettingUtil.writeLog4jSetting(restSettings, dir, log4jFileName, logLevelKeys);
+
             Writer wtr = new FileWriter(new File(dir, "sipxrest-config.xml"));
             try {
                 write(wtr, settings, location, manager.getDomainManager().getDomain(), sipxcdrApi);
@@ -66,7 +76,7 @@ public class RestConfiguration implements ConfigProvider {
     void write(Writer wtr, RestServerSettings settings, Location location,
             Domain domain, Address sipxcdrApi) throws IOException {
         VelocityContext context = new VelocityContext();
-        context.put("settings", settings.getSettings().getSetting("rest-config"));
+        context.put("settings", settings.getSettings().getSetting(m_restSettingKey));
         context.put("location", location);
         context.put("domainName", domain.getName());
         context.put("sipxcdrDbAddress", sipxcdrApi.toString());

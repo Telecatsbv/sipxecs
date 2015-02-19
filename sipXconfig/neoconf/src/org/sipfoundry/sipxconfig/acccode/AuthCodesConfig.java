@@ -19,18 +19,21 @@ import org.sipfoundry.sipxconfig.cfgmgt.ConfigManager;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigProvider;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigRequest;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigUtils;
-import org.sipfoundry.sipxconfig.cfgmgt.KeyValueConfiguration;
+import org.sipfoundry.sipxconfig.cfgmgt.LoggerKeyValueConfiguration;
 import org.sipfoundry.sipxconfig.cfgmgt.PostConfigListener;
 import org.sipfoundry.sipxconfig.common.Replicable;
 import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.commserver.SipxReplicationContext;
 import org.sipfoundry.sipxconfig.domain.Domain;
 import org.sipfoundry.sipxconfig.freeswitch.FreeswitchFeature;
+import org.sipfoundry.sipxconfig.setting.Setting;
+import org.sipfoundry.sipxconfig.setting.SettingUtil;
 import org.springframework.beans.factory.annotation.Required;
 
 public class AuthCodesConfig implements ConfigProvider, PostConfigListener {
     private AuthCodesImpl m_authCodes;
     private SipxReplicationContext m_sipxReplicationContext;
+    private String m_accCodeSettingKeyString = "acccode-config";
 
     @Override
     public void replicate(ConfigManager manager, ConfigRequest request) throws IOException {
@@ -44,14 +47,20 @@ public class AuthCodesConfig implements ConfigProvider, PostConfigListener {
         Set<Location> locations = request.locations(manager);
         Address fs = manager.getAddressManager().getSingleAddress(FreeswitchFeature.ACC_EVENT_ADDRESS);
         Domain domain = manager.getDomainManager().getDomain();
+        AuthCodeSettings settings = m_authCodes.getSettings();
+        Setting acccodeSettings = settings.getSettings().getSetting(m_accCodeSettingKeyString);
         for (Location location : locations) {
-            AuthCodeSettings settings = m_authCodes.getSettings();
             File dir = manager.getLocationDataDirectory(location);
             boolean enabled = manager.getFeatureManager().isFeatureEnabled(AuthCodes.FEATURE, location);
             ConfigUtils.enableCfengineClass(dir, "sipxacccode.cfdat", enabled, "sipxacccode");
             if (!enabled) {
                 continue;
             }
+
+            String log4jFileName = "log4j-acccode.properties.part";
+            String[] logLevelKeys = {"log4j.logger.org.sipfoundry.sipxacccode"};
+            SettingUtil.writeLog4jSetting(acccodeSettings, dir, log4jFileName, logLevelKeys);
+
             Writer flat = new FileWriter(new File(dir, "sipxacccode.properties.part"));
             try {
                 writeConfig(flat, settings, domain, fs.getPort());
@@ -71,8 +80,8 @@ public class AuthCodesConfig implements ConfigProvider, PostConfigListener {
     }
 
     void writeConfig(Writer wtr, AuthCodeSettings settings, Domain domain, int freeswithPort) throws IOException {
-        KeyValueConfiguration config = KeyValueConfiguration.equalsSeparated(wtr);
-        config.writeSettings(settings.getSettings().getSetting("acccode-config"));
+        LoggerKeyValueConfiguration config = LoggerKeyValueConfiguration.equalsSeparated(wtr);
+        config.writeSettings(settings.getSettings().getSetting(m_accCodeSettingKeyString));
         config.write("freeswitch.eventSocketPort", freeswithPort);
     }
 

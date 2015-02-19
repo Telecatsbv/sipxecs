@@ -30,6 +30,8 @@ public class UserSession {
      */
     private boolean m_navigationVisible = true;
 
+    private Integer m_loggedInUserId;
+
     /**
      * user that is currently logged in
      */
@@ -47,10 +49,15 @@ public class UserSession {
 
     public Integer getUserId() {
         UserDetailsImpl userDetails = getUserDetails();
-        if (userDetails == null) {
-            return null;
+        if (userDetails != null) {
+            m_loggedInUserId = userDetails.getUserId();
+            return userDetails.getUserId();
         }
-        return userDetails.getUserId();
+        return null;
+    }
+
+    public Integer getLoggedInUserId() {
+        return m_loggedInUserId;
     }
 
     /**
@@ -78,6 +85,10 @@ public class UserSession {
 
     public void logout() {
         SecurityContextHolder.clearContext();
+    }
+
+    public boolean isImEnabled(CoreContext coreContext) {
+        return getUser(coreContext).isImEnabled();
     }
 
     /**

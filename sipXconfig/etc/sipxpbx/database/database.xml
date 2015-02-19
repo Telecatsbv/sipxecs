@@ -455,22 +455,23 @@
     <antcall target="shards"/>
     <antcall target="region"/>
     <antcall target="region-ips"/>
+    <antcall target="dns"/>
+    <antcall target="dns_custom"/>
     <antcall target="drop_acd"/>
-    <!-- slot 7 -->
-    <!-- slot 8 -->
-    <!-- slot 9 -->
-    <!-- slot 10 -->
-    <!-- slot 11 -->
-    <!-- slot 12 -->
-    <!-- slot 13 -->
-    <!-- slot 14 -->
-    <!-- slot 15 -->
-    <!-- slot 16 -->
-    <!-- slot 17 -->
-    <!-- slot 18 -->
-    <!-- slot 19 -->
-    <!-- slot 20 -->
-    <!-- slot 21 -->
+    <antcall target="holiday-dates" />
+    <antcall target="add-backup-device-files-column" />
+    <antcall target="add_attendant_lang" />
+    <antcall target="add_attendant_dial_regex" />
+    <antcall target="live-attendant" />
+    <antcall target="live-attendant-night" />
+    <antcall target="callgroup-usefwdtimers" />
+    <antcall target="callgroup-fallback-expire" />
+    <antcall target="update-polycom-version" />
+    <antcall target="add-orbit-location" />
+    <antcall target="add-schedule-feature" />
+    <antcall target="insert_default_dns_view" />
+    <antcall target="system-audit" />
+    <antcall target="config-change-value" />
   </target>
 
   <target name="plugin-patches">
@@ -1363,6 +1364,9 @@
   <target name="iptables-call-rate-limit" unless="iptables-call-rate-limit">
 	<db-patch patch="iptables-call-rate-limit"/>
   </target>
+  <target name="dns" unless="dns">
+	<db-patch patch="dns"/>
+  </target>
   <target name="branch-timezone" unless="branch-timezone">
     <db-patch patch="branch-timezone"/>
   </target>
@@ -1375,6 +1379,9 @@
   <target name="add-chefsec" unless="add-chefsec">
 	<db-patch patch="add-chefsec"/>
   </target>
+  <target name="dns_custom" unless="dns_custom">
+	<db-patch patch="dns_custom"/>
+  </target>
   <target name="add_timeout_to_ldap" unless="add_timeout_to_ldap">
 	<db-patch patch="add_timeout_to_ldap"/>
   </target>
@@ -1383,7 +1390,51 @@
   </target>
   <target name="remove-ldap-filter-constraint" unless="remove-ldap-filter-constraint">
 	<db-patch patch="remove-ldap-filter-constraint"/>
+  </target>
+  <target name="add_attendant_dial_regex" unless="add_attendant_dial_regex">
+	<db-patch patch="add_attendant_dial_regex"/>
   </target>		
+  <target name="holiday-dates" unless="holiday-dates">
+    <db-patch patch="holiday-dates"/>
+  </target>
+  <target name="add-backup-device-files-column" unless="add-backup-device-files-column">
+  	<plsql-patch patch="add-backup-device-files-column"/>
+  </target>
+  <target name="add_attendant_lang" unless="add_attendant_lang">
+    <db-patch patch="add_attendant_lang"/>
+  </target>
+  <target name="live-attendant" unless="live-attendant">
+	<db-patch patch="live-attendant"/>
+  </target>
+  <target name="live-attendant-night" unless="live-attendant-night">
+    <db-patch patch="live-attendant-night"/>
+  </target>
+  <target name="callgroup-usefwdtimers" unless="callgroup-usefwdtimers">
+    <db-patch patch="callgroup-usefwdtimers" />
+  </target>
+  <target name="callgroup-fallback-expire" unless="callgroup-fallback-expire">
+    <db-patch patch="callgroup-fallback-expire" />
+  </target>
+  <target name="update-polycom-version" unless="update-polycom-version">
+    <db-patch patch="update-polycom-version" />
+  </target>
+  <target name="add-orbit-location" unless="add-orbit-location">
+    <db-patch patch="add-orbit-location" />
+  </target>
+  <target name="add-schedule-feature" unless="add-schedule-feature">
+    <db-patch patch="add-schedule-feature" />
+  </target>
+  <target name="insert_default_dns_view" unless="insert_default_dns_view">
+    <db-patch patch="insert_default_dns_view" />
+  </target>
+  <target name="system-audit" unless="system-audit">
+    <db-patch patch="system-audit"/>
+    <plsql-patch patch="system-audit-cleanup"/>
+  </target>
+  <target name="config-change-value" unless="config-change-value">
+    <db-patch patch="config-change-value"/>
+  </target>
+
   <!--
     - SUPPORT UTILITIES
   -->

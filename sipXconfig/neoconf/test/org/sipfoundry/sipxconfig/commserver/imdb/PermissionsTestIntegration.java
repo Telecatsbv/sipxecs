@@ -26,6 +26,7 @@ import org.sipfoundry.sipxconfig.permission.PermissionName;
 import org.sipfoundry.sipxconfig.setting.Group;
 import org.sipfoundry.sipxconfig.test.ImdbTestCase;
 
+import com.mongodb.DBCursor;
 import com.mongodb.QueryBuilder;
 
 public class PermissionsTestIntegration extends ImdbTestCase {
@@ -42,19 +43,25 @@ public class PermissionsTestIntegration extends ImdbTestCase {
     }
 
     public void testGenerateEmpty() throws Exception {
+        getEntityCollection().drop();
         for (SpecialUserType u : SpecialUserType.values()) {
             SpecialUser su = new SpecialUser(u);
             getReplicationManager().replicateEntity(su, DataSet.PERMISSION);
         }
 
-        // As PHONE_PROVISION does NOT require any permissions, don't count it.
-        assertCollectionCount(getEntityCollection(), SPEC_COUNT - 1);
+        // Even if PHONE_PROVISION has no permissions, it will still be written in Mongo.
+        assertCollectionCount(getEntityCollection(), SPEC_COUNT);
         // 5 permissions per special user
 
         for (SpecialUserType su : SpecialUserType.values()) {
             // As PHONE_PROVISION does NOT require any permissions, skip it.
             if (!su.equals(SpecialUserType.PHONE_PROVISION)) {
                 assertObjectWithIdPresent(getEntityCollection(), su.getUserName());
+                System.out.println("User: " + su.getUserName());
+                DBCursor c = getEntityCollection().find();
+                while (c.hasNext()) {
+                    System.out.println(c.next().toString());
+                }
                 assertObjectListFieldCount(getEntityCollection(), su.getUserName(), MongoConstants.PERMISSIONS, PERM_COUNT);
             }
         }

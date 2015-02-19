@@ -19,30 +19,28 @@ commons_PKGS = \
 	commons-codec \
 	commons-digester \
 	commons-lang \
+	commons-collections \
 	xmlrpc-client \
-	org.springframework.beans \
-	org.springframework.context \
-	org.springframework.core \
+	spring-beans \
+	spring-context \
+	spring-core \
 	org.springframework.transaction \
 	spring-data-mongodb \
 	spring-data-commons \
 	mongo \
+	org.restlet \
 	spring-data-redis \
 	jedis \
 	thumbnailator \
 	jaudiotagger \
 	jetty \
-	jetty-client \
-	jetty-continuation \
 	jetty-http \
 	jetty-io \
 	jetty-security \
 	jetty-server \
 	jetty-servlet \
-	jetty-servlets \
 	jetty-util \
 	jetty-webapp \
-	jetty-websocket \
 	jetty-xml \
 	servlet-api \
 	spring-security-cas \
@@ -50,4 +48,7 @@ commons_PKGS = \
 	spring-security-core \
 	spring-security-ldap \
 	spring-security-web \
-	joda-time
+	joda-time \
+	hazelcast-all \
+	reflections \
+	guava

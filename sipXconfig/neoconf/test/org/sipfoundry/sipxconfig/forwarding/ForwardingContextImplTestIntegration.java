@@ -26,12 +26,9 @@ import org.sipfoundry.sipxconfig.common.CoreContext;
 import org.sipfoundry.sipxconfig.common.ScheduledDay;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.common.UserException;
-import org.sipfoundry.sipxconfig.common.event.DaoEventPublisherImpl;
 import org.sipfoundry.sipxconfig.dialplan.attendant.WorkingTime;
 import org.sipfoundry.sipxconfig.dialplan.attendant.WorkingTime.WorkingHours;
-import org.sipfoundry.sipxconfig.phone.PhoneContext;
 import org.sipfoundry.sipxconfig.test.ImdbTestCase;
-import org.sipfoundry.sipxconfig.test.IntegrationTestCase;
 import org.sipfoundry.sipxconfig.test.ResultDataGrid;
 import org.sipfoundry.sipxconfig.test.TestHelper;
 import org.springframework.dao.DataAccessException;
@@ -85,19 +82,19 @@ public class ForwardingContextImplTestIntegration extends ImdbTestCase {
     public void testOnDeleteUser() throws Exception {
         User user = m_coreContext.loadUser(m_testUserId);
         assertEquals(5, countRowsInTable("ring"));
-        assertEquals(5, countRowsInTable("schedule"));
+        assertEquals(6, countRowsInTable("schedule"));
         assertEquals(9, countRowsInTable("schedule_hours"));
 
         m_coreContext.deleteUser(user);
         commit();
 
         assertEquals(2, countRowsInTable("ring"));
-        assertEquals(3, countRowsInTable("schedule"));
+        assertEquals(4, countRowsInTable("schedule"));
         assertEquals(2, countRowsInTable("schedule_hours"));
     }
 
     public void testSave() throws Exception {
-        TestHelper.cleanInsert("ClearDb.xml");
+
         loadDataSetXml("commserver/seedLocations.xml");
         User user = m_coreContext.loadUser(m_testUserId);
         CallSequence callSequence = m_forwardingContext.getCallSequenceForUser(user);
@@ -116,6 +113,7 @@ public class ForwardingContextImplTestIntegration extends ImdbTestCase {
 
         try {
             m_forwardingContext.saveCallSequence(callSequence);
+            flush();
         } catch (DataAccessException e) {
             Throwable cause = e.getCause();
             System.err.println(((SQLException) cause).getNextException().getMessage());
@@ -155,7 +153,7 @@ public class ForwardingContextImplTestIntegration extends ImdbTestCase {
         }
 
         m_forwardingContext.saveCallSequence(callSequence);
-
+        flush();
         Object[][] expected = new Object[][] {
                 {1001, 1001, "231001", 401, true, "If no response", 0, 102},
                 {1002, 1000, "231002", 402, true, "If no response", 0, null},
@@ -284,7 +282,7 @@ public class ForwardingContextImplTestIntegration extends ImdbTestCase {
     }
 
     public void testDeleteSchedulesById() throws Exception {
-        assertEquals(5, getConnection().getRowCount("schedule"));
+        assertEquals(6, getConnection().getRowCount("schedule"));
         List<Integer> scheduleIds = new ArrayList<Integer>();
         scheduleIds.add(new Integer(100));
         scheduleIds.add(new Integer(101));
@@ -292,7 +290,7 @@ public class ForwardingContextImplTestIntegration extends ImdbTestCase {
         m_forwardingContext.deleteSchedulesById(scheduleIds);
         commit();
 
-        assertEquals(3, countRowsInTable("schedule"));
+        assertEquals(4, countRowsInTable("schedule"));
     }
 
     public void testGetAllAvailableSchedulesForUser() throws Exception {
@@ -323,6 +321,41 @@ public class ForwardingContextImplTestIntegration extends ImdbTestCase {
         assertEquals("Schedule for dialing rule", generalSchedule.getDescription());
     }
 
+    public void testFeatureSchedules() throws Exception {
+        List<FeatureSchedule> allFeatureSchedules = m_forwardingContext.getAllFeatureSchedules();
+        assertEquals(1, allFeatureSchedules.size());
+        assertEquals(1, m_forwardingContext.getSchedulesForFeatureId("proxy").size());
+
+        FeatureSchedule featureSchedule = allFeatureSchedules.get(0);
+        assertEquals(new Integer(105), featureSchedule.getId());
+        assertEquals("proxy", featureSchedule.getFeatureId());
+        assertEquals("FeatureSchedule", featureSchedule.getName());
+        assertEquals("Schedule for proxy feature", featureSchedule.getDescription());
+
+        FeatureSchedule featureScheduleWithDuplicateName = new FeatureSchedule();
+        featureScheduleWithDuplicateName.setName("FeatureSchedule");
+        featureScheduleWithDuplicateName.setFeatureId("registrar");
+        try {
+            m_forwardingContext.saveSchedule(featureScheduleWithDuplicateName);
+        } catch (UserException ex) {
+            assertTrue(true);
+        }
+
+        FeatureSchedule anotherFatureSchedule = new FeatureSchedule();
+        anotherFatureSchedule.setName("CustomFeatureSchedule");
+        anotherFatureSchedule.setFeatureId("registrar");
+        m_forwardingContext.saveSchedule(anotherFatureSchedule);
+        assertEquals(2, m_forwardingContext.getAllFeatureSchedules().size());
+        assertEquals(1, m_forwardingContext.getSchedulesForFeatureId("registrar").size());
+
+        List<Integer> scheduleIds = new ArrayList<Integer>();
+        scheduleIds.add(anotherFatureSchedule.getId());
+        m_forwardingContext.deleteSchedulesById(scheduleIds);
+        assertEquals(1, m_forwardingContext.getAllFeatureSchedules().size());
+        assertEquals(1, m_forwardingContext.getSchedulesForFeatureId("proxy").size());
+        assertEquals(0, m_forwardingContext.getSchedulesForFeatureId("registrar").size());
+    }
+
     @Override
     public void setForwardingContext(ForwardingContext forwardingContext) {
         m_forwardingContext = forwardingContext;
@@ -332,6 +365,4 @@ public class ForwardingContextImplTestIntegration extends ImdbTestCase {
     public void setCoreContext(CoreContext coreContext) {
         m_coreContext = coreContext;
     }
-
-
 }

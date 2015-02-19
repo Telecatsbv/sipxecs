@@ -99,6 +99,9 @@ public class SpecialUser extends BeanWithId implements Replicable {
         Set<DataSet> ds = new HashSet<DataSet>();
         ds.add(DataSet.PERMISSION);
         ds.add(DataSet.CREDENTIAL);
+        if (m_type == SpecialUserType.XMPP_SERVER) {
+            ds.add(DataSet.SPEED_DIAL);
+        }
         return ds;
     }
 
@@ -125,7 +128,7 @@ public class SpecialUser extends BeanWithId implements Replicable {
     }
 
     @Override
-    public boolean isEnabled() {
+    public boolean isReplicationEnabled() {
         return true;
     }
 }

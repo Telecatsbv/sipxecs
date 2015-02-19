@@ -12,7 +12,8 @@ EXTRA_DIST = \
 	context \
 	packages \
 	$(web_SRC) \
-	$(addprefix src/,$(web_RESOURCES))
+	$(addprefix src/,$(web_RESOURCES)) \
+	unitelite
 
 noinst_DATA = javac-wsdl java-gwt javac-web 
 
@@ -86,16 +87,13 @@ java-gwt : $(gwt_SRC)
 
 # file in packages get compiled in thru compiling page dart files w/main()s
 DART_SRC = $(shell cd $(srcdir)/context/WEB-INF; find . -name '*.dart' -not -regex '.*/packages/.*')
-DART_PKGS = $(shell cd $(top_srcdir); find packages -name '*.js')
+DART_PKGS = $(shell cd $(top_srcdir); find packages/*/ -name '*.js')
 
 java-dart : $(addprefix $(web_JAVAROOT)/,$(DART_SRC:.dart=.js) $(DART_PKGS))
 
-$(addprefix $(web_JAVAROOT)/,$(DART_PKGS)) : $(DART_PKGS)
+$(addprefix $(web_JAVAROOT)/,$(DART_PKGS)) : $(web_JAVAROOT)/% : $(top_srcdir)/%
 	test -d $(dir $@) || mkdir -p $(dir $@)
 	cp $< $@
-
-debug:
-	echo $(DART_PKGS)
 
 $(addprefix $(web_JAVAROOT)/,$(DART_SRC:.dart=.js)) : $(web_JAVAROOT)/%.js : context/WEB-INF/%.dart $(wildcard $(top_srcdir)/lib/*.dart)
 	test -d $(dir $@) || mkdir -p $(dir $@)
@@ -132,6 +130,7 @@ web_RESOURCES = $(shell cd $(srcdir)/src; find . -type f \( \
 	  -o -name '*.jpg' \
 	  -o -name '*.css' \
 	  -o -name '*.xml' \
+	  -o -name '*.dtd' \
 	  -o -name '*.vm' \
 	  -o -name '*.wsdl' \
 	  -o -name '*.properties' \
@@ -156,6 +155,7 @@ context_SRC = $(shell cd $(srcdir)/context; find . -type f \( \
 	  -o -name '*.properties' \
 	  -o -name '*.html' \
 	  -o -name '*.script' \
+      -o -name '*.js' \	  
 	  -o -name '*.xml' \
 	  $(context_TESTPAGE) \
 	\))
@@ -179,6 +179,10 @@ sipxconfig.war : java-gwt $(WSDD) $(addprefix context/,$(context_SRC))
 style_SRC = $(filter-out src/com/%,$(web_SRC))
 style_DEPS = \
 	$(call JavaDep,@SIPX_JAVADIR@/sipXcommons $(top_srcdir)/lib,$(web_PKGS))
+
+unitelitedir=@SIPX_VARDIR@/unitelite
+install-data-hook :
+	cp -r $(srcdir)/unitelite $(DESTDIR)@SIPX_VARDIR@/ 
 
 precommit : style validate-xml
 
@@ -217,3 +221,4 @@ clean :
 		server-config.wsdd \
 		server-config-no-spring.wsdd.dirty \
 	)	
+

@@ -169,6 +169,11 @@ public class ExportCsv {
             Index.LINKEDIN_NAME.set(row, profile.getLinkedinName());
             Index.FACEBOOK_NAME.set(row, profile.getFacebookName());
             Index.XING_NAME.set(row, profile.getXingName());
+            Index.AUTH_ACCOUNT_NAME.set(row, profile.getAuthAccountName());
+            Index.EMAIL_ADDRESS_ALIASES.set(row, profile.getEmailAddressAliases());
+            Index.CUSTOM_1.set(row, profile.getCustom1());
+            Index.CUSTOM_2.set(row, profile.getCustom2());
+            Index.CUSTOM_3.set(row, profile.getCustom3());
         }
 
         // voice mail settings

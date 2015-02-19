@@ -135,8 +135,10 @@ public interface MongoConstants {
     static final String DIALPAD = "dlpd";
     static final String PERSONAL_ATT = "pa";
     static final String ACTIVEGREETING = "actvgr";
+    static final String UNIFIED_MESSAGING_LANGUAGE = "vmlang";
     static final String ITEM = "itm";
     static final String DISTRIB_LISTS = "dlst";
+    static final String FORCE_PIN_CHANGE= "fpchg";
     // AUTH CODE
     static final String AUTH_CODE = "authc";
     // GROUP
@@ -152,16 +154,24 @@ public interface MongoConstants {
     static final String EMERGENCY = "e911";
     static final String ELIN = "elin";
     static final String ADDRESS_INFO = "addrinfo";
+    static final String ELIN_ID = "elid";
 
     // registrations
     static final String INSTRUMENT = "instrument";
     static final String EXPIRATION_TIME = "expirationTime";
     static final String REG_CONTACT = "contact";
     static final String PRIMARY = "primary";
+    static final String LOCAL_ADDRESS = "localAddress";
     static final String CALL_ID = "callId";
 
     // user voicemail vacation
     static final String VOICEMAIL_ENABLED = "vmenbld";
     //hoteling
     static final String HOTELING = "htl";
+
+    // shared user AOR, empty in case not an shared user
+    static final String SHARED = "shared";
+
+    //phones
+    static final String SERIAL_NUMBER = "mac";
 }

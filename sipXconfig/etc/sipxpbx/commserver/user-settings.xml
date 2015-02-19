@@ -45,6 +45,10 @@
         <type refid="enable-disable" />
         <value>DISABLE</value>
       </setting>
+      <setting name="dbauth-only">
+        <type refid="enable-disable" />
+        <value>DISABLE</value>
+      </setting>
       <setting name="tui-change-pin">
         <type refid="enable-disable" />
         <value>ENABLE</value>
@@ -241,6 +245,14 @@
     </setting>
   </group>  
   <group name="voicemail">
+    <group name="security" hidden="yes">
+      <setting name="force-pin-change" advanced="yes">
+        <type>
+          <boolean />
+        </type>
+        <value>0</value>
+      </setting>
+    </group>
     <group name="fax" hidden="yes">
       <setting name="extension">
       <type refid="validPhone" />
@@ -279,6 +291,11 @@
           </enum>
         </type>
         <value>standard</value>
+      </setting>
+      <setting name="language">
+        <type>
+            <string />
+        </type>
       </setting>
       <setting name="user-busy-prompt">
         <type>

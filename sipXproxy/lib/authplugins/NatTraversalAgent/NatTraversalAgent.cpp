@@ -163,19 +163,8 @@ NatTraversalAgent::readConfig( OsConfigDb& configDb /**< a subhash of the indivi
                     " NAT Traversal feature is DISABLED", mInstanceName.data() );
   }
 
-   if (mpRegDb != NULL) {
-       delete mpRegDb;
-       mpRegDb = NULL;
-   }
-
-
-   mpRegDb = RegDB::CreateInstance();
-
-   if (mpSubscribeDb != NULL) {
-       delete mpSubscribeDb;
-       mpSubscribeDb = NULL;
-   }
-   mpSubscribeDb = new SubscribeDB(MongoDB::ConnectionInfo::globalInfo());
+   mpRegDb = SipRouter::getRegDBInstance();
+   mpSubscribeDb = SipRouter::getSubscribeDBInstance();
 }
 
 AuthPlugin::AuthResult
@@ -549,15 +538,27 @@ void NatTraversalAgent::announceAssociatedSipRouter( SipRouter* sipRouter )
          UtlString publicTransportAlias;
          char portNumericForm[24];
          sprintf( portNumericForm, "%d", mNatTraversalRules.getPublicTransportInfo().getPort() );
-
          publicTransportAlias = mNatTraversalRules.getPublicTransportInfo().getAddress();
          publicTransportAlias += ":";
          publicTransportAlias += portNumericForm;
          mpSipRouter->addHostAlias( publicTransportAlias );
+         
+         UtlString securePublicTransportAlias;
+         char securePortNumericForm[24];
+         sprintf( securePortNumericForm, "%d", mNatTraversalRules.getSecurePublicTransportInfo().getPort() );
+         securePublicTransportAlias = mNatTraversalRules.getSecurePublicTransportInfo().getAddress();
+         securePublicTransportAlias += ":";
+         securePublicTransportAlias += securePortNumericForm;
+         mpSipRouter->addHostAlias( securePublicTransportAlias );
+         
+         assert(mpSipRouter->getUserAgent());
+         mpSipRouter->getUserAgent()->setStaticNATAddress(mNatTraversalRules.getPublicTransportInfo().getAddress());
       }
 
       // launch thread that will maintain NAT keep alives
-      mpNatMaintainer = new NatMaintainer( sipRouter, mpRegDb, mpSubscribeDb );
+      mpNatMaintainer = new NatMaintainer( sipRouter, mpRegDb, mpSubscribeDb, 
+        mNatTraversalRules.getPublicTransportInfo().getAddress(),
+        mNatTraversalRules.getPublicTransportInfo().getPort() );
       mpNatMaintainer->start();
    }
 }
@@ -789,12 +790,30 @@ void NatTraversalAgent::adjustRecordRouteForNatTraversal( SipMessage& message, c
                if( !tmpRecordRouteUrl.getUrlParameter( SIPX_DONE_URI_PARAM, dummyValue ) )
                {
                   tmpRecordRouteUrl.setHostAddress( replacementAddress );
-                  tmpRecordRouteUrl.setHostPort( replacementPort );
+                  //
+                  // No need to reset the port.  This assures that if a record route is using TLS, that it does
+                  // not revert back to 5060.  
+                  //
+                  //tmpRecordRouteUrl.setHostPort( replacementPort );
                   tmpRecordRouteUrl.setUrlParameter( SIPX_DONE_URI_PARAM, NULL );
 
                   tmpRecordRouteUrl.toString( tmpRecordRoute );
                   bRecordRouteAdjusted = true;
                }
+            }
+            else if (tmpRecordRouteHost == mNatTraversalRules.getSecureProxyTransportInfo().getAddress() &&
+                tmpRecordRoutePort == mNatTraversalRules.getSecureProxyTransportInfo().getPort())
+            {
+              //
+              // TLS does hop-by-hop record routing so we need to consider multiple record routes for TLS
+              //
+              tmpRecordRouteUrl.setHostAddress( replacementAddress );
+              //
+              // No need to reset the port.  This assures that if a record route is using TLS, that it does
+              // not revert back to 5060.  
+              //
+              //tmpRecordRouteUrl.setHostPort( replacementPort );
+              tmpRecordRouteUrl.toString( tmpRecordRoute );
             }
             message.insertHeaderField( SIP_RECORD_ROUTE_FIELD, tmpRecordRoute.data(), writeRecordRouteIndex );
             writeRecordRouteIndex++;
@@ -908,6 +927,12 @@ CallTracker* NatTraversalAgent::createCallTrackerAndAddToMap( const UtlString& c
                                         "new Call Tracker into map.  key : '%s'",
                                         mInstanceName.data(), callId.data() );
    }
+   else
+   {
+     OS_LOG_INFO(FAC_NAT, "NatTraversalAgent::createCallTrackerAndAddToMap - Added new call tracker for Call-Id: " 
+       << callId.data() << " Map Size: " << mCallTrackersMap.entries());
+   }
+   
    return pCallTracker;
 }
 
@@ -971,16 +996,6 @@ NatTraversalAgent::~NatTraversalAgent()
    }
    mCallTrackersMap.destroyAll();
 
-   if (mpRegDb != NULL)
-   {
-       delete mpRegDb;
-       mpRegDb = NULL;
-   }
-
-   if (mpSubscribeDb != NULL) {
-       delete mpSubscribeDb;
-       mpSubscribeDb = NULL;
-   }
 
    if (mpMediaRelay != NULL)
    {

@@ -3,7 +3,10 @@
 <autoattendants xmlns="http://www.sipfoundry.org/sipX/schema/xml/autoattendants-00-00">
   <autoattendant id="operator">
     <name>operator</name>
+    <lang>default</lang>
     <prompt>prompts/operator.wav</prompt>
+    <allowDial></allowDial>
+    <denyDial></denyDial>
     <menuItems />
     <dtmf>
       <initialTimeout>7000</initialTimeout>
@@ -16,13 +19,22 @@
       <invalidResponseCount>2</invalidResponseCount>
       <transferOnFailures>false</transferOnFailures>
     </invalidResponse>
+    <onTransfer>
+      <play-prompt>true</play-prompt>
+    </onTransfer>
   </autoattendant>
   <schedules>
     <schedule id="aa_-1">
       <holiday>
         <id>operator</id>
-        <date>03-May-2010</date>
-        <date>04-Jul-2010</date>
+        <period>
+        	<startDate>03-May-2010 00:00</startDate>
+        	<endDate>03-May-2010 23:59</endDate>
+        </period>
+        <period>
+        	<startDate>04-Jul-2010 00:00</startDate>
+        	<endDate>04-Jul-2010 23:59</endDate>
+        </period>
       </holiday>
       <regularhours>
         <id>operator</id>

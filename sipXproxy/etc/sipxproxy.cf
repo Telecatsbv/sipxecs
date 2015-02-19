@@ -33,12 +33,18 @@ bundle agent sipxproxy {
 
 bundle agent sipxproxy_logwatcher {
   files:
+    "$(sipx.SIPX_CONFDIR)/sipxlogwatcher.d/sipxproxy.tmp"
+      comment => "sipxproxy log watcher",
+      create => "true",
+      perms => m(644),
+      transformer => "$(sipx.SIPX_LIBEXECDIR)/sipxlogwatcher-maker --in $(sipx.SIPX_CFDATA)/$(sipx.location_id)/alarms.yaml --template $(sipx.SIPX_CONFDIR)/sipxproxy/sipxproxy.sec.erb --out $(this.promiser)";     
+      
     "$(sipx.SIPX_CONFDIR)/sipxlogwatcher.d/sipxproxy.sec"
       comment => "sipxproxy log watcher",
       create => "true",
       perms => m(644),
-      transformer => "$(sipx.SIPX_LIBEXECDIR)/sipxlogwatcher-maker --in $(sipx.SIPX_CFDATA)/$(sipx.location_id)/alarms.yaml --template $(sipx.SIPX_CONFDIR)/sipxproxy/sipxproxy.sec.erb --out $(this.promiser)",
-      classes => if_repaired("reload_sipxlogwatcher");
+      copy_from => local_cp_by_digest("$(sipx.SIPX_CONFDIR)/sipxlogwatcher.d/sipxproxy.tmp"),
+      classes => if_repaired("reload_sipxlogwatcher");      
 }
 
 bundle agent sipxproxy_config {
@@ -62,7 +68,7 @@ bundle agent sipxproxy_config {
         create => "true",
         perms => m("644"),
         edit_line => sipXproxy_config_contents(),
-        classes => if_repaired("restart_sipxproxy");
+        classes => if_repaired("sipxproxy_properties_changed");
     
     any::   
       "$(sipx.SIPX_CONFDIR)/resource-limits-proxy.ini"
@@ -97,6 +103,7 @@ bundle edit_line sipXproxy_config_contents() {
       "SIPX_PROXY.400_authrules.RULES : $(sipx.SIPX_CONFDIR)/authrules.xml";
       "SIPX_PROXY.990_emerglineid.EMERGRULES : $(sipx.SIPX_CONFDIR)/authrules.xml";
       "SIPX_PROXY_BIND_IP : $(sipx.bind_ip)";
+      "SIPX_TRAN_HOOK_LIBRARY.905_gatewaydest : $(sipx.SIPX_LIBDIR)/transactionplugins/libGatewayDestPlugin.so";
     homer::
       "SIPX_TRAN_HOOK_LIBRARY.100_sipxhomer : $(sipx.SIPX_LIBDIR)/transactionplugins/libsipXhomerProxyPlugin.so";
 
@@ -121,11 +128,19 @@ bundle agent sipxproxy_running {
   classes:
     mongo_local_reconnect::
       "restart_sipxproxy" expression => "any";
+    sipxproxy.sipxproxy_properties_changed::
+  	  "restart_sipxproxy" not => fileexists("$(sipx.SIPX_CONFDIR)/sipXproxy-config.cf-before-edit");
 
   methods:
     any::
       "any" usebundle => find_sipxservice_by_command("$(service_command)","sipxproxy_running");
 
+	sipxproxy.sipxproxy_properties_changed.!restart_sipxproxy::
+      "sipxproxy_properties_changed" usebundle => refresh_sip_service("SIPX_PROXY_LOG_LEVEL : (DEBUG|INFO|NOTICE|WARNING|ERR|ERROR|CRIT|ALERT|EMERG)",
+      										 "$(sipx.SIPX_CONFDIR)/sipXproxy-config",
+      										 "$(sipx.SIPX_CONFDIR)/sipXproxy-config.cf-before-edit",
+      										 "sipxproxy"); 
+      										 
   commands:
     (!sipxproxy|stop_sipxecs).sipxproxy_running::
       "$(sipx.SIPX_SERVICEDIR)/sipxproxy"
@@ -167,5 +182,9 @@ bundle agent sipxproxy_running {
         comment => "redeploy NAT config - restart sipxbridge",
         args => "restart";
 
+    sipxproxy.sipxproxy_running.refresh_sipxproxy::
+      "/usr/bin/killall"
+        comment => "refresh sipXproxy",
+        args => "-HUP sipXproxy";
 }
 

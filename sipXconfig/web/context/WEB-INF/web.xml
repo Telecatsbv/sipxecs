@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<web-app xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd" version="2.4">
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
 
   <display-name>sipXconfig-web</display-name>
   <!--
@@ -12,6 +12,7 @@
     <param-value>
        classpath:/org/sipfoundry/sipxconfig/system.beans.xml
        classpath*:/org/sipfoundry/sipxconfig/*/**/*.beans.xml
+       classpath:/org/sipfoundry/sipxconfig/api/jaxrs-server.xml
        classpath*:/sipxplugin.beans.xml
     </param-value>
   </context-param>
@@ -35,6 +36,7 @@
   <filter>
     <filter-name>sipxFilterChainProxy</filter-name>
     <filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
+    <async-supported>true</async-supported>
   </filter>
 
   <filter-mapping>
@@ -57,6 +59,17 @@
   </listener>
   <!-- END AXIS -->
 
+  <listener>
+    <listener-class>org.springframework.security.web.session.HttpSessionEventPublisher</listener-class>
+  </listener>
+
+  <!-- START CXF -->
+  <servlet>
+    <servlet-name>CXFServlet</servlet-name>
+    <servlet-class>org.apache.cxf.transport.servlet.CXFServlet</servlet-class>
+  </servlet>
+  <!-- END CXF -->
+
   <servlet>
     <servlet-name>skin</servlet-name>
     <servlet-class>org.sipfoundry.sipxconfig.site.skin.SkinServlet</servlet-class>
@@ -73,6 +86,13 @@
     <load-on-startup>100</load-on-startup>
   </servlet>
   <!-- END AXIS -->
+
+  <!-- START CXF -->
+  <servlet-mapping>
+   <servlet-name>CXFServlet</servlet-name>
+   <url-pattern>/api/*</url-pattern>
+  </servlet-mapping>
+  <!-- END CXF -->
 
   <servlet>
     <servlet-name>sipXconfig-web</servlet-name>
@@ -178,5 +198,22 @@
     <mime-type>text/xml</mime-type>
   </mime-mapping>
   <!-- END AXIS -->
+  
+  <!-- WEB SOCKET -->
+  <!-- Processes application requests -->
+  <servlet>
+    <servlet-name>ws</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+    <async-supported>true</async-supported>
+  </servlet>
 
+  <servlet-mapping>
+    <servlet-name>ws</servlet-name>
+    <url-pattern>/api/ws/*</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>ws</servlet-name>
+    <url-pattern>/api/my/ws/*</url-pattern>
+  </servlet-mapping>  
+  <!-- END WEB SOCKET -->
 </web-app>

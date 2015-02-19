@@ -1,7 +1,7 @@
 #!@BASH@
 # sipxconfig - Startup script for sipxconfig
 
-# chkconfig: 35 92 5
+# chkconfig: 35 99 5
 # description: sipxconfig is an administration server
 # processname: sipxconfig
 
@@ -19,7 +19,7 @@ Usage: sipxconfig [start|stop|configtest|status|setup|db|run commands ...]
 Start Web UI administration for sipXpbx and for remotely provisioned
 SIP-based phones.
 
-Options include:
+Options include: 
 
   none                 Runs web admin ui
 
@@ -144,6 +144,7 @@ buildCommand() {
      -Djetty.log.dir=${LogDir} \
      -Dorg.apache.lucene.lockdir=${IndexDir} \
      -Dorg.apache.commons.loging.Log=org.apache.commons.logging.impl.Log4JLogger \
+     -Dorg.eclipse.jetty.server.Request.maxFormKeys=2000 \
      -Djava.awt.headless=true"
 }
 
@@ -165,7 +166,7 @@ start() {
   databaseVersionCheck
   clearIndexLocks
   buildCommand $prog
-  Command="$Command org.mortbay.jetty.Server @SIPX_CONFDIR@/sipxconfig-jetty.xml"
+  Command="$Command org.eclipse.jetty.xml.XmlConfiguration @SIPX_CONFDIR@/sipxconfig-jetty.xml"
   if [ -n "${NoFork}" ] ; then
     killAnyOrphans @SIPXPBXUSER@ $regex
     runuser -m -s @BASH@ @SIPXPBXUSER@ -c "${Command}"

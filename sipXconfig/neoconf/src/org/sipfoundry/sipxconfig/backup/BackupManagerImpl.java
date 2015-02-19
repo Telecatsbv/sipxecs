@@ -27,25 +27,29 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.sipfoundry.sipxconfig.admin.AdminContext;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigManager;
 import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.commserver.LocationsManager;
 import org.sipfoundry.sipxconfig.feature.FeatureManager;
 import org.sipfoundry.sipxconfig.setting.BeanWithSettingsDao;
+import org.sipfoundry.sipxconfig.setup.SetupListener;
+import org.sipfoundry.sipxconfig.setup.SetupManager;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 public class BackupManagerImpl extends HibernateDaoSupport implements BackupManager,
-        BeanFactoryAware {
+        BeanFactoryAware, SetupListener {
     private FeatureManager m_featureManager;
     private Collection<ArchiveProvider> m_providers;
     private ListableBeanFactory m_beanFactory;
     private BeanWithSettingsDao<BackupSettings> m_settingsDao;
     private LocationsManager m_locationsManager;
     private ConfigManager m_configManager;
-    private String m_backupScript;
+    private String m_tmpDirectoryPath;
     private File m_restoreStagingDir;
 
     @Override
@@ -67,6 +71,13 @@ public class BackupManagerImpl extends HibernateDaoSupport implements BackupMana
         }
         BackupPlan plan = new BackupPlan();
         plan.setType(type);
+        //Make sure to have at least one definition checked. when system is first installed
+        //configuration is always a proposed selectable
+        if (plan.getDefinitionIds().isEmpty()) {
+            plan.getDefinitionIds().add(AdminContext.ARCHIVE);
+        }
+        plan.setIncludeDeviceFiles(
+            (Boolean) getSettings().getIncludeDeviceFiles().getTypedValue());
         return plan;
     }
 
@@ -76,10 +87,11 @@ public class BackupManagerImpl extends HibernateDaoSupport implements BackupMana
     }
 
     @Override
-    public Collection<ArchiveDefinition> getArchiveDefinitions(Location location, BackupSettings manual) {
+    public Collection<ArchiveDefinition> getArchiveDefinitions(Location location, BackupPlan plan,
+        BackupSettings settings) {
         Set<ArchiveDefinition> defs = new HashSet<ArchiveDefinition>();
         for (ArchiveProvider provider : getArchiveProviders()) {
-            Collection<ArchiveDefinition> locationDefs = provider.getArchiveDefinitions(this, location, manual);
+            Collection<ArchiveDefinition> locationDefs = provider.getArchiveDefinitions(this, location, plan, settings);
             if (locationDefs != null) {
                 defs.addAll(locationDefs);
             }
@@ -128,7 +140,7 @@ public class BackupManagerImpl extends HibernateDaoSupport implements BackupMana
         Set<String> ids = new HashSet<String>();
         for (Location location : m_locationsManager.getLocationsList()) {
             for (ArchiveProvider provider : getArchiveProviders()) {
-                Collection<ArchiveDefinition> defs = provider.getArchiveDefinitions(this, location, null);
+                Collection<ArchiveDefinition> defs = provider.getArchiveDefinitions(this, location, null, null);
                 if (defs != null) {
                     for (ArchiveDefinition def : defs) {
                         ids.add(def.getId());
@@ -140,33 +152,35 @@ public class BackupManagerImpl extends HibernateDaoSupport implements BackupMana
         return ids;
     }
 
-    @Override
-    public String getBackupLink(BackupPlan plan) {
-        BackupCommandRunner runner = new BackupCommandRunner(getPlanFile(plan), getBackupScript());
-        return runner.getBackupLink();
-    }
-
     public File getPlanFile(BackupPlan plan) {
         String fname = format("1/archive-%s.yaml", plan.getType());
         return new File(m_configManager.getGlobalDataDirectory(), fname);
+    }
+
+    public File getTmpBackupFile(BackupPlan plan) {
+        String fname = format("archive-backup-tmp-%s.yaml", plan.getType());
+        return new File(m_tmpDirectoryPath, fname);
+    }
+
+    public File getTmpRestoreFile(BackupPlan plan) {
+        String fname = format("archive-restore-tmp-%s.yaml", plan.getType());
+        return new File(m_tmpDirectoryPath, fname);
     }
 
     public void setLocationsManager(LocationsManager locationsManager) {
         m_locationsManager = locationsManager;
     }
 
-    public String getBackupScript() {
-        return m_backupScript;
-    }
-
-    public void setBackupScript(String backupScript) {
-        m_backupScript = backupScript;
-    }
-
     public void setConfigManager(ConfigManager configManager) {
         m_configManager = configManager;
     }
 
+    @Required
+    public void setTmpDirectoryPath(String tmpDirectoryPath) {
+        m_tmpDirectoryPath = tmpDirectoryPath;
+    }
+
+    @Required
     public void setRestoreStagingDirectoryPath(String dir) {
         m_restoreStagingDir = new File(dir);
     }
@@ -186,6 +200,23 @@ public class BackupManagerImpl extends HibernateDaoSupport implements BackupMana
         }
         dir.mkdirs();
         return dir;
+    }
+    /**
+     * We need to make sure that archive-local.yaml and archive-ftp.yaml are created when system initializes
+     * so we can proper list any existing backup
+     * saveBackupPlan automatically triggers replication via BackupPlan.deployConfigOnEdit
+     */
+    @Override
+    public boolean setup(SetupManager manager) {
+        String id = "backup_initialized";
+        if (manager.isFalse(id)) {
+            BackupPlan local = findOrCreateBackupPlan(BackupType.local);
+            saveBackupPlan(local);
+            BackupPlan ftp = findOrCreateBackupPlan(BackupType.ftp);
+            saveBackupPlan(ftp);
+            manager.setTrue(id);
+        }
+        return true;
     }
 
 }

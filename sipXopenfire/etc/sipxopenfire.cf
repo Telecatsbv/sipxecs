@@ -26,6 +26,9 @@ bundle agent sipxopenfire {
       "$(sipx.OPENFIRE_HOME)/conf/openfire.xml"
         comment => "delete openfire configuration file if service not enabled",
         delete => unlink;
+      "$(sipx.OPENFIRE_HOME)/conf/openfire.xml.sipx"
+        comment => "delete generated openfire configuration file if service not enabled",
+        delete => unlink;  
 }
 
 bundle agent sipxopenfire_config {
@@ -60,12 +63,6 @@ bundle agent sipxopenfire_config {
         copy_from => copy_from_cfdata("$(sipx.location_id)/$(xml_file_restart)"),
         classes => if_repaired("restart_openfire");
 
-      "$(sipx.OPENFIRE_HOME)/conf/openfire.xml"
-        comment => "install openfire config $(this.promiser)",
-        perms => mog("644", "$(sipx.OPENFIRE_USER)", "$(sipx.OPENFIRE_GROUP)"),
-        copy_from => local_cp_by_digest("$(sipx.SIPX_CONFDIR)/openfire/openfire.xml"),
-        classes => if_repaired("restart_openfire");
-
       "$(sipx.OPENFIRE_HOME)/resources/security/truststore"
         comment => "openfire authorities",
         create => "false",
@@ -77,7 +74,7 @@ bundle agent sipxopenfire_config {
         comment => "openfire certificates",
         create => "false",
         perms => mog(600, "$(sipx.OPENFIRE_USER)", "$(sipx.OPENFIRE_GROUP)"),
-        copy_from => copy_from_cfdata("ssl-web.keystore"),
+        copy_from => copy_from_cfdata("ssl-openfire.keystore"),
         classes => if_repaired("restart_openfire");
 
       "/etc/sysconfig/openfire"
@@ -85,6 +82,16 @@ bundle agent sipxopenfire_config {
         perms => m("644"),
         edit_defaults => empty,
         edit_line => openfire_config_contents;
+                
+      "$(sipx.OPENFIRE_HOME)/conf/log4j.properties"
+        comment => "configure sipXopenfire log4j $(this.promiser)",
+        create => "true",
+        perms => mog("644", "$(sipx.OPENFIRE_USER)", "$(sipx.OPENFIRE_GROUP)"),
+        edit_line => sipxopenfire_log4j_properties_contents;
+        
+      "$(sipx.OPENFIRE_HOME)/lib/log4j.xml"
+        comment => "configure openfire server log4j xml $(this.promiser)",
+        edit_line => sipxopenfire_log4j_xml_contents;
 
       # We have to copy file in 2 phases because we use one phase to tell when there's a
       # config change and another update openfire. This is because openfire oddly
@@ -97,12 +104,24 @@ bundle agent sipxopenfire_config {
         edit_line => openfire_properties,
         classes => if_repaired("update_openfire_conf");
 
+      "$(sipx.OPENFIRE_HOME)/conf/openfire.xml.sipx"
+        comment => "install openfire.xml.sipx $(this.promiser)",
+        perms => mog("644", "$(sipx.OPENFIRE_USER)", "$(sipx.OPENFIRE_GROUP)"),
+        copy_from => local_cp_by_digest("$(sipx.SIPX_CONFDIR)/openfire/openfire.xml"),
+        classes => if_repaired("update_openfire_conf");
+
     update_openfire_conf::
       # Phase 2.
       "$(sipx.OPENFIRE_HOME)/conf/openfire.properties"
         comment => "install openfire properties $(this.promiser)",
         perms => mog("644", "$(sipx.OPENFIRE_USER)", "$(sipx.OPENFIRE_GROUP)"),
         copy_from => local_cp_by_digest("$(sipx.OPENFIRE_HOME)/conf/openfire.properties.sipx"),
+        classes => if_repaired("restart_openfire");
+
+      "$(sipx.OPENFIRE_HOME)/conf/openfire.xml"
+        comment => "install openfire xml $(this.promiser)",
+        perms => mog("644", "$(sipx.OPENFIRE_USER)", "$(sipx.OPENFIRE_GROUP)"),
+        copy_from => local_cp_by_digest("$(sipx.OPENFIRE_HOME)/conf/openfire.xml.sipx"),
         classes => if_repaired("restart_openfire");
 }
 
@@ -134,9 +153,14 @@ body select_region select_filter(name) {
 
 bundle edit_line openfire_config_contents {
   insert_lines:
-    "SIP_DOMAIN_NAME=$(sipx.domain)";
-    "FQDN=$(sipx.host).$(sipx.net_domain)";
-    "source $(sipx.SIPX_LIBEXECDIR)/openfire-config $1";
+    sipxofconfig::
+      "CONFIG_NODE=true";
+    !sipxofconfig::
+      "CONFIG_NODE=false";
+    any::
+      "SIP_DOMAIN_NAME=$(sipx.domain)";
+      "FQDN=$(sipx.host).$(sipx.net_domain)";
+      "source $(sipx.SIPX_LIBEXECDIR)/openfire-config $1";
 }
 
 bundle edit_line openfire_properties {
@@ -196,4 +220,54 @@ body copy_from local_cp_by_digest(filename) {
   source => "$(filename)";
   compare => "digest";
   purge => "true";
+}
+
+bundle edit_line sipxopenfire_log4j_properties_contents {
+  insert_lines:
+    any::
+      "$(sipx.SIPX_CFDATA)/$(sipx.location_id)/log4j-openfire.properties.part"
+        insert_type => "file";
+	  "log4j.rootLogger=warn, file";
+      "log4j.appender.file=org.sipfoundry.commons.log4j.SipFoundryAppender";
+      "log4j.appender.file.File=$(sipx.OPENFIRE_HOME)/logs/sipxopenfire.log";
+      "log4j.appender.file.layout=org.sipfoundry.commons.log4j.SipFoundryLayout";
+      "log4j.appender.file.layout.facility=sipXopenfire";
+  delete_lines:
+    any::
+      ".*";
+}
+
+bundle edit_line sipxopenfire_log4j_xml_contents {
+  vars:
+    sipxopenfire::
+      "loglevelfile" string => readfile("$(sipx.SIPX_CFDATA)/$(sipx.location_id)/log4j-openfire.properties.part", "100");
+
+  classes:
+    "sipxopenfire" expression => regextract("(.*)=(.*)(\n|\r|\r\n)",
+                                  "$(loglevelfile)",
+                                  "loglevel");
+  replace_patterns:
+    sipxopenfire::
+      "debug|DEBUG" replace_with => loglevel("$(loglevel[2])"),
+                  	select_region => rootSection;
+	  "info|INFO"  	replace_with => loglevel("$(loglevel[2])"),
+			      	select_region => rootSection;
+	  "warn|WARN" 	replace_with => loglevel("$(loglevel[2])"),
+				  	select_region => rootSection;
+	  "error|ERROR" replace_with => loglevel("$(loglevel[2])"),
+					select_region => rootSection;
+	  "fatal|FATAL" replace_with => loglevel("$(loglevel[2])"),
+					select_region => rootSection;
+}
+
+body replace_with loglevel(x)
+{
+  replace_value => "$(x)";
+  occurrences => "all";
+}
+
+body select_region rootSection
+{
+  select_start => "^\s*?<root>\s*?$";
+  select_end => "^\s*?<appender-ref ref=\"debug-out\" />\s*?$";
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
-	"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+	"http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
 <hibernate-mapping package="org.sipfoundry.sipxconfig.dialplan" default-lazy="false">
   <class name="DialPlan" table="dial_plan">
     <id name="id" column="dial_plan_id" type="int" unsaved-value="-1">
@@ -97,6 +97,13 @@
       <property name="attendantAliases" />
       <property name="extension" />
       <property name="did" />
+      <property name="liveAttendant" />
+      <property name="liveAttendantExtension" />
+      <property name="liveAttendantRingFor" />
+      <property name="followUserCallForward" />
+      <property name="liveAttendantCode" />
+      <property name="liveAttendantEnabled" />
+      <property name="liveAttendantExpire" />
       <component name="afterHoursAttendant"
         class="org.sipfoundry.sipxconfig.dialplan.attendant.ScheduledAttendant">
         <many-to-one name="attendant" column="after_hours_attendant_id" class="AutoAttendant"
@@ -108,11 +115,14 @@
         <many-to-one name="attendant" column="holiday_attendant_id" class="AutoAttendant"
           cascade="none" foreign-key="fk_holiday_dates_attendant_dialing_rule" />
         <property name="enabled" column="holiday_attendant_enabled" />
-        <list name="dates" table="holiday_dates">
+        <list name="periods" table="holiday_dates">
           <key column="attendant_dialing_rule_id"
             foreign-key="fk_holiday_dates_attendant_dialing_rule" />
           <index column="position" />
-          <element type="date" column="date" not-null="true" />
+		  <composite-element class="org.sipfoundry.commons.util.HolidayPeriod">
+			<property name="startDate" column="start_date" not-null="true"/>
+			<property name="endDate" column="end_date" not-null="true"/>
+		  </composite-element>
         </list>
       </component>
       <component name="workingTimeAttendant"
@@ -191,5 +201,13 @@
 
   <query name="dialingRulesForScheduleId">
     <![CDATA[from DialingRule dialingRule where dialingRule.schedule.id = :scheduleId]]>
+  </query>
+
+  <query name="aaRulesForCode">
+    <![CDATA[from AttendantRule rule where concat(rule.extension, rule.liveAttendantCode) = :code]]>
+  </query>
+
+  <query name="disabledLiveAaRules">
+    <![CDATA[from AttendantRule rule where rule.liveAttendant = true and rule.liveAttendantEnabled = false]]>
   </query>
 </hibernate-mapping>

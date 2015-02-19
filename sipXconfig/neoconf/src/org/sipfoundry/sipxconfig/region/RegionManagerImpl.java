@@ -23,6 +23,8 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.sipfoundry.sipxconfig.common.UserException;
+import org.sipfoundry.sipxconfig.systemaudit.ConfigChangeAction;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditManager;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -40,6 +42,7 @@ public class RegionManagerImpl implements RegionManager {
         }
     };
     private JdbcTemplate m_db;
+    private SystemAuditManager m_systemAuditManager;
 
     @Override
     public List<Region> getRegions() {
@@ -58,15 +61,29 @@ public class RegionManagerImpl implements RegionManager {
                     nextId, region.getName(), addresses
                 });
                 region.setUniqueId(nextId);
+                m_systemAuditManager.onConfigChangeAction(region,
+                        ConfigChangeAction.ADDED, null, null, null);
             } else {
                 String sql = "update region set name = ?, addresses = ? where region_id = ?";
                 m_db.update(sql, new Object[] {
                     region.getName(), addresses, region.getId()
                 });
+                String[] properties = new String[] {"regionName", "regionAddress"};
+                String[] valuesAfter = new String[] {region.getName(), region.getAddresses().toString()};
+                m_systemAuditManager.onConfigChangeAction(region,
+                        ConfigChangeAction.MODIFIED, properties, null,
+                        valuesAfter);
             }
         } catch (DuplicateKeyException e) {
             throw new UserException(ERROR_NAME_IN_USE, region.getName());
         }
+    }
+
+    @Override
+    public List<Integer> getServersByRegion(int regionId) {
+        String sql = "select location_id from location where region_id=%d";
+        return m_db.queryForList(String.format(sql, regionId), Integer.class);
+
     }
 
     void validateRegion(Region region) {
@@ -96,6 +113,8 @@ public class RegionManagerImpl implements RegionManager {
         m_db.update("delete from region where region_id = ?", new Object[] {
             region.getId()
         });
+        m_systemAuditManager.onConfigChangeAction(region,
+                ConfigChangeAction.DELETED, null, null, null);
     }
 
     public void setConfigJdbcTemplate(JdbcTemplate configJdbcTemplate) {
@@ -106,5 +125,9 @@ public class RegionManagerImpl implements RegionManager {
     public Region getRegion(int id) {
         Region region = m_db.queryForObject("select * from region where region_id = ?", REGION_MAPPER, id);
         return region;
+    }
+
+    public void setSystemAuditManager(SystemAuditManager systemAuditManager) {
+        m_systemAuditManager = systemAuditManager;
     }
 }

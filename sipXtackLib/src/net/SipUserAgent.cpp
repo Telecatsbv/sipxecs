@@ -51,6 +51,11 @@
 #include <os/OsLogger.h>
 #include <os/OsFS.h>
 #include <utl/UtlTokenizer.h>
+#include <boost/lexical_cast.hpp>
+#include <Poco/Semaphore.h>
+
+#include "net/HttpMessage.h"
+#include "net/SipMessage.h"
 
 // EXTERNAL FUNCTIONS
 // EXTERNAL VARIABLES
@@ -64,6 +69,7 @@
 #define MAXIMUM_SIP_LOG_SIZE 100000
 #define SIP_UA_LOG "sipuseragent.log"
 #define CONFIG_LOG_DIR SIPX_LOGDIR
+#define BOOL_ENABLE_MESSAGE_LOGGING TRUE
 
 #ifndef  VENDOR
 # define VENDOR "sipXecs"
@@ -91,7 +97,8 @@
 //#define TRANSACTION_MATCH_DEBUG // enable only for transaction match debugging - log is confusing otherwise
 
 // STATIC VARIABLE INITIALIZATIONS
-
+const int MAX_EVENT_THREAD = 10;
+static Poco::Semaphore gEventSem(MAX_EVENT_THREAD);
 /* //////////////////////////// PUBLIC //////////////////////////////////// */
 
 /* ============================ CREATORS ================================== */
@@ -137,6 +144,7 @@ SipUserAgent::SipUserAgent(int sipTcpPort,
         , mbForceSymmetricSignaling(bForceSymmetricSignaling)
         , mbShuttingDown(FALSE)
         , mbShutdownDone(FALSE)
+        , _maxTransactionCount(0)
 {
    Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
                  "SipUserAgent[%s]::_ sipTcpPort = %d, sipUdpPort = %d, "
@@ -221,6 +229,8 @@ SipUserAgent::SipUserAgent(int sipTcpPort,
 
     mForkingEnabled = TRUE;
     mRecurseOnlyOne300Contact = FALSE;
+    
+    mMessageLogEnabled = FALSE;
 
     mMaxSrvRecords = 4;
     mDnsSrvTimeout = 4; // seconds
@@ -939,8 +949,7 @@ UtlBoolean SipUserAgent::send(SipMessage& message,
          // other than ACK and CANCEL
          else
          {
-            // Should not be getting here
-            Os::Logger::instance().log(FAC_SIP, PRI_WARNING,
+            Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
                           "SipUserAgent::send %s request matches existing transaction",
                           method.data());
 
@@ -1440,6 +1449,75 @@ UtlBoolean SipUserAgent::sendStatelessAck(SipMessage& ackRequest,
     return sendSucceeded;
 }
 
+bool SipUserAgent::relayStatelessAck(SipMessage& request)
+{
+  
+  // Try to get top-most route
+  UtlString routeUri;
+  
+  if (request.getRouteUri(0, &routeUri))
+  {
+    UtlString routeAddress;
+    int routePort;
+    UtlString routeProtocol;
+
+    SipMessage::parseAddressFromUri(routeUri.data(),
+                                    &routeAddress, &routePort, &routeProtocol);
+
+    if (!routeAddress.isNull())
+    {
+      if (routeAddress != mLocalHostAddress && routeAddress != mStaticNATAddress)
+      {
+        //
+        // It doesn't route back to US.  We can relay
+        //  
+        
+        if (routePort <= 0)
+          routePort = 5060;
+        
+        // Decrement max-forwards
+        int maxForwards;
+        if(!request.getMaxForwards(maxForwards))
+        {
+            request.setMaxForwards(getMaxForwards() - 1);
+        }
+        else
+        {
+            request.setMaxForwards(maxForwards - 1);
+        }
+        
+        OS_LOG_INFO(FAC_SIP, "SipUserAgent::relayStatelessAck address=" << routeAddress.data() << ":" << routePort);
+        
+        OsSocket::IpProtocolSocketType protocol = OsSocket::UDP;
+        
+        if (!routeProtocol.isNull())
+          SipMessage::convertProtocolStringToEnum(routeProtocol.data(), protocol);
+        
+        // Send using the correct protocol
+        if(protocol == OsSocket::UDP || protocol == OsSocket::UNKNOWN)
+        {
+           sendUdp(&request, routeAddress.data(), routePort);
+        }
+        else if(protocol == OsSocket::TCP)
+        {
+           sendTcp(&request, routeAddress.data(), routePort);
+        }
+     #ifdef SIP_TLS
+        else if(protocol == OsSocket::SSL_SOCKET)
+        {
+           sendTls(&request, routeAddress.data(), routePort);
+        }
+     #endif
+        
+        return true;
+      }
+    }
+  }
+
+  
+  return false;
+}
+
 UtlBoolean SipUserAgent::sendStatelessRequest(SipMessage& request,
                                               const UtlString& address,
                                               int port,
@@ -1658,6 +1736,48 @@ void SipUserAgent::dispatch(SipMessage* message, int messageType)
        delete message;
        return;
    }
+   
+   bool dontDispatch = false;
+   
+   if (SipMessageEvent::APPLICATION && !message->isResponse())
+   {
+      bool midDialogRequest = true;
+
+      Url fromUrl;
+      Url toUrl;
+      UtlString fromTag;
+      UtlString toTag;
+
+      message->getFromUrl(fromUrl);
+      fromUrl.getFieldParameter("tag", fromTag);
+
+      message->getToUrl(toUrl);
+      toUrl.getFieldParameter("tag", toTag);
+
+      midDialogRequest = (!fromTag.isNull() && !toTag.isNull());
+      
+      if (!midDialogRequest)
+      {
+        //
+        // Don't dispatch if we have too much transactions active
+        //
+        dontDispatch = _maxTransactionCount && mSipTransactions.size() > _maxTransactionCount;
+      }
+      
+      if (!dontDispatch && _preDispatch)
+      {
+        //
+        // Don't dispatch if application pre-dispatch exists and returned false;
+        //
+        dontDispatch = !_preDispatch(message);
+      }
+   }
+   
+   if (dontDispatch)
+   {
+      delete message;
+      return;
+   }
 
    ssize_t len;
    UtlString msgBytes;
@@ -1767,7 +1887,7 @@ void SipUserAgent::dispatch(SipMessage* message, int messageType)
             {
               // If there is more than one Via
               UtlString dummyVia;
-              if (message->getViaField(&dummyVia, 1))
+              if (message->getViaFieldSubField(&dummyVia, 1))
               {
                 UtlBoolean ret = sendStatelessResponse(*message);
                 if (ret)
@@ -1787,6 +1907,32 @@ void SipUserAgent::dispatch(SipMessage* message, int messageType)
          // New transaction for incoming request
          else
          {
+            UtlString method;
+            message->getRequestMethod(&method);
+            
+            if(method.compareTo(SIP_ACK_METHOD) == 0 && relationship != SipTransaction::MESSAGE_2XX_ACK_PROXY)
+            {
+              Os::Logger::instance().log(FAC_SIP, PRI_WARNING,
+                                 "SipUserAgent[%s]::dispatch received ACK without transaction",
+                                 getName().data());
+               
+              int maxForwards;
+
+              // Check the ACK max-forwards has not gone too many hops
+              if(message->getMaxForwards(maxForwards) &&
+                maxForwards <= 0 )
+              {
+                delete message;
+                return;
+              }
+               
+               if (relayStatelessAck(*message))
+               {
+                 delete message;
+                 return;
+               }
+               
+            }
              // Should create a server transaction
             transaction = new SipTransaction(message, FALSE /* incoming */, isUaTransaction);
 
@@ -1794,8 +1940,7 @@ void SipUserAgent::dispatch(SipMessage* message, int messageType)
             transaction->markBusy();
             mSipTransactions.addTransaction(transaction);
 
-            UtlString method;
-            message->getRequestMethod(&method);
+            
 
             if(method.compareTo(SIP_ACK_METHOD) == 0)
             {
@@ -1999,6 +2144,12 @@ void SipUserAgent::dispatch(SipMessage* message, int messageType)
             int maxForwards;
 
             message->getRequestMethod(&method);
+            
+            //
+            // Set the transaction count property
+            //
+            message->setProperty("transaction-count", boost::lexical_cast<std::string>(mSipTransactions.size()));
+            
             if(isUaTransaction)
             {
                getAllowedMethods(&allowedMethods);
@@ -2589,11 +2740,12 @@ UtlBoolean checkExtensions(SipMessage* message)
         return(TRUE);
 }
 
-
-UtlBoolean SipUserAgent::handleMessage(OsMsg& eventMessage)
+void SipUserAgent::handleThreadedMessage(OsMsg* pMsg)
 {
-   UtlBoolean messageProcessed = FALSE;
-   //osPrintf("SipUserAgent: handling message\n");
+  OsMsg& eventMessage = *pMsg;
+  UtlBoolean messageProcessed = FALSE;
+  
+  //osPrintf("SipUserAgent: handling message\n");
    int msgType = eventMessage.getMsgType();
    int msgSubType = eventMessage.getMsgSubType();
    // Print message if input queue to SipUserAgent exceeds 100.
@@ -2674,7 +2826,7 @@ UtlBoolean SipUserAgent::handleMessage(OsMsg& eventMessage)
       {
          const SipMessage* sipMessage = sipEvent->getMessage();
          int msgEventType = sipEvent->getMessageStatus();
-
+         
          // Resend timeout
          if(msgEventType == SipMessageEvent::TRANSACTION_RESEND)
          {
@@ -2714,7 +2866,8 @@ UtlBoolean SipUserAgent::handleMessage(OsMsg& eventMessage)
 #           endif
                SipTransaction* transaction = mSipTransactions.findTransactionFor(*sipMessage,
                                                                                  TRUE, // timers are only set for outgoing messages I think
-                                                                                 relationship);
+                                                                                 relationship,
+                                                                                  true /* Perform garbage collection */);
                if (transaction)
                {
 #ifdef TRANSACTION_MATCH_DEBUG // enable only for transaction match debugging - log is confusing otherwise
@@ -2983,8 +3136,25 @@ UtlBoolean SipUserAgent::handleMessage(OsMsg& eventMessage)
       garbageCollection();
    }
 #endif
+   gEventSem.set();
+   
+   delete pMsg;
+}
 
-   return(messageProcessed);
+UtlBoolean SipUserAgent::handleMessage(OsMsg& eventMessage)
+{
+  gEventSem.wait();
+  OsMsg* pMsg = eventMessage.createCopy();
+  if (!_threadPool.schedule(boost::bind(&SipUserAgent::handleThreadedMessage, this, _1), pMsg))
+  {
+    delete pMsg;
+    return FALSE;
+  }
+  
+  //
+  // pMsg is owned by the thread
+  //
+  return TRUE;
 }
 
 void SipUserAgent::garbageCollection()
@@ -2992,8 +3162,8 @@ void SipUserAgent::garbageCollection()
     OsTime time;
     OsDateTime::getCurTimeSinceBoot(time);
     long bootime = time.seconds();
-
-    long then = bootime - (mTransactionStateTimeoutMs / 1000);
+    long delay = (mTransactionStateTimeoutMs / 1000);
+    long then = bootime - delay;
     long tcpThen = bootime - mMaxTcpSocketIdleTime;
     long oldTransaction = then - (mTransactionStateTimeoutMs / 1000);
     long oldInviteTransaction = then - mMinInviteTransactionTimeout;
@@ -3005,59 +3175,58 @@ void SipUserAgent::garbageCollection()
         tcpThen = -1;
     }
 
-    if(mLastCleanUpTime < then && getMessageQueue()->isEmpty())      // tx timeout could have happened
-    {
-       Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                    "SipUserAgent[%s]::garbageCollection reaping terminated transactions.",
-                    getName().data());
 
+    Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
+                 "SipUserAgent[%s]::garbageCollection reaping terminated transactions. Message Queue size %d",
+                 getName().data(), getMessageQueue()->numMsgs());
+
+    #ifdef LOG_TIME
+       Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
+                     "SipUserAgent[%s]::garbageCollection"
+                     " bootime: %ld then: %ld tcpThen: %ld"
+                     " oldTransaction: %ld oldInviteTransaction: %ld",
+                     getName().data(),
+                     bootime, then, tcpThen, oldTransaction,
+                     oldInviteTransaction);
+       #endif
+    mSipTransactions.removeOldTransactions(oldTransaction,
+                                           oldInviteTransaction);
+    if (mSipUdpServer)
+    {
        #ifdef LOG_TIME
           Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                        "SipUserAgent[%s]::garbageCollection"
-                        " bootime: %ld then: %ld tcpThen: %ld"
-                        " oldTransaction: %ld oldInviteTransaction: %ld",
-                        getName().data(),
-                        bootime, then, tcpThen, oldTransaction,
-                        oldInviteTransaction);
-          #endif
-       mSipTransactions.removeOldTransactions(oldTransaction,
-                                              oldInviteTransaction);
-       if (mSipUdpServer)
-       {
-          #ifdef LOG_TIME
-             Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                           "SipUserAgent[%s]::garbageCollection starting removeOldClients(udp)",
-                           getName().data());
-          #endif
-          mSipUdpServer->removeOldClients(then);
-       }
-       if (mSipTcpServer)
-       {
-          #ifdef LOG_TIME
-             Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                           "SipUserAgent[%s]::garbageCollection starting removeOldClients(tcp)",
-                           getName().data());
-          #endif
-          mSipTcpServer->removeOldClients(tcpThen);
-       }
-       #ifdef SIP_TLS
-          if (mSipTlsServer)
-          {
-             #ifdef LOG_TIME
-                Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                              "SipUserAgent[%s]::garbageCollection starting removeOldClients(tls)",
-                              getName().data());
-             #endif
-             mSipTlsServer->removeOldClients(tcpThen);
-          }
-       #endif // SIP_TLS
-       #ifdef LOG_TIME
-          Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                        "SipUserAgent[%s]::garbageCollection done",
+                        "SipUserAgent[%s]::garbageCollection starting removeOldClients(udp)",
                         getName().data());
        #endif
-       mLastCleanUpTime = bootime;
+       mSipUdpServer->removeOldClients(then);
     }
+    if (mSipTcpServer)
+    {
+       #ifdef LOG_TIME
+          Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
+                        "SipUserAgent[%s]::garbageCollection starting removeOldClients(tcp)",
+                        getName().data());
+       #endif
+       mSipTcpServer->removeOldClients(tcpThen);
+    }
+    #ifdef SIP_TLS
+       if (mSipTlsServer)
+       {
+          #ifdef LOG_TIME
+             Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
+                           "SipUserAgent[%s]::garbageCollection starting removeOldClients(tls)",
+                           getName().data());
+          #endif
+          mSipTlsServer->removeOldClients(tcpThen);
+       }
+    #endif // SIP_TLS
+    #ifdef LOG_TIME
+       Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
+                     "SipUserAgent[%s]::garbageCollection done",
+                     getName().data());
+    #endif
+    mLastCleanUpTime = bootime;
+
 }
 
 /* ============================ ACCESSORS ================================= */
@@ -3880,7 +4049,7 @@ void SipUserAgent::whichExtensionsNotAllowed(const SipMessage* message,
 
 UtlBoolean SipUserAgent::isMessageLoggingEnabled()
 {
-    return(mMessageLogEnabled);
+    return(BOOL_ENABLE_MESSAGE_LOGGING);
 }
 
 UtlBoolean SipUserAgent::isForkingEnabled()
@@ -4174,6 +4343,13 @@ UtlBoolean SipUserAgent::doesMaddrMatchesUserAgent(SipMessage& message)
 
    return bMatch;
 }
+
+void SipUserAgent::onFinalResponse(SipTransaction* pTransaction, const SipMessage& request, SipMessage& finalResponse)
+{
+  if (_finalResponseHandler)
+    _finalResponseHandler(pTransaction, request, finalResponse);
+}
+
 
 /* //////////////////////////// PRIVATE /////////////////////////////////// */
 

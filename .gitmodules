@@ -85,6 +85,9 @@
 [submodule "sipXyealink"]
 	path = sipXyealink
 	url = git@gitlab.telecats.nl:sipxecs/sipxyealink.git
+[submodule "sipXtcyealink"]
+	path = sipXtcyealink
+	url = git@gitlab.telecats.nl:sipxecs/sipxyealink.git
 [submodule "sipXtcExample"]
 	path = sipXtcExample
 	url = git@gitlab.telecats.nl:sipxecs/sipxtcexample.git
@@ -99,7 +102,7 @@
 	url = git@gitlab.telecats.nl:sipxecs/sipxrandomgroupdial.git
 [submodule "sipXtcCustomCallerId"]
 	path = sipXtcCustomCallerId
-	url = git@gitlab.telecats.nl:sipxecs/sipxrandomgroupdial.git
+	url = git@gitlab.telecats.nl:sipxecs/sipxtccustomcallerid.git
 [submodule "sipXtcDhcp"]
 	path = sipXtcDhcp
 	url = git@gitlab.telecats.nl:sipxecs/sipxtcdhcp.git
@@ -118,3 +121,9 @@
 [submodule "sipXhotprovisioning"]
 	path = sipXhotprovisioning
 	url = git@gitlab.telecats.nl:sipxecs/sipxhotprovisioning.git
+[submodule "sipXresiprocate"]
+	path = sipXresiprocate
+	url = git://github.com/SIPfoundry/resiprocate.git
+[submodule "freeswitch_edge"]
+	path = freeswitch_edge
+	url = git://github.com/SIPfoundry/freeswitch.git

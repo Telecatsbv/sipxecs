@@ -29,6 +29,7 @@ import org.sipfoundry.sipxconfig.address.AddressType;
 import org.sipfoundry.sipxconfig.backup.ArchiveDefinition;
 import org.sipfoundry.sipxconfig.backup.ArchiveProvider;
 import org.sipfoundry.sipxconfig.backup.BackupManager;
+import org.sipfoundry.sipxconfig.backup.BackupPlan;
 import org.sipfoundry.sipxconfig.backup.BackupSettings;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigManager;
 import org.sipfoundry.sipxconfig.commserver.Location;
@@ -246,13 +247,13 @@ public class IvrImpl implements FeatureProvider, AddressProvider, Ivr, ProcessPr
 
     @Override
     public Collection<ArchiveDefinition> getArchiveDefinitions(BackupManager manager, Location location,
-            BackupSettings settings) {
+            BackupPlan plan, BackupSettings settings) {
         if (!manager.getFeatureManager().isFeatureEnabled(FEATURE, location)) {
             return null;
         }
 
-        String script = "$(sipx.SIPX_BINDIR)/" + m_archiveScript;
-        ArchiveDefinition def = new ArchiveDefinition(ARCHIVE, script + " --backup %s", script + " --restore %s");
+        ArchiveDefinition def = new ArchiveDefinition(ARCHIVE, m_archiveScript + " --backup %s",
+            m_archiveScript + " --restore %s");
         return Collections.singleton(def);
     }
 

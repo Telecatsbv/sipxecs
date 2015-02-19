@@ -26,6 +26,10 @@
 #include <os/OsQueuedEvent.h>
 #include <net/SipOutputProcessor.h>
 #include <net/SipInputProcessor.h>
+#include "os/OsThreadPool.h"
+#include <Poco/Semaphore.h>
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
 
 // DEFINES
 #define SIP_DEFAULT_RTT     100 // Default T1 value (RFC 3261), in msec.
@@ -167,6 +171,9 @@ public:
     friend class SipUdpServer;
     friend int SipUdpServer::run(void* runArg);
 
+    typedef boost::function<bool(SipMessage*)> DispatchEvaluator;
+    typedef boost::function<void(SipTransaction*, const SipMessage&, SipMessage&)> FinalResponseHandler;
+    
     enum EventSubTypes
     {
         UNSPECIFIED = 0,
@@ -296,6 +303,8 @@ public:
 
     //! For internal use only
     virtual UtlBoolean handleMessage(OsMsg& eventMessage);
+    
+    void handleThreadedMessage(OsMsg* pMsg);
 
     //! Deprecated (Add a SIP message recipient)
     virtual void addMessageConsumer(OsServerTask* messageConsumer);
@@ -685,6 +694,8 @@ public:
                                 UtlString& address,
                                 int port,
                                 OsSocket::IpProtocolSocketType protocol);
+    
+    bool relayStatelessAck(SipMessage& request);
 
     /** Send a UDP message symmetrically, that is, so the source port is
      *  the SipUserAgent's UDP listening port. */
@@ -692,6 +703,22 @@ public:
                                 const char* serverAddress, ///< destination address
                                 int port                   ///< destination port
        );
+
+    void setStaticNATAddress(const UtlString& address);
+
+    const UtlString& getStaticNATAddress() const;
+    
+    void setMaxTransactionCount(int maxTransactionCount);
+    
+    int getMaxTransactionCount() const;
+    
+    void setPreDispatchEvaluator(const DispatchEvaluator& preDispatch);
+    
+    void setFinalResponseHandler(const FinalResponseHandler& finalResponseHandler);
+
+    const SipTransactionList& getSipTransactions() const;
+    
+    void onFinalResponse(SipTransaction* pTransaction, const SipMessage& request, SipMessage& finalResponse);
 
 /* //////////////////////////// PROTECTED ///////////////////////////////// */
 protected:
@@ -752,6 +779,8 @@ protected:
     void setInviteTransactionTimeoutSeconds(int expiresSeconds);
 
     void garbageCollection();
+    
+    
 /* //////////////////////////// PRIVATE /////////////////////////////////// */
 private:
 
@@ -786,6 +815,7 @@ private:
     OsRWMutex mSipInputProcessorMutex;
     // The local address and port.
     UtlString mLocalHostAddress;
+    UtlString mStaticNATAddress;
     int mLocalUdpHostPort;
     int mLocalTcpHostPort;
     int mLocalTlsHostPort;
@@ -857,6 +887,13 @@ private:
     //! flags used during shutdown
     UtlBoolean mbShuttingDown;
     UtlBoolean mbShutdownDone;
+    
+    OsThreadPool<OsMsg*> _threadPool;
+    Poco::Semaphore* _pThreadPoolSem;
+    int _maxConcurrentThreads;
+    int _maxTransactionCount;
+    DispatchEvaluator _preDispatch;
+    FinalResponseHandler _finalResponseHandler;
 
     //! Disabled copy constructor
     SipUserAgent(const SipUserAgent& rSipUserAgent);
@@ -868,5 +905,41 @@ private:
 };
 
 /* ============================ INLINE METHODS ============================ */
+
+inline void SipUserAgent::setStaticNATAddress(const UtlString& address)
+{
+  mStaticNATAddress = address;
+}
+
+inline const UtlString& SipUserAgent::getStaticNATAddress() const
+{
+  return mStaticNATAddress;
+}
+
+inline void SipUserAgent::setMaxTransactionCount(int maxTransactionCount)
+{
+  _maxTransactionCount = maxTransactionCount;
+}
+    
+inline int SipUserAgent::getMaxTransactionCount() const
+{
+  return _maxTransactionCount;
+}
+
+inline const SipTransactionList& SipUserAgent::getSipTransactions() const
+{
+  return mSipTransactions;
+}
+
+inline void SipUserAgent::setPreDispatchEvaluator(const DispatchEvaluator& preDispatch)
+{
+  _preDispatch = preDispatch;
+}
+
+inline void SipUserAgent::setFinalResponseHandler(const FinalResponseHandler& finalResponseHandler)
+{
+  _finalResponseHandler = finalResponseHandler;
+}
+
 
 #endif  // _SipUserAgent_h_

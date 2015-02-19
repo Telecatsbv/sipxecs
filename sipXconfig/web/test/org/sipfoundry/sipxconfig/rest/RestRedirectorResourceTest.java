@@ -10,21 +10,26 @@ import java.util.List;
 import junit.framework.TestCase;
 
 import org.apache.axis.utils.ByteArrayOutputStream;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.restlet.data.ChallengeResponse;
 import org.restlet.data.MediaType;
 import org.restlet.data.Reference;
 import org.restlet.data.Request;
+import org.restlet.data.Status;
 import org.restlet.resource.Representation;
+import org.restlet.resource.ResourceException;
 import org.restlet.resource.Variant;
 import org.sipfoundry.sipxconfig.address.Address;
 import org.sipfoundry.sipxconfig.address.AddressManager;
 import org.sipfoundry.sipxconfig.common.CoreContext;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.ivr.Ivr;
+import org.sipfoundry.sipxconfig.permission.PermissionManager;
 import org.sipfoundry.sipxconfig.rest.RestRedirectorResource.HttpInvoker;
 import org.sipfoundry.sipxconfig.restserver.RestServer;
 import org.sipfoundry.sipxconfig.security.TestAuthenticationToken;
+import org.sipfoundry.sipxconfig.test.TestHelper;
 import org.sipfoundry.sipxconfig.vm.MailboxManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -42,6 +47,11 @@ public class RestRedirectorResourceTest extends TestCase {
         m_user.setUserName("200");
         m_user.setFirstName("John");
         m_user.setLastName("Doe");
+        PermissionManager pManager = createMock(PermissionManager.class);
+        pManager.getPermissionModel();
+        expectLastCall().andReturn(TestHelper.loadSettings("commserver/user-settings.xml")).anyTimes();
+        replay(pManager);
+        m_user.setPermissionManager(pManager);
 
         Authentication token = new TestAuthenticationToken(m_user, false, false).authenticateToken();
         SecurityContextHolder.getContext().setAuthentication(token);
@@ -77,6 +87,32 @@ public class RestRedirectorResourceTest extends TestCase {
         represent("http://host.example.com:6667", "http://host.example.com:6666/cdr/200", RestRedirectorResource.CDR, "<cdr></cdr>".getBytes());
     }
 
+    public void testRepresentNothing() throws Exception {
+        genericNotFoundTest("");
+    }
+
+    public void testRepresentUnknown() throws Exception {
+        genericNotFoundTest("/idonotexist");
+    }
+
+    private void genericNotFoundTest(String res) throws ResourceException {
+        HttpInvoker invoker = createMock(HttpInvoker.class);
+        RestRedirectorResource resource = createResource(invoker, "");
+        invoker.invokeGet("http://host.example.com/my/redirect" + res);
+        Object unimportantRespones = new byte[0];
+        expectLastCall().andReturn(unimportantRespones).once();
+        replay(invoker);
+
+        Status reStatus = null;
+        try {
+            resource.represent(new Variant(MediaType.ALL));
+        } catch (ResourceException re) {
+            reStatus = re.getStatus();
+        }
+
+        assertEquals(Status.CLIENT_ERROR_NOT_FOUND, reStatus);
+    }
+
     public void testPost() throws Exception {
         post("http://host.example.com:6667", "http://host.example.com:6666/callcontroller/200/201", RestRedirectorResource.CALLCONTROLLER);
     }
@@ -99,10 +135,16 @@ public class RestRedirectorResourceTest extends TestCase {
         RestRedirectorResource resource = createResource(invoker, resIdentifier);
 
         Representation representation = resource.represent(new Variant(MediaType.ALL));
-        ByteArrayOutputStream writer = new ByteArrayOutputStream();
-        representation.write(writer);
-        byte[] generated = writer.toByteArray();
-        assertEquals(new String(result), new String(generated));
+        ByteArrayOutputStream writer = null;
+        try {
+            writer = new ByteArrayOutputStream();
+            representation.write(writer);
+            byte[] generated = writer.toByteArray();
+
+            assertEquals(new String(result), new String(generated));
+        } finally {
+            IOUtils.closeQuietly(writer);
+        }
     }
 
     private void post(String address, String resIdentifier, String resourceType) throws Exception{
@@ -120,7 +162,7 @@ public class RestRedirectorResourceTest extends TestCase {
     private void put(String address, String resIdentifier, String resourceType) throws Exception{
         HttpInvoker invoker = createMock(HttpInvoker.class);
         String uri = StringUtils.substringAfter(resIdentifier, resourceType);
-        invoker.invokePut(address + resourceType + uri);
+        invoker.invokePut(address + resourceType + uri, null);
         expectLastCall().once();
         replay(invoker);
 

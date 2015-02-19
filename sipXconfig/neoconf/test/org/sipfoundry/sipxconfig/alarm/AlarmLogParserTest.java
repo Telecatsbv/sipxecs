@@ -23,30 +23,42 @@ import java.util.Map;
 
 import org.junit.Test;
 
+@SuppressWarnings("static-method")
 public class AlarmLogParserTest {
-    
+
     @Test
     public void decode() {
         AlarmLogParser parser = new AlarmLogParser();
         assertEquals("lion", parser.decodeValue("= STRING: lion"));
         assertEquals("lion sleeps tonight", parser.decodeValue("= STRING: \"lion sleeps tonight\""));
-    }    
-    
+        assertEquals("lion sleeps: tonight", parser.decodeValue("= STRING: \"lion sleeps: tonight\""));
+        assertEquals("lion sleeps:: tonight", parser.decodeValue("= STRING: \"lion sleeps:: tonight\""));
+        assertEquals(":lion sleeps:: tonight", parser.decodeValue("= STRING: \":lion sleeps:: tonight\""));
+    }
+
     @Test
-    public void parseFields() throws IOException {
+    public void parseFields() {
         AlarmLogParser parser = new AlarmLogParser();
         Map<String, String> actual = parser.parseFields("bird", "cat::species = STRING: lion bird::species = STRING: goose bird::color = STRING: gray");
         assertEquals(2, actual.size());
         assertEquals("goose", actual.get("species"));
         assertEquals("gray", actual.get("color"));
     }
-    
+
+    @Test
+    public void parseFieldsWithSpecialChars() {
+        AlarmLogParser parser = new AlarmLogParser();
+        Map<String, String> actual = parser.parseFields("bird", "cat::species = STRING: lion bird::species = STRING: goose:xxx bird::color = STRING: gray: xxx");
+        assertEquals("goose:xxx", actual.get("species"));
+        assertEquals("gray: xxx", actual.get("color"));
+    }
+
     @Test
     public void parse() throws IOException {
         AlarmLogParser parser = new AlarmLogParser();
         List<AlarmEvent> events = parser.parse(null, null, 0, 10, getClass().getResourceAsStream("alarm.test.log"));
         assertEquals(2, events.size());
         AlarmEvent[] actual = events.toArray(new AlarmEvent[0]);
-        assertNotNull(actual[0].getDate());       
+        assertNotNull(actual[0].getDate());
     }
 }

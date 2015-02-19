@@ -27,8 +27,9 @@ import org.sipfoundry.sipxconfig.commserver.imdb.AliasMapping;
 import org.sipfoundry.sipxconfig.commserver.imdb.DataSet;
 import org.sipfoundry.sipxconfig.dialplan.ForkQueueValue;
 import org.sipfoundry.sipxconfig.dialplan.MappingRule;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
-public class CallGroup extends AbstractCallSequence implements Replicable {
+public class CallGroup extends AbstractCallSequence implements Replicable, SystemAuditable {
     private static final int SIP_PASSWORD_LEN = 10;
     private static final String ALIAS_RELATION = "callgroup";
     private boolean m_enabled;
@@ -40,6 +41,8 @@ public class CallGroup extends AbstractCallSequence implements Replicable {
     private boolean m_voicemailFallback = true;
     private boolean m_userForward = true;
     private String m_sipPassword;
+    private boolean m_useFwdTimers;
+    private Integer m_fallbackExpire = AbstractRing.DEFAULT_EXPIRATION;
 
     public CallGroup() {
         generateSipPassword();
@@ -120,12 +123,28 @@ public class CallGroup extends AbstractCallSequence implements Replicable {
         m_userForward = userForward;
     }
 
+    public boolean getUseFwdTimers() {
+        return m_useFwdTimers;
+    }
+
+    public void setUseFwdTimers(boolean useFwdTimers) {
+        m_useFwdTimers = useFwdTimers;
+    }
+
     public String getSipPassword() {
         return m_sipPassword;
     }
 
     public void setSipPassword(String sipPassword) {
         m_sipPassword = sipPassword;
+    }
+
+    public Integer getFallbackExpire() {
+        return m_fallbackExpire;
+    }
+
+    public void setFallbackExpire(Integer expire) {
+        m_fallbackExpire = expire;
     }
 
     /**
@@ -159,12 +178,13 @@ public class CallGroup extends AbstractCallSequence implements Replicable {
      */
     public List<AliasMapping> getAliasMappings(String domainName) {
         if (!isEnabled()) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         String myIdentity = AliasMapping.createUri(m_name, domainName);
 
         ForkQueueValue forkQueueValue = new ForkQueueValue(getRings().size() + 1);
-        List<AliasMapping> mappings = generateAliases(m_name, domainName, true, m_userForward, forkQueueValue);
+        List<AliasMapping> mappings = generateAliases(m_name, m_extension, domainName, true,
+                m_userForward, forkQueueValue);
 
         if (m_voicemailFallback) {
             AbstractRing lastRing = getLastRing();
@@ -174,24 +194,23 @@ public class CallGroup extends AbstractCallSequence implements Replicable {
                     // decrement q so that VM contact has lower q than the last contact
                     forkQueueValue.getSerial();
                 }
-                String vmailContact = lastRing.calculateContact(domainName, forkQueueValue, false, m_userForward,
+                String vmailContact = lastRing.calculateContact(domainName, null, forkQueueValue, false, m_userForward,
                         MappingRule.Voicemail.VM_PREFIX);
                 mappings.add(new AliasMapping(m_name, vmailContact, ALIAS_RELATION));
             }
         } else if (StringUtils.isNotBlank(m_fallbackDestination)) {
             String falback = SipUri.fix(m_fallbackDestination, domainName);
-            String fallbackContact = String.format("<%s>;%s", falback, forkQueueValue.getSerial());
+            String fallbackContact = String.format("<%s?expires=%s>;%s", falback, m_fallbackExpire,
+                    forkQueueValue.getSerial());
             mappings.add(new AliasMapping(m_name, fallbackContact, ALIAS_RELATION));
         }
 
         if (StringUtils.isNotBlank(m_extension) && !m_extension.equals(m_name)) {
-            AliasMapping extensionAlias = new AliasMapping(m_extension,
-                    myIdentity, ALIAS_RELATION);
+            AliasMapping extensionAlias = new AliasMapping(m_extension, myIdentity, ALIAS_RELATION);
             mappings.add(extensionAlias);
         }
         if (StringUtils.isNotBlank(m_did) && !m_did.equals(m_name)) {
-            AliasMapping didAlias = new AliasMapping(m_did, myIdentity,
-                    ALIAS_RELATION);
+            AliasMapping didAlias = new AliasMapping(m_did, myIdentity, ALIAS_RELATION);
             mappings.add(didAlias);
         }
 
@@ -245,11 +264,42 @@ public class CallGroup extends AbstractCallSequence implements Replicable {
 
     @Override
     public Map<String, Object> getMongoProperties(String domain) {
-        return Collections.EMPTY_MAP;
+        return Collections.emptyMap();
     }
 
     @Override
     public String getEntityName() {
         return getClass().getSimpleName();
+    }
+
+    /**
+     * CallGroup entity must be replicated only when m_enabled is set to true
+     */
+    @Override
+    public boolean isReplicationEnabled() {
+        return isEnabled();
+    }
+
+    @Override
+    public List<AbstractRing> getRings() {
+        List<AbstractRing> rings = super.getRings();
+        if (m_userForward && m_useFwdTimers) {
+            for (AbstractRing ring : rings) {
+                if (ring instanceof UserRing) {
+                    ring.setExpiration(((UserRing) ring).getUser().getEffectiveExpire());
+                }
+            }
+        }
+        return rings;
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getName();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return CallGroup.class.getSimpleName();
     }
 }

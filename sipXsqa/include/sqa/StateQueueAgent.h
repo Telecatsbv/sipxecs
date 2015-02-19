@@ -17,7 +17,7 @@
 #define STATEQUEUEAGENT_H_INCLUDED
 
 
-#include "ServiceOptions.h"
+#include <os/OsServiceOptions.h>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/asio.hpp>
@@ -30,14 +30,13 @@
 #include "StateQueueMessage.h"
 #include "StateQueueListener.h"
 #include "zmq.hpp"
-#include "sipdb/MongoOpLog.h"
 #include "RedisClientAsync.h"
 
 
 class StateQueueAgent : boost::noncopyable
 {
 public:
-  StateQueueAgent(ServiceOptions& options);
+  StateQueueAgent(OsServiceOptions& options);
   ~StateQueueAgent();
   void run();
   void stop();
@@ -111,7 +110,7 @@ public:
   
   void onQueueTimeout(const std::string& id, const boost::any& data);
 
-  ServiceOptions& options();
+  OsServiceOptions& options();
   StateQueueListener& listener();
   int& inactivityThreshold();
   
@@ -125,7 +124,7 @@ protected:
   void onRedisWatcherConnect(int status);
   void onRedisWatcherDisconnect(int status);
 
-  ServiceOptions& _options;
+  OsServiceOptions& _options;
   boost::thread* _pIoServiceThread;
   boost::asio::io_service _ioService;
   TimedQueue _cache;
@@ -145,7 +144,12 @@ protected:
 //
 // Inlines
 //
-inline ServiceOptions& StateQueueAgent::options()
+//inline const char* StateQueueAgent::getClassName()
+//{
+//  return "StateQueueAgent";
+//}
+
+inline OsServiceOptions& StateQueueAgent::options()
 {
   return _options;
 }

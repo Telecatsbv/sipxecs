@@ -3,7 +3,10 @@
 <autoattendants xmlns="http://www.sipfoundry.org/sipX/schema/xml/autoattendants-00-00">
   <autoattendant id="operator">
     <name>operator</name>
+    <lang>default</lang>
     <prompt>prompts/operator.wav</prompt>
+    <allowDial></allowDial>
+    <denyDial></denyDial>
     <menuItems>
       <menuItem>
         <dialPad>#</dialPad>
@@ -35,10 +38,16 @@
       <invalidResponseCount>2</invalidResponseCount>
       <transferOnFailures>false</transferOnFailures>
     </invalidResponse>
+    <onTransfer>
+      <play-prompt>true</play-prompt>
+    </onTransfer>
   </autoattendant>
   <autoattendant id="xcf-1" special="true">
     <name>abc</name>
+    <lang>en</lang>
     <prompt>prompts/prompt.wav</prompt>
+    <allowDial>2[5-9][0-9]|3[0-4][0-9]|350</allowDial>
+    <denyDial>345</denyDial>
     <menuItems>
       <menuItem>
         <dialPad>0</dialPad>
@@ -68,6 +77,9 @@
       <transferUrl>sip:999@example.org</transferUrl>
       <transferPrompt>prompts/test.wav</transferPrompt>
     </invalidResponse>
+    <onTransfer>
+      <play-prompt>true</play-prompt>
+    </onTransfer>
   </autoattendant>
   <schedules/>
 </autoattendants>

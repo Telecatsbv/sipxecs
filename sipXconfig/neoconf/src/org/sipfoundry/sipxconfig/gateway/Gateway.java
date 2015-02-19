@@ -31,11 +31,12 @@ import org.sipfoundry.sipxconfig.dialplan.DialPlanContext;
 import org.sipfoundry.sipxconfig.feature.Feature;
 import org.sipfoundry.sipxconfig.sbc.SbcDevice;
 import org.sipfoundry.sipxconfig.setting.Setting;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
 /**
  * Gateway
  */
-public class Gateway extends Device implements Replicable, DeployConfigOnEdit {
+public class Gateway extends Device implements Replicable, DeployConfigOnEdit, SystemAuditable {
     public static final String LINEID = ";sipxecs-lineid=";
     public static final String UID = "~~gw";
     private String m_name;
@@ -124,10 +125,12 @@ public class Gateway extends Device implements Replicable, DeployConfigOnEdit {
         m_addressTransport = addressTransport;
     }
 
+    @Override
     public String getName() {
         return m_name;
     }
 
+    @Override
     public void setName(String name) {
         m_name = name;
     }
@@ -345,7 +348,7 @@ public class Gateway extends Device implements Replicable, DeployConfigOnEdit {
 
     @Override
     public Collection<AliasMapping> getAliasMappings(String domain) {
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 
     @Override
@@ -370,11 +373,31 @@ public class Gateway extends Device implements Replicable, DeployConfigOnEdit {
 
     @Override
     public Collection<Feature> getAffectedFeaturesOnChange() {
-        return Collections.singleton((Feature) DialPlanContext.FEATURE);
+        List<Feature> features = new ArrayList<Feature>();
+        features.add(DialPlanContext.FEATURE);
+        return features;
     }
 
     @Override
     public String getEntityName() {
         return getClass().getSimpleName();
+    }
+
+    /**
+     * Gateway entity must be replicated only when m_enabled is set to true
+     */
+    @Override
+    public boolean isReplicationEnabled() {
+        return isEnabled();
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getName();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return Gateway.class.getSimpleName();
     }
 }

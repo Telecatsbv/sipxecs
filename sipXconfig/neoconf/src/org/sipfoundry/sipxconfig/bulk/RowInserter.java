@@ -15,7 +15,6 @@ import org.apache.commons.collections.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.sipfoundry.sipxconfig.bulk.csv.CsvRowInserter;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.job.JobContext;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
@@ -26,15 +25,19 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
 public abstract class RowInserter<T> extends HibernateDaoSupport implements Closure {
+    private static final Log LOG = LogFactory.getLog(RowInserter.class);
+
     public enum RowStatus {
         FAILURE, SUCCESS, WARNING_PIN_RESET, WARNING_ALIAS_COLLISION;
     }
 
-    public static final Log LOG = LogFactory.getLog(CsvRowInserter.class);
-
     private JobContext m_jobContext;
 
     private PlatformTransactionManager m_transactionManager;
+
+    protected Log getLog() {
+        return LOG;
+    }
 
     public void setJobContext(JobContext jobContext) {
         m_jobContext = jobContext;
@@ -118,7 +121,8 @@ public abstract class RowInserter<T> extends HibernateDaoSupport implements Clos
 
         protected void doInTransactionWithoutResult(TransactionStatus status_) {
             m_jobContext.start(m_id);
-            switch (checkRowData(m_input).getRowStatus()) {
+            RowResult result = checkRowData(m_input);
+            switch (result.getRowStatus()) {
             case SUCCESS:
                 insertRow(m_input);
                 m_jobContext.success(m_id);
@@ -126,23 +130,23 @@ public abstract class RowInserter<T> extends HibernateDaoSupport implements Clos
                 break;
             case FAILURE:
                 String errorMessage = "Invalid data format when importing: " + dataToString(m_input);
-                String wrongData = checkRowData(m_input).getErrorMessage();
+                String wrongData = result.getErrorMessage();
                 if (StringUtils.isNotBlank(wrongData)) {
                     errorMessage += " - unsupported value: " + wrongData;
                 }
-                LOG.warn(errorMessage);
+                getLog().warn(errorMessage);
                 m_jobContext.failure(m_id, errorMessage, null);
                 break;
             case WARNING_PIN_RESET:
                 insertRow(m_input);
                 String warnMessage = "Unable to import Voicemail PIN: PIN has been reset.";
-                LOG.warn(warnMessage);
+                getLog().warn(warnMessage);
                 m_jobContext.warning(m_id, warnMessage);
                 break;
             case WARNING_ALIAS_COLLISION:
                 insertRow(m_input);
                 warnMessage = "Alias collision - skip alias for: " + dataToString(m_input);
-                LOG.warn(warnMessage);
+                getLog().warn(warnMessage);
                 m_jobContext.warning(m_id, warnMessage);
                 afterInsert();
                 break;

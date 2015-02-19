@@ -26,8 +26,9 @@ import org.sipfoundry.sipxconfig.setting.BeanWithSettings;
 import org.sipfoundry.sipxconfig.setting.Setting;
 import org.sipfoundry.sipxconfig.setting.type.FileSetting;
 import org.sipfoundry.sipxconfig.setting.type.SettingType;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
-public class Bridge extends BeanWithSettings implements DeployConfigOnEdit {
+public class Bridge extends BeanWithSettings implements DeployConfigOnEdit, SystemAuditable {
     public static final String BEAN_NAME = "conferenceBridge";
     public static final String PROMPTS_DEFAULT = "stdprompts";
     public static final String CONFERENCE = "conf";
@@ -156,5 +157,15 @@ public class Bridge extends BeanWithSettings implements DeployConfigOnEdit {
 
     public void setLocation(Location location) {
         m_location = location;
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getName();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return Conference.class.getSimpleName();
     }
 }

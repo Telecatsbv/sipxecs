@@ -44,6 +44,7 @@
 #include <net/HttpConnectionMap.h>
 #include <net/Url.h>
 #include <net/Instrumentation.h>
+#include <os/OsStunQueryAgent.h>
 
 
 // EXTERNAL FUNCTIONS
@@ -86,6 +87,7 @@ HttpMessage::HttpMessage(const char* messageBytes, ssize_t byteCount)
    , mSendPort(PORT_NONE)
    , mpResponseListenerQueue(NULL)
    , mResponseListenerData(NULL)
+   , _ignoreLastRead(false)
 {
   system_tap_sip_msg_created((intptr_t)this);
    smHttpMessageCount++;
@@ -109,6 +111,7 @@ HttpMessage::HttpMessage(OsSocket* inSocket, ssize_t bufferSize)
    , mSendPort(PORT_NONE)
    , mpResponseListenerQueue(NULL)
    , mResponseListenerData(NULL)
+   , _ignoreLastRead(false)
 {
   system_tap_sip_msg_created((intptr_t)this);
 
@@ -123,7 +126,8 @@ HttpMessage::HttpMessage(OsSocket* inSocket, ssize_t bufferSize)
 
 
 // Copy constructor
-HttpMessage::HttpMessage(const HttpMessage& rHttpMessage)
+HttpMessage::HttpMessage(const HttpMessage& rHttpMessage) :
+  _ignoreLastRead(false)
 {
   system_tap_sip_msg_created((intptr_t)this);
 
@@ -154,6 +158,7 @@ HttpMessage::HttpMessage(const HttpMessage& rHttpMessage)
 #endif
     mSendAddress = rHttpMessage.mSendAddress;
     mSendPort = rHttpMessage.mSendPort;
+    _properties = rHttpMessage._properties;
 }
 
 // Destructor
@@ -242,6 +247,8 @@ HttpMessage::operator=(const HttpMessage& rHttpMessage)
 #endif
        mSendAddress = rHttpMessage.mSendAddress;
        mSendPort = rHttpMessage.mSendPort;
+       
+       _properties = rHttpMessage._properties;
    }
 
    return *this;
@@ -1132,6 +1139,11 @@ int HttpMessage::read(OsSocket* inSocket, ssize_t bufferSize,
                       UtlString* externalBuffer,
                       int maxContentLength)
 {
+  //
+  // Flag we use to tell the upper layer that the last read operation, although
+  // yielded readable bytes is not an HTTP message.  Eg. STUN requests.  
+  //
+  _ignoreLastRead = false;
    //
    // Initialize state variables that keep track of what we have seen
    // of the incoming HTTP message.
@@ -1152,7 +1164,7 @@ int HttpMessage::read(OsSocket* inSocket, ssize_t bufferSize,
    // time to confirm that that is not so, then un-ifdef the code below. For now we just warn with extreme
    // prejudice.
    //
-   #if 0
+   #if 1
    if (body)
    {
        delete body;
@@ -1270,6 +1282,19 @@ int HttpMessage::read(OsSocket* inSocket, ssize_t bufferSize,
          }
          else // we must have read bytes from the socket
          {
+           //
+           // We should be able to detect if the DATAGRAM is a STUN request
+           // at this point
+           //
+           if (inSocket->getIpProtocol() == OsSocket::UDP)
+           {
+             if ((bytesRead > 0) && StunMessage::isStunMessage(buffer, bytesRead))
+             {
+               _ignoreLastRead = true;
+               return 0;
+             }
+           }
+           
 #           ifdef MSG_DEBUG
             Os::Logger::instance().log(FAC_HTTP, PRI_DEBUG,
                           "HttpMessage::read %zu bytes read: '%.*s'",
@@ -3857,6 +3882,35 @@ UtlBoolean HttpMessage::isWholeMessage(const char* messageBuffer,
 UtlBoolean HttpMessage::isFirstSend() const
 {
     return(!mFirstSent);
+}
+
+void HttpMessage::setProperty(const std::string& key, const std::string& value)
+{
+  mutex_critic_sec_lock lock(_propertiesMutex);
+  _properties[key] = value;
+}
+    
+bool HttpMessage::getProperty(const std::string& key, std::string& value)
+{
+  mutex_critic_sec_lock lock(_propertiesMutex);
+  std::map<std::string, std::string>::iterator iter = _properties.find(key);
+  if (iter == _properties.end())
+    return false;
+  value = iter->second;
+  return !value.empty();
+}
+
+void HttpMessage::removeProperty(const std::string& key)
+{
+  mutex_critic_sec_lock lock(_propertiesMutex);
+  _properties.erase(key);
+}
+
+bool HttpMessage::hasProperty(const std::string& key)
+{
+  mutex_critic_sec_lock lock(_propertiesMutex);
+  std::map<std::string, std::string>::iterator iter = _properties.find(key);
+  return iter != _properties.end();
 }
 
 /* //////////////////////////// PROTECTED ///////////////////////////////// */

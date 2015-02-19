@@ -9,25 +9,42 @@
  */
 package org.sipfoundry.sipxconfig.phone;
 
+import static org.sipfoundry.commons.mongo.MongoConstants.GROUPS;
+import static org.sipfoundry.commons.mongo.MongoConstants.SERIAL_NUMBER;
+import static org.sipfoundry.commons.mongo.MongoConstants.TIMESTAMP;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.sipfoundry.sipxconfig.common.Replicable;
 import org.sipfoundry.sipxconfig.common.SipUri;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.common.UserException;
+import org.sipfoundry.sipxconfig.commserver.imdb.AliasMapping;
+import org.sipfoundry.sipxconfig.commserver.imdb.DataSet;
 import org.sipfoundry.sipxconfig.device.Device;
 import org.sipfoundry.sipxconfig.device.ModelSource;
 import org.sipfoundry.sipxconfig.device.RestartException;
+import org.sipfoundry.sipxconfig.feature.FeatureManager;
 import org.sipfoundry.sipxconfig.phonebook.PhonebookManager;
 import org.sipfoundry.sipxconfig.setting.Setting;
 import org.sipfoundry.sipxconfig.sip.SipService;
+import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 
 /**
  * Base class for managed phone subclasses
  */
-public abstract class Phone extends Device {
+public abstract class Phone extends Device implements Replicable, SystemAuditable {
+    public static final Log LOG = LogFactory.getLog(Phone.class);
 
     public static final String URI_IN_PREFIX = "~~in~";
 
@@ -38,10 +55,11 @@ public abstract class Phone extends Device {
 
     private static final String PHONE_SIP_EXCEPTION = "&phone.sip.exception";
     private static final String PHONE_LINE_NOT_VALID = "&phone.line.not.valid";
+    private static final String E911_SETTING_PATH = "e911/location";
 
     private String m_description;
 
-    private List<Line> m_lines = Collections.EMPTY_LIST;
+    private List<Line> m_lines = Collections.emptyList();
 
     private PhoneContext m_phoneContext;
 
@@ -54,6 +72,8 @@ public abstract class Phone extends Device {
     private PhoneModel m_model;
 
     private String m_profileDir;
+
+    private FeatureManager m_featureManager;
 
     protected Phone() {
     }
@@ -165,21 +185,21 @@ public abstract class Phone extends Device {
         if (getLines().size() == 0) {
             Line line = createSpecialPhoneProvisionUserLine();
             try {
-                m_sip.sendCheckSync(line.getAddrSpec(), line.getUserName(), getSerialNumber(),
-                        line.getUser().getSipPassword());
+                m_sip.sendCheckSync(line.getAddrSpec(), line.getUserName(), getSerialNumber(), line.getUser()
+                        .getSipPassword());
             } catch (RuntimeException ex) {
                 throw new RestartException(PHONE_SIP_EXCEPTION);
             }
         } else {
             Line line = getLine(0);
             try {
-                m_sip.sendCheckSync(line.getAddrSpec(), line.getUserName(), getSerialNumber(),
-                        line.getUser().getSipPassword());
+                m_sip.sendCheckSync(line.getAddrSpec(), line.getUserName(), getSerialNumber(), line.getUser()
+                        .getSipPassword());
             } catch (RuntimeException ex) {
                 /*
-                 * If the previous attempt didn't work, perhaps the phone has been auto-provisioned,
-                 * but has not yet been restarted. If sending a restart to the defined line doesn't
-                 * work, fall back to the auto-provision user.
+                 * If the previous attempt didn't work, perhaps the phone has been
+                 * auto-provisioned, but has not yet been restarted. If sending a restart to the
+                 * defined line doesn't work, fall back to the auto-provision user.
                  */
                 Line linedefault = createSpecialPhoneProvisionUserLine();
                 try {
@@ -269,11 +289,18 @@ public abstract class Phone extends Device {
 
     /**
      * Find a phone user. By convention phone user is a user associated with the phone first line.
-     *
      */
     public User getPrimaryUser() {
         List<Line> lines = getLines();
         if (lines.isEmpty()) {
+            return null;
+        }
+        if (lines.get(0) == null) {
+            /*
+             * Note that it is possible although very improbable to have a non empty list of lines
+             * but line 0 to be null (a line on position 1). This is a misconfiguration, but we
+             * need to take care of this possibility.
+             */
             return null;
         }
         return lines.get(0).getUser();
@@ -302,11 +329,93 @@ public abstract class Phone extends Device {
         return line;
     }
 
-    public Collection<? extends PhoneModel> getModelIdsForSelection(String beanId) {
+    public Collection< ? extends PhoneModel> getModelIdsForSelection(String beanId) {
         return null;
     }
 
     public Integer getE911LocationId() {
-        return (Integer) getSettingTypedValue("e911/location");
+        if (getSettingTypedValue(E911_SETTING_PATH) == null) {
+            return null;
+        }
+        Integer id = (Integer) getSettingTypedValue(E911_SETTING_PATH);
+        if (id < 0) {
+            LOG.error("Database is in bad state, E911 location defined is wrong! Please review!");
+        }
+        return id;
+    }
+
+    public void setE911LocationId(Integer id) {
+        if (id != null && id < 0) {
+            return;
+        }
+        setSettingTypedValue(E911_SETTING_PATH, id);
+    }
+
+    @Override
+    public String getName() {
+        return null;
+    }
+
+    @Override
+    public void setName(String name) {
+    }
+
+    @Override
+    public Set<DataSet> getDataSets() {
+        Set<DataSet> ds = new HashSet<DataSet>();
+        ds.add(DataSet.E911);
+        return ds;
+    }
+
+    @Override
+    public String getIdentity(String domainName) {
+        return null;
+    }
+
+    @Override
+    public Collection<AliasMapping> getAliasMappings(String domainName) {
+        return null;
+    }
+
+    @Override
+    public boolean isValidUser() {
+        return false;
+    }
+
+    @Override
+    public Map<String, Object> getMongoProperties(String domain) {
+        Map<String, Object> props = new HashMap<String, Object>();
+        props.put(SERIAL_NUMBER, getSerialNumber());
+        props.put(TIMESTAMP, System.currentTimeMillis());
+        props.put(GROUPS, Arrays.asList(getGroupsNames().split(" ")));
+        return props;
+    }
+
+    @Override
+    public String getEntityName() {
+        return PHONE_CONSTANT;
+    }
+
+    @Override
+    public boolean isReplicationEnabled() {
+        return true;
+    }
+
+    @Override
+    public String getEntityIdentifier() {
+        return getSerialNumber();
+    }
+
+    @Override
+    public String getConfigChangeType() {
+        return Phone.class.getSimpleName();
+    }
+
+    public void setFeatureManager(FeatureManager featureManager) {
+        m_featureManager = featureManager;
+    }
+
+    public FeatureManager getFeatureManager() {
+        return m_featureManager;
     }
 }

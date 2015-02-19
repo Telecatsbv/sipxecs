@@ -4,9 +4,7 @@
 
   <bean id="mongoDbFactory" class="org.sipfoundry.commons.mongo.MongoSpringFactory">
     <property name="configFile" value="${sysdir.etc}/mongo-client.ini" />
-  </bean>  
-
-  <bean id="mongoTunnnel" class="org.sipfoundry.sipxconfig.mongo.MongoTunnelProvider" />
+  </bean>
   
   <bean id="mongoManager" class="org.springframework.aop.framework.ProxyFactoryBean" parent="abstractDao">
     <property name="target" ref="mongoManagerImpl"/>
@@ -41,7 +39,8 @@
     <property name="mongoStatusScript" value="${sysdir.bin}/mongodb-status"/>        
     <property name="mongoAnalyzerScript" value="${sysdir.bin}/mongodb-analyzer"/>
     <!-- no path because this is a remote script -->        
-    <property name="mongoAdminScript" value="mongodb-admin"/>  
+    <property name="mongoAdminScript" value="mongodb-admin"/>
+    <property name="nodeDb" ref="nodeDb"/>
   </bean>
 
   <bean id="mongoSettings" class="org.sipfoundry.sipxconfig.mongo.MongoSettings" parent="settingsBean">

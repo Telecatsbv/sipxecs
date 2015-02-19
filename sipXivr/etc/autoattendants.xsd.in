@@ -20,10 +20,34 @@
 		</annotation>
 	</element>
 
+	<element name="lang" type="normalizedString">
+		<annotation>
+			<documentation>
+				Lang to be used when playing AA
+			</documentation>
+		</annotation>
+	</element>
+
 	<element name="prompt" type="normalizedString">
 		<annotation>
 			<documentation>
 				The prompt to play on entry
+			</documentation>
+		</annotation>
+	</element>
+
+	<element name="allowDial" type="normalizedString">
+		<annotation>
+			<documentation>
+				Regex to allow extension dial
+			</documentation>
+		</annotation>
+	</element>
+
+	<element name="denyDial" type="normalizedString">
+		<annotation>
+			<documentation>
+				Regex to deny extension dial
 			</documentation>
 		</annotation>
 	</element>
@@ -206,7 +230,13 @@
 			<sequence>
                 <element ref="tns:id" maxOccurs="1" minOccurs="0">
 				</element>
-                <element ref="tns:date" maxOccurs="unbounded" minOccurs="0">
+				<element name="period">
+					<complexType>
+						<sequence>
+			                <element ref="tns:startDate" maxOccurs="unbounded" minOccurs="0">
+			                <element ref="tns:endDate" maxOccurs="unbounded" minOccurs="0">
+						</sequence>
+					</complexType>
 				</element>
 			</sequence>
 		</complexType>

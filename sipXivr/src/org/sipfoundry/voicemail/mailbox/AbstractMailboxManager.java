@@ -17,6 +17,8 @@
 package org.sipfoundry.voicemail.mailbox;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.SequenceInputStream;
 
@@ -100,13 +102,15 @@ public abstract class AbstractMailboxManager implements MailboxManager {
 
         if (!message.isStored()) {
             String messageId = nextMessageId(m_mailstoreDirectory + "/..");
-            VmMessage savedMessage = saveTempMessageInStorage(destUser, message,
-                    createMessageDescriptor(destUser.getUserName(), message, messageId, subject, destUser.getIdentity()),
-                    folder, messageId);
+            VmMessage savedMessage = saveTempMessageInStorage(
+                    destUser,
+                    message,
+                    createMessageDescriptor(destUser.getUserName(), message, messageId, subject,
+                            destUser.getIdentity()), folder, messageId);
             message.setSavedMessageId(messageId);
             message.setStored(true);
             if (savedMessage != null) {
-                //Make sure to set folder after the message was correctly saved
+                // Make sure to set folder after the message was correctly saved
                 savedMessage.setParentFolder(folder);
                 m_emailer.queueVm2Email(destUser, savedMessage);
             }
@@ -118,7 +122,8 @@ public abstract class AbstractMailboxManager implements MailboxManager {
         String newMessageId = nextMessageId(m_mailstoreDirectory + "/..");
         VmMessage savedMessage = copyMessage(newMessageId, destUser, message);
         if (savedMessage != null) {
-            //the method applies only to voicemails - so the folder where the message is saved is always INBOX
+            // the method applies only to voicemails - so the folder where the message is saved is
+            // always INBOX
             savedMessage.setParentFolder(Folder.INBOX);
             m_emailer.queueVm2Email(destUser, savedMessage);
         }
@@ -134,7 +139,8 @@ public abstract class AbstractMailboxManager implements MailboxManager {
         descriptor.setSubject("Fwd:Voice Message " + newMessageId);
         VmMessage savedMessage = forwardMessage(message, comments, descriptor, destUser, newMessageId);
         if (savedMessage != null) {
-            //the method applies only to voicemails - so the folder where the message is saved is always INBOX
+            // the method applies only to voicemails - so the folder where the message is saved is
+            // always INBOX
             savedMessage.setParentFolder(Folder.INBOX);
             m_emailer.queueVm2Email(destUser, savedMessage);
         }
@@ -194,6 +200,23 @@ public abstract class AbstractMailboxManager implements MailboxManager {
     }
 
     @Override
+    public final boolean manageLiveAttendant(String code, boolean enable) {
+        try {
+            String url = String.format("%s/sipxconfig/rest/auto-attendant/livemode/%s", m_configUrl, code);
+            // Use sipXconfig's RESTful interface to change the special mode
+            RestfulRequest rr = new RestfulRequest(url, "superadmin", m_secret);
+            if (enable) {
+                return rr.put(null);
+            } else {
+                return rr.delete();
+            }
+        } catch (Exception e) {
+            LOG.error("Failure to manage live attendant", e);
+        }
+        return false;
+    }
+
+    @Override
     public void migrate(String path) {
         // do nothing, classes that extends this should provide a mean for migrating voicemails
     }
@@ -219,7 +242,7 @@ public abstract class AbstractMailboxManager implements MailboxManager {
         return descriptor;
     }
 
-    //Creates VOICEMAIL message descriptors only
+    // Creates VOICEMAIL message descriptors only
     private MessageDescriptor createMessageDescriptor(String destUser, TempMessage message, String messageId,
             String identity) {
         return createMessageDescriptor(destUser, message, messageId, VOICEMAIL_SUBJECT, identity);
@@ -227,7 +250,7 @@ public abstract class AbstractMailboxManager implements MailboxManager {
 
     /**
      * Generate the next message Id static synchronized as it's machine wide
-     *
+     * 
      * @param directory which holds the messageid.txt file
      */
     private synchronized String nextMessageId(String directory) {
@@ -286,19 +309,35 @@ public abstract class AbstractMailboxManager implements MailboxManager {
     }
 
     protected String getGreetingTypeName(GreetingType type) {
+        return getGreetingTypeName(type, m_audioFormat);
+    }
+
+    protected String getAltGreetingTypeName(GreetingType type) {
+        return getGreetingTypeName(type, m_altAudioFormat);
+    }
+
+    private String getGreetingTypeName(GreetingType type, String audioFormat) {
         switch (type) {
         case STANDARD:
-            return String.format("standard.%s", m_audioFormat);
+            return String.format("standard.%s", audioFormat);
         case OUT_OF_OFFICE:
-            return String.format("outofoffice.%s", m_audioFormat);
+            return String.format("outofoffice.%s", audioFormat);
         case EXTENDED_ABSENCE:
-            return String.format("extendedabs.%s", m_audioFormat);
+            return String.format("extendedabs.%s", audioFormat);
         default:
             return null;
         }
     }
 
     protected void concatAudio(File newFile, File orig1, File orig2) throws Exception {
+        if (getAudioFormat().equals("wav")) {
+            concatWavAudio(newFile, orig1, orig2);
+        } if (getAudioFormat().equals("mp3")) {
+            concatMP3Audio(newFile, orig1, orig2);
+        }
+    }
+
+    private void concatWavAudio(File newFile, File orig1, File orig2) throws Exception {
         String operation = "dunno";
         AudioInputStream clip1 = null;
         AudioInputStream clip2 = null;
@@ -326,8 +365,39 @@ public abstract class AbstractMailboxManager implements MailboxManager {
         }
     }
 
+    private void concatMP3Audio(File newFile, File orig1, File orig2) throws Exception {
+        FileInputStream comment = new FileInputStream(orig1);
+        FileInputStream original = new FileInputStream(orig2);
+        SequenceInputStream concatStream = new SequenceInputStream(comment, original);
+        FileOutputStream concat = new FileOutputStream(newFile);
+        try {
+
+            int temp;
+
+            while( ( temp = concatStream.read() ) != -1)
+            {
+                concat.write(temp);
+            }
+        } catch (Exception ex) {
+            throw new Exception("VmMessage::concatAudio Problem while writting MP3 file", ex);
+        } finally {
+            IOUtils.closeQuietly(concat);
+            IOUtils.closeQuietly(concatStream);
+            IOUtils.closeQuietly(comment);
+            IOUtils.closeQuietly(original);
+        }
+    }
+
     public String getNameFile() {
-        return String.format("name.%s", m_audioFormat);
+        return getNameFile(m_audioFormat);
+    }
+
+    public String getAltNameFile() {
+        return getNameFile(m_altAudioFormat);
+    }
+
+    private String getNameFile(String audioFormat) {
+        return String.format("name.%s", audioFormat);
     }
 
     public String getPromptFile() {

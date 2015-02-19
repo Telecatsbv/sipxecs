@@ -8,16 +8,18 @@
  */
 package org.sipfoundry.voicemail;
 
-import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
 import org.sipfoundry.commons.freeswitch.DisconnectException;
 import org.sipfoundry.commons.freeswitch.PromptList;
+import org.sipfoundry.commons.hz.HzConstants;
+import org.sipfoundry.commons.hz.HzPublisherTask;
+import org.sipfoundry.commons.hz.HzVmEvent;
 import org.sipfoundry.commons.userdb.PersonalAttendant;
 import org.sipfoundry.commons.userdb.User;
-import org.sipfoundry.commons.util.IMSender;
-import org.sipfoundry.commons.util.IMSender.HttpResult;
 import org.sipfoundry.sipxivr.common.DialByNameChoice;
 import org.sipfoundry.sipxivr.common.IvrChoice;
 import org.sipfoundry.sipxivr.common.IvrChoice.IvrChoiceReason;
@@ -32,10 +34,10 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
     private Map<String, String> m_depositMap;
     private ApplicationContext m_appContext;
     private String m_operatorAddr;
-
+    private ExecutorService m_executorService = Executors.newSingleThreadExecutor();
     /**
      * The depositVoicemail dialog
-     * 
+     *
      * @return
      */
     @Override
@@ -44,11 +46,8 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
         PersonalAttendant pa = user.getPersonalAttendant();
 
         String localeString = pa.getLanguage();
-        if (localeString != null) {
-            LOG.debug("Changing locale for this call to " + localeString);
-            changeLocale(localeString);
-            user.setLocale(new Locale(localeString));
-        }
+        personalizeLocale(localeString, user);
+
         TempMessage tempMessage = null;
 
         Greeting greeting = createGreeting();
@@ -250,11 +249,9 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
                 + m_appContext.getMessage("leaving_msg", null, "is leaving a voice message.", user.getLocale());
         try {
             if (user.getVMEntryIM()) {
-                HttpResult result = IMSender.sendVmEntryIM(user, instantMsg, m_sendIMUrl);
-                if (!result.isSuccess()) {
-                    LOG.error("Deposit::sendIM Trouble with RemoteRequest: " + result.getResponse(),
-                            result.getException());
-                }
+                m_executorService.submit(new HzPublisherTask(
+                    new HzVmEvent(getChannelCallerIdName(), user.getUserName(), instantMsg, HzVmEvent.VmType.START_LEAVE_VM),
+                    HzConstants.VM_TOPIC));
             }
         } catch (Exception ex) {
             LOG.error("Deposit::sendIM failed", ex);
@@ -277,11 +274,9 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
             String instantMsg = getChannelCallerIdName() + " (" + getChannelCallerIdNumber() + ") " + description;
             try {
                 if (user.getVMExitIM()) {
-                    HttpResult result = IMSender.sendVmExitIM(user, instantMsg, m_sendIMUrl);
-                    if (!result.isSuccess()) {
-                        LOG.error("Deposit::sendIM Trouble with RemoteRequest: " + result.getResponse(),
-                                result.getException());
-                    }
+                    m_executorService.submit(new HzPublisherTask(
+                        new HzVmEvent(getChannelCallerIdName(), user.getUserName(), instantMsg, HzVmEvent.VmType.END_LEAVE_VM),
+                        HzConstants.VM_TOPIC));
                 }
             } catch (Exception ex) {
                 LOG.error("Deposit::sendIM failed", ex);
@@ -291,7 +286,7 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
 
     /**
      * See if the caller wants to send this message to other mailboxes
-     * 
+     *
      * @param existingMessage the message they want to send
      */
     private void moreOptions(TempMessage message) {

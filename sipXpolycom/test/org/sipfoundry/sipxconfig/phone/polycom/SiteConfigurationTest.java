@@ -24,12 +24,13 @@ public class SiteConfigurationTest extends PolycomXmlTestCase {
 
     @Override
     protected void setUp() throws Exception {
-        setUp404150Tests();
+        setUp404150TestsMwiMohRlsEnabled();
         String cert = "Version: 3 " + "Serial Number: 1378803401547 " + "Signature Algorithm: SHA1WITHRSA "
                 + "Issuer: C=US,ST=AnyState,L=AnyTown,O=ezuce.ro,OU=sipXecs,CN=ca.ezuce.ro,E=root@ezuce.ro "
                 + "Not Before: Tue Sep 10 10:56:41 EEST 2013 " + "Not After: Sun Sep 10 10:56:41 EEST 2023 "
                 + "Subject: C=US,ST=AnyState,L=AnyTown,O=ezuce.ro,OU=sipXecs,CN=ca.ezuce.ro,E=root@ezuce.ro "
-                + "-----BEGIN CERTIFICATE----- " + "MIIDrjCCApagAwIBAgIGAUEHFkNLMA0GCSqGSIb3DQEBBQUAMIGLMQswCQYDVQQG "
+                + "-----BEGIN CERTIFICATE----- "
+                + "MIIDrjCCApagAwIBAgIGAUEHFkNLMA0GCSqGSIb3DQEBBQUAMIGLMQswCQYDVQQG "
                 + "EwJVUzERMA8GA1UECAwIQW55U3RhdGUxEDAOBgNVBAcMB0FueVRvd24xETAPBgNV "
                 + "BAoMCGV6dWNlLnJvMRAwDgYDVQQLDAdzaXBYZWNzMRQwEgYDVQQDDAtjYS5lenVj "
                 + "ZS5ybzEcMBoGCSqGSIb3DQEJARYNcm9vdEBlenVjZS5ybzAeFw0xMzA5MTAwNzU2 "
@@ -62,7 +63,7 @@ public class SiteConfigurationTest extends PolycomXmlTestCase {
         m_pg.generate(location, app, null, "profile");
 
         InputStream expectedPhoneStream = getClass().getResourceAsStream("expected-sipx-site.cfg");
-        
+
         assertPolycomXmlEquals(new InputStreamReader(expectedPhoneStream), location.getReader());
         EasyMock.verify(m_certificateManager);
         expectedPhoneStream.close();
@@ -85,9 +86,63 @@ public class SiteConfigurationTest extends PolycomXmlTestCase {
         m_pg.generate(location, app, null, "profile");
 
         InputStream expectedPhoneStream = getClass().getResourceAsStream("expected-sipx-site-50.cfg");
+        dumpXml(location.getReader(), System.out);
         assertPolycomXmlEquals(new InputStreamReader(expectedPhoneStream), location.getReader());
         EasyMock.verify(m_certificateManager);
         expectedPhoneStream.close();
     }
-    
+
+    public void testGenerateProfile501() throws Exception {
+        SiteConfiguration app = new SiteConfiguration(phone501, m_certificateManager);
+
+        m_pg.generate(location, app, null, "profile");
+
+        InputStream expectedPhoneStream = getClass().getResourceAsStream("expected-sipx-site-50.cfg");
+        assertPolycomXmlEquals(new InputStreamReader(expectedPhoneStream), location.getReader());
+        EasyMock.verify(m_certificateManager);
+        expectedPhoneStream.close();
+    }
+
+    public void testGenerateProfile502() throws Exception {
+        SiteConfiguration app = new SiteConfiguration(phone502, m_certificateManager);
+
+        m_pg.generate(location, app, null, "profile");
+
+        InputStream expectedPhoneStream = getClass().getResourceAsStream("expected-sipx-site-502.cfg");
+        assertPolycomXmlEquals(new InputStreamReader(expectedPhoneStream), location.getReader());
+        EasyMock.verify(m_certificateManager);
+        expectedPhoneStream.close();
+    }
+    public void testGenerateProfile416() throws Exception {
+        SiteConfiguration app = new SiteConfiguration(phone416, m_certificateManager);
+
+        m_pg.generate(location, app, null, "profile");
+
+        InputStream expectedPhoneStream = getClass().getResourceAsStream("expected-sipx-site-416.cfg");
+        assertPolycomXmlEquals(new InputStreamReader(expectedPhoneStream), location.getReader());
+        EasyMock.verify(m_certificateManager);
+        expectedPhoneStream.close();
+    }
+
+    public void testGenerateProfile418() throws Exception {
+        SiteConfiguration app = new SiteConfiguration(phone418, m_certificateManager);
+
+        m_pg.generate(location, app, null, "profile");
+
+        InputStream expectedPhoneStream = getClass().getResourceAsStream("expected-sipx-site-418.cfg");
+        assertPolycomXmlEquals(new InputStreamReader(expectedPhoneStream), location.getReader());
+        EasyMock.verify(m_certificateManager);
+        expectedPhoneStream.close();
+    }
+
+    public void testGenerateProfile520() throws Exception {
+        SiteConfiguration app = new SiteConfiguration(phone520, m_certificateManager);
+
+        m_pg.generate(location, app, null, "profile");
+
+        InputStream expectedPhoneStream = getClass().getResourceAsStream("expected-sipx-site-520.cfg");
+        assertPolycomXmlEquals(new InputStreamReader(expectedPhoneStream), location.getReader());
+        EasyMock.verify(m_certificateManager);
+        expectedPhoneStream.close();
+    }
 }

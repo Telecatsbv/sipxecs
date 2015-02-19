@@ -24,6 +24,7 @@ public class User {
     private String m_pintoken;
     private String m_voicemailPintoken;
     private String m_passtoken;
+    private String m_sipPassword;
     private boolean m_inDirectory;
     private boolean m_hasVoicemail;
     private boolean m_userBusyPrompt;
@@ -82,10 +83,13 @@ public class User {
     private boolean m_operatorInIvr;
     private boolean m_depositVoicemail;
     private boolean m_admin;
+    private boolean m_hotelingEnabled;
+    private boolean m_forcePinChange;
+    private String m_vmLanguage;
 
     public enum EmailFormats {
         FORMAT_NONE("NONE"), FORMAT_FULL("FULL"), FORMAT_MEDIUM("MEDIUM"), FORMAT_BRIEF("BRIEF"), FORMAT_IMAP("IMAP");
-        private String m_id;
+        private final String m_id;
 
         EmailFormats(String id) {
             m_id = id;
@@ -647,7 +651,7 @@ public class User {
     public void setMoh(String moh) {
         m_moh = moh;
     }
-    
+
     public String getHighestWeightGroup() {
         return m_highestWeightGroup;
     }
@@ -706,5 +710,37 @@ public class User {
 
     public void setAdmin(boolean admin) {
         m_admin = admin;
+    }
+
+    public boolean isHotelingEnabled() {
+        return m_hotelingEnabled;
+    }
+
+    public void setHotelingEnabled(boolean hotelingEnabled) {
+        m_hotelingEnabled = hotelingEnabled;
+    }
+
+    public boolean isForcePinChange() {
+        return m_forcePinChange;
+    }
+
+    public void setForcePinChange(String value) {
+       m_forcePinChange = value.equals("1") || value.equals("true");
+    }
+
+    public String getSipPassword() {
+        return m_sipPassword;
+    }
+
+    public void setSipPassword(String sipPassword) {
+        m_sipPassword = sipPassword;
+    }
+
+    public String getVmLanguage() {
+        return m_vmLanguage;
+    }
+
+    public void setVmLanguage(String vmLanguage) {
+        m_vmLanguage = vmLanguage;
     }
 }

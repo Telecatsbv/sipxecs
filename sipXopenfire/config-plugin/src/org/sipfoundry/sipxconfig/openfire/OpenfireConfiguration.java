@@ -23,33 +23,29 @@ import java.io.Writer;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
-import org.sipfoundry.sipxconfig.address.Address;
-import org.sipfoundry.sipxconfig.admin.AdminContext;
 import org.sipfoundry.sipxconfig.bulk.ldap.LdapManager;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigManager;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigProvider;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigRequest;
 import org.sipfoundry.sipxconfig.cfgmgt.ConfigUtils;
-import org.sipfoundry.sipxconfig.cfgmgt.KeyValueConfiguration;
 import org.sipfoundry.sipxconfig.commserver.Location;
 import org.sipfoundry.sipxconfig.commserver.LocationsManager;
-import org.sipfoundry.sipxconfig.event.WebSocket;
 import org.sipfoundry.sipxconfig.feature.FeatureManager;
 import org.sipfoundry.sipxconfig.im.ImManager;
 import org.sipfoundry.sipxconfig.imbot.ImBot;
 import org.sipfoundry.sipxconfig.localization.LocalizationContext;
-import org.sipfoundry.sipxconfig.rls.Rls;
+import org.sipfoundry.sipxconfig.setting.Setting;
+import org.sipfoundry.sipxconfig.setting.SettingUtil;
 import org.springframework.beans.factory.annotation.Required;
 
 public class OpenfireConfiguration implements ConfigProvider {
     protected static final String DAT_FILE = "sipxopenfire.cfdat";
     protected static final String SIPXOPENFIRE_CLASS = "sipxopenfire";
+    protected static final String SIPXOPENFIRE_CONFIG_CLASS = "sipxofconfig";
 
     private OpenfireConfigurationFile m_config;
     private SipxOpenfireConfiguration m_sipxConfig;
-    private ConfigManager m_configManager;
     private FeatureManager m_featureManager;
-    private WebSocket m_websocket;
     private Openfire m_openfire;
 
     @Override
@@ -68,6 +64,7 @@ public class OpenfireConfiguration implements ConfigProvider {
 
     protected void writeConfigFiles(ConfigManager manager, ConfigRequest request) throws IOException {
         Set<Location> locations = request.locations(manager);
+        boolean configNode = true;
         for (Location location : locations) {
             File dir = manager.getLocationDataDirectory(location);
             boolean enabled = manager.getFeatureManager().isFeatureEnabled(ImManager.FEATURE, location);
@@ -75,30 +72,28 @@ public class OpenfireConfiguration implements ConfigProvider {
                 disableIm(dir);
                 continue;
             }
-            enableIm(dir);
+            enableIm(dir, configNode);
+            configNode = false;
             OpenfireSettings settings = m_openfire.getSettings();
             boolean consoleEnabled = (Boolean) settings.getSettingTypedValue("settings/console");
-            boolean presenceEnabled = (Boolean) settings.getSettingTypedValue("settings/enable-presence")
-                    && manager.getFeatureManager().isFeatureEnabled(Rls.FEATURE);
+            boolean presenceEnabled = (Boolean) settings.getSettingTypedValue("settings/enable-presence");
             ConfigUtils.enableCfengineClass(dir, "ofconsole.cfdat", consoleEnabled, "ofconsole");
+
+            Setting openfireSettings = settings.getSettings().getSetting("settings");
+            String log4jFileName = "log4j-openfire.properties.part";
+            String[] logLevelKeys = {"log4j.logger.org.sipfoundry.openfire",
+                                     "log4j.logger.org.sipfoundry.sipxconfig"};
+            SettingUtil.writeLog4jSetting(openfireSettings, dir, log4jFileName, logLevelKeys);
+
             File f = new File(dir, "sipx.properties.part");
             if (!f.exists()) {
                 f.createNewFile();
-            }
-            Writer wtr = new FileWriter(f);
-            try {
-                boolean isWsEnabled = m_featureManager.isFeatureEnabled(WebSocket.FEATURE, location);
-                Address addr = m_configManager.getAddressManager().getSingleAddress(AdminContext.HTTP_ADDRESS);
-                write(wtr, presenceEnabled, isWsEnabled, location.getAddress(), m_websocket.getSettings()
-                        .getWebSocketPort(), addr.toString());
-            } finally {
-                IOUtils.closeQuietly(wtr);
             }
 
             Writer ofproperty = new FileWriter(new File(dir, "openfire.properties.part"));
             try {
                 m_config.writeOfPropertyConfig(ofproperty, m_openfire.getSettings());
-                writeLdapProps(ofproperty, manager);
+                writeLdapProps(ofproperty);
             } finally {
                 IOUtils.closeQuietly(ofproperty);
             }
@@ -112,34 +107,28 @@ public class OpenfireConfiguration implements ConfigProvider {
         }
     }
 
-    protected void writeLdapProps(Writer ofproperty, ConfigManager manager) throws IOException {
+    protected void writeLdapProps(Writer ofproperty) throws IOException {
         m_config.writeOfLdapPropertyConfig(ofproperty, m_openfire.getSettings());
     }
 
     @SuppressWarnings("static-method")
-    protected void enableIm(File dir) throws IOException {
-        ConfigUtils.enableCfengineClass(dir, DAT_FILE, true, SIPXOPENFIRE_CLASS, "postgres");
+    protected void enableIm(File dir, boolean configNode) throws IOException {
+        if (configNode) {
+            ConfigUtils.enableCfengineClass(dir, DAT_FILE, true, SIPXOPENFIRE_CLASS, SIPXOPENFIRE_CONFIG_CLASS);
+        } else {
+            ConfigUtils.enableCfengineClass(dir, DAT_FILE, true, SIPXOPENFIRE_CLASS);
+        }
+
     }
 
     @SuppressWarnings("static-method")
     protected void disableIm(File dir) throws IOException {
-        ConfigUtils.enableCfengineClass(dir, DAT_FILE, false, SIPXOPENFIRE_CLASS);
+        ConfigUtils.enableCfengineClass(dir, DAT_FILE, false, SIPXOPENFIRE_CLASS, SIPXOPENFIRE_CONFIG_CLASS);
     }
 
     protected void touchImFile() {
         // touch xmpp_update.xml on every location where openfire runs
         m_openfire.touchXmppUpdate(m_featureManager.getLocationsForEnabledFeature(ImManager.FEATURE));
-    }
-
-    private static void write(Writer wtr, boolean presence, boolean wsEnabled, String wsAddress, int wsPort,
-            String adminRestUrl) throws IOException {
-        KeyValueConfiguration config = KeyValueConfiguration.equalsSeparated(wtr);
-        config.write("openfire.presence", presence);
-        if (wsEnabled) {
-            config.write("websocket.address", wsAddress);
-            config.write("websocket.port", wsPort);
-            config.write("admin.rest.url", adminRestUrl);
-        }
     }
 
     public void setConfig(OpenfireConfigurationFile config) {
@@ -150,18 +139,9 @@ public class OpenfireConfiguration implements ConfigProvider {
         m_sipxConfig = sipxConfig;
     }
 
-    public void setConfigManager(ConfigManager configManager) {
-        m_configManager = configManager;
-    }
-
     @Required
     public void setFeatureManager(FeatureManager featureManager) {
         m_featureManager = featureManager;
-    }
-
-    @Required
-    public void setWebsocket(WebSocket websocket) {
-        m_websocket = websocket;
     }
 
     @Required
