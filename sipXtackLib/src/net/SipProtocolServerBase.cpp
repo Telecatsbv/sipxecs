@@ -1,3 +1,6 @@
+
+#include "os/OsSocket.h"
+
 //
 // Copyright (C) 2007 Pingtel Corp., certain elements licensed under a Contributor Agreement.
 // Contributors retain copyright to elements licensed under a Contributor Agreement.
@@ -11,6 +14,7 @@
 
 // SYSTEM INCLUDES
 #include <assert.h>
+#include <boost/lexical_cast.hpp>
 
 // APPLICATION INCLUDES
 #include <net/SipClient.h>
@@ -107,8 +111,10 @@ UtlBoolean SipProtocolServerBase::send(SipMessage* message,
     // Take the client list lock, because we have to make sure that
     // the client isn't deleted before its sendTo() returns.
     OsLock lock(mClientLock);
-
-    SipClient* client = getClientForDestination(hostAddress, hostPort, localIp);
+   
+    bool canFailover = false;
+    SipClient* client = getClientForDestination(hostAddress, hostPort, localIp, message, canFailover);
+    
     if (client)
     {
        if (Os::Logger::instance().willLog(FAC_SIP, PRI_DEBUG))
@@ -119,7 +125,16 @@ UtlBoolean SipProtocolServerBase::send(SipMessage* message,
                         "SipProtocolServerBase[%s]::send %s (%p), %s",
                         getName().data(), client->getName().data(), client, clientNames.data());
        }
-       sendOk = client->sendTo(*message, hostAddress, hostPort);
+       
+       if (canFailover && (client->getSocketType() == OsSocket::UDP || client->getSocketType() == OsSocket::UNKNOWN))
+       {
+         //
+         // UDP doesn't need fail over
+         //
+         canFailover = false;
+       }
+       
+       sendOk = client->sendTo(*message, hostAddress, hostPort, canFailover);
     }
 
     return (sendOk);
@@ -177,14 +192,16 @@ UtlBoolean SipProtocolServerBase::startListener()
 }
 
 SipClient* SipProtocolServerBase::getClientForDestination(const char* hostAddress,
-                                                          int hostPort,
-                                                          const char* localIp)
-{
-   UtlString remoteHostAddr;
+                                      int hostPort,
+                                      const char* localIp,
+                                      SipMessage* pMsg,
+                                      bool& canFailover)
+{ 
    SipClient* client;
    UtlBoolean clientStarted = FALSE;
-
+   
    client = findExistingClientForDestination(hostAddress, hostPort, localIp);
+
    if (!client)
    {
 #ifdef TEST_CLIENT_CREATION
@@ -255,7 +272,6 @@ SipClient* SipProtocolServerBase::getClientForDestination(const char* hostAddres
                              "SipProtocolServerBase[%s]::getClientForDestination start() failed",
                              getName().data());
                delete client;
-               client = NULL;
             }
          }
          else
@@ -279,11 +295,43 @@ SipClient* SipProtocolServerBase::getClientForDestination(const char* hostAddres
       // clients for this server.
       if (client)
       {
-         mClientList.append(client);
+        mClientList.append(client);
+        canFailover = false;
       }
    }
+   else
+   {
+     //
+     // We found an existing client.  Set failover flag
+     //
+     canFailover = true;
+   }
 
-   return client;
+ 
+  return client;
+}
+
+SipClient* SipProtocolServerBase::findExistingClientForDestination(const char* hostAddress,
+                                               int hostPort,
+                                               const char* localIp)
+{
+
+  UtlString hostAddressString(hostAddress ? hostAddress : "");
+  SipClient* pClient = 0;
+  UtlSListIterator iter(mClientList);
+  
+  while ((pClient = dynamic_cast <SipClient*> (iter())))
+  {
+    if( pClient->isAcceptableForDestination(hostAddressString, hostPort, localIp) )
+    {
+      OS_LOG_INFO( FAC_SIP, "SipProtocolServerBase::findExistingClientForDestination found good flow " 
+        << pClient->getName().data() 
+        << " for target " << hostAddressString.data() << ":" << hostPort);
+      return pClient;
+    }
+  }
+
+  return 0;
 }
 
 int SipProtocolServerBase::isOk()
@@ -306,53 +354,6 @@ int SipProtocolServerBase::isOk()
     // We are not OK if any of the SipClients report problems or we don't
     // have a client (e.g. unable to bind on port)
     return bRet && (count > 0);
-}
-
-SipClient* SipProtocolServerBase::findExistingClientForDestination(const char* hostAddress,
-                                                                   int hostPort,
-                                                                   const char* localIp)
-{
-   UtlString hostAddressString(hostAddress ? hostAddress : "");
-   SipClient* client = NULL;
-
-   #ifdef TEST_CLIENT_CREATION
-      Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                    "SipProtocolServerBase[%s]::findExistingClientForDestination('%s', %d, '%s')",
-                    getName().data(), hostAddress, hostPort, localIp);
-   #endif
-
-   UtlSListIterator iter(mClientList);
-   while ((client = dynamic_cast <SipClient*> (iter())))
-   {
-      #ifdef TEST_CLIENT_CREATION
-         Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                       "SipProtocolServerBase[%s]::findExistingClientForDestination examining '%s'",
-                       getName().data(), client->getName().data());
-      #endif
-      // Are these the same host?
-      if( client->isAcceptableForDestination(hostAddressString, hostPort, localIp) )
-      {
-         break;
-      }
-   }
-
-   #ifdef TEST_CLIENT_CREATION
-      if (client)
-      {
-         Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                       "SipProtocolServerBase[%s]::findExistingClientForDestination('%s', %d, '%s') found %s",
-                       getName().data(), hostAddress, hostPort, localIp,
-                       client->getName().data());
-      }
-      else
-      {
-         Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
-                       "SipProtocolServerBase[%s]::findExistingClientForDestination('%s', %d, '%s') not found",
-                       getName().data(), hostAddress, hostPort, localIp);
-      }
-   #endif
-
-   return (client);
 }
 
 void SipProtocolServerBase::deleteClient(SipClient* sipClient)

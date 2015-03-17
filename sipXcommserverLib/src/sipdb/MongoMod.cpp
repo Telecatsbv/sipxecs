@@ -15,7 +15,13 @@
 
 #include <mongo/client/dbclient.h>
 
+#include "os/OsTime.h"
+#include "os/OsDateTime.h"
+#include "os/OsLogger.h"
 #include "sipdb/MongoMod.h"
+
+// Defines the maximum delay accepted for mongo connection
+#define MAX_CONNECTION_DELAY_MSEC 100
 
 //
 // Rewrites the mongo::minKey external variable defined in Mongo c++ driver
@@ -39,5 +45,31 @@ mongo::BSONObj mongoMod::minKey((const char *) &minkeydata);
 
 mongo::ScopedDbConnection* mongoMod::ScopedDbConnection::getScopedDbConnection(const std::string& host, double socketTimeout)
 {
-  return new mongo::ScopedDbConnection(host, socketTimeout);
+  OS_LOG_DEBUG(FAC_ODBC, "ScopedDbConnection::getScopedDbConnection() - host '" << host << "', socketTimeout '" << socketTimeout << "' seconds");
+
+  OsTime start;
+  OsDateTime::getCurTime(start);
+
+  mongo::ScopedDbConnection* connection = new mongo::ScopedDbConnection(host, socketTimeout);
+  if (connection->ok())
+  {
+    OsTime stop;
+    OsDateTime::getCurTime(stop);
+    int connectionDelayMsec = (stop - start).cvtToMsecs();
+
+    OsSysLogPriority priority = PRI_DEBUG;
+    if (MAX_CONNECTION_DELAY_MSEC < connectionDelayMsec)
+    {
+      priority = PRI_ALERT;
+    }
+    Os::Logger::instance().log(FAC_ODBC, priority, "ScopedDbConnection::getScopedDbConnection() - returned connection %p in %d milliseconds",
+        connection->get(),
+        connectionDelayMsec);
+  }
+  else
+  {
+    OS_LOG_ERROR(FAC_ODBC, "ScopedDbConnection::getScopedDbConnection() - failed for host " << host);
+  }
+
+  return connection;
 }

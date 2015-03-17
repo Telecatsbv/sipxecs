@@ -25,6 +25,8 @@ import org.apache.commons.collections.Predicate;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.cxf.common.util.StringUtils;
+import org.hibernate.Query;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
@@ -52,6 +54,7 @@ import org.sipfoundry.sipxconfig.phonebook.PhonebookEntry;
 import org.sipfoundry.sipxconfig.phonebook.PhonebookManager;
 import org.sipfoundry.sipxconfig.setting.Group;
 import org.sipfoundry.sipxconfig.setting.SettingDao;
+import org.sipfoundry.sipxconfig.setting.ValueStorage;
 import org.sipfoundry.sipxconfig.speeddial.SpeedDial;
 import org.sipfoundry.sipxconfig.speeddial.SpeedDialManager;
 import org.springframework.beans.factory.BeanFactory;
@@ -72,6 +75,7 @@ public class PhoneContextImpl extends SipxHibernateDaoSupport implements BeanFac
     private static final String SERIAL_NUMBER = "serial_number";
     private static final String MODEL_ID = "model_id";
     private static final String PHONE_ID = "phone_id";
+    private static final String VALUE_STORAGE_ID = "value_storage_id";
     private static final Log LOG = LogFactory.getLog(PhoneContextImpl.class);
     private static final String QUERY_PHONE_ID_BY_SERIAL_NUMBER = "phoneIdsWithSerialNumber";
     private static final String QUERY_PHONE_BY_SERIAL_NUMBER = "phoneWithSerialNumber";
@@ -83,10 +87,27 @@ public class PhoneContextImpl extends SipxHibernateDaoSupport implements BeanFac
     private static final String VALUE = "value";
     private static final String SQL_SELECT_GROUP = "select p.phone_id,p.serial_number "
             + "from phone p join phone_group pg on pg.phone_id = p.phone_id where pg.group_id=%d";
-    private static final String SQL_SELECT_GROUP_RESTRICT_BY_BEAN_ID = "select p.phone_id,p.model_id,p.serial_number "
-            + "from phone p join phone_group pg on pg.phone_id = p.phone_id "
-            + "where p.bean_id = '%s' and pg.group_id=%d and p.device_version_id != '%s'";
+    private static final String SQL_SELECT_GROUP_RESTRICT_BY_BEAN_ID = "select p.phone_id,p.model_id,p.serial_number, "
+            + "p.value_storage_id from phone p join phone_group pg on pg.phone_id = p.phone_id "
+            + "where p.bean_id = '%s' and p.model_id = '%s' and pg.group_id=%d and p.device_version_id != '%s'";
+    private static final String QUERY_MODEL_FIRMWARE_VERSION = "SELECT sv.value FROM setting_value sv, phone p "
+        + "JOIN phone_group pg ON p.phone_id = pg.phone_id "
+        + "JOIN group_storage gs ON pg.group_id = gs.group_id "
+        + "WHERE sv.path = 'group.version/firmware.version' "
+        + "AND p.value_storage_id = sv.value_storage_id "
+        + "AND p.model_id='%s' "
+        + "AND pg.group_id='%d' "
+        + "LIMIT 1";
     private static final String SQL_UPDATE = "update phone set device_version_id='%s' where phone_id=%d";
+    private static final String SQL_GROUP_FIRMWARE_UPDATE = "update setting_value set value='%s' "
+        + "WHERE value_storage_id=%d AND path = 'group.version/firmware.version'";
+    private static final String SQL_PHONE_GROUP_MIN_WEIGHT = "SELECT gs.group_id FROM phone_group ph "
+        + "JOIN group_storage gs ON ph.group_id = gs.group_id WHERE ph.phone_id=%d "
+        + "ORDER BY gs.weight LIMIT 1";
+    private static final String SQL_PHONE_GROUP_WEIGHT = "SELECT MIN(gs.weight) FROM phone_group ph "
+        + "JOIN group_storage gs ON ph.group_id = gs.group_id WHERE ph.phone_id=%d";
+    private static final String SQL_GROUP_WEIGHT = "SELECT gs.weight FROM group_storage gs WHERE gs.group_id = %d";
+
     private CoreContext m_coreContext;
 
     private SettingDao m_settingDao;
@@ -157,6 +178,7 @@ public class PhoneContextImpl extends SipxHibernateDaoSupport implements BeanFac
         }
         DaoUtils.checkDuplicatesByNamedQuery(hibernate, phone, QUERY_PHONE_ID_BY_SERIAL_NUMBER, serialNumber,
                 new DuplicateSerialNumberException(serialNumber));
+
         phone.setValueStorage(clearUnsavedValueStorage(phone.getValueStorage()));
         isNew = phone.isNew();
         if (isNew) {
@@ -378,6 +400,12 @@ public class PhoneContextImpl extends SipxHibernateDaoSupport implements BeanFac
     public void onSave(Object entity) {
         if (entity instanceof Phone) {
             Phone phone = (Phone) entity;
+            //set phone group firmware version
+            //this is a proposed phone firmware version given what groups a phone belongs to
+            //and we save it as a setting value.
+            //given complexity of phone model and what groups a phone belongs to, a proposed
+            //firmware value will show in group firmware UI page
+            applyGroupFirmwareVersion(phone);
             LOG.error(String.format(ALARM_PHONE_CHANGED, phone.getId(), phone.getSerialNumber()));
         } else if (entity instanceof Group) {
             Group g = (Group) entity;
@@ -388,15 +416,32 @@ public class PhoneContextImpl extends SipxHibernateDaoSupport implements BeanFac
     }
 
     @Override
-    public void applyGroupFirmwareVersion(Group group, DeviceVersion v) {
+    public void applyGroupFirmwareVersion(Group group, DeviceVersion v, String modelId) {
         LOG.debug(String.format("Attempting to apply firmware version %s to group %s... ", v.getVersionId(),
                 group.getName()));
+        Collection<Phone> phones = getPhonesByGroupId(group.getId());
+        boolean flushNeeded = false;
+        for (Phone phone : phones) {
+            //initialize group firmware version if there are phones with no group firmware version
+            //this is a proposed phone firmware version given what groups a phone belongs to
+            //and we save it as a setting value.
+            //given complexity of phone model and what groups a phone belongs to, a proposed
+            //firmware value will show in group firmware UI page
+            if (StringUtils.isEmpty(phone.getSettingValue(Phone.GROUP_VERSION_FIRMWARE_VERSION))) {
+                applyGroupFirmwareVersion(phone);
+                flushNeeded = true;
+            }
+        }
+        if (flushNeeded) {
+            getHibernateTemplate().flush();
+        }
         String versionId = v.toString();
         final List<Integer> ids = new LinkedList<Integer>();
         final List<String> models = new LinkedList<String>();
         final List<String> serials = new LinkedList<String>();
+        final List<Integer> storageIds = new LinkedList<Integer>();
         m_jdbcTemplate.query(
-                String.format(SQL_SELECT_GROUP_RESTRICT_BY_BEAN_ID, v.getVendorId(), group.getId(), versionId),
+                String.format(SQL_SELECT_GROUP_RESTRICT_BY_BEAN_ID, v.getVendorId(), modelId, group.getId(), versionId),
                 new RowCallbackHandler() {
 
                     @Override
@@ -404,6 +449,7 @@ public class PhoneContextImpl extends SipxHibernateDaoSupport implements BeanFac
                         ids.add(rs.getInt(PHONE_ID));
                         models.add(rs.getString(MODEL_ID));
                         serials.add(rs.getString(SERIAL_NUMBER));
+                        storageIds.add(rs.getInt(VALUE_STORAGE_ID));
                     }
                 });
         List<String> updates = new ArrayList<String>();
@@ -411,9 +457,13 @@ public class PhoneContextImpl extends SipxHibernateDaoSupport implements BeanFac
             PhoneModel model = m_beanFactory.getBean(models.get(i), PhoneModel.class);
             int id = ids.get(i);
             String serial = serials.get(i);
+            Integer valueStorageId = storageIds.get(i);
             if (ArrayUtils.contains(model.getVersions(), v)) {
                 LOG.info("Updating " + serial + " to " + versionId);
-                updates.add(String.format(SQL_UPDATE, versionId, id));
+                if (valueStorageId != null && getPhoneGroupWeight(id) == getGroupWeight(group.getId())) {
+                    updates.add(String.format(SQL_UPDATE, versionId, id));
+                    updates.add(String.format(SQL_GROUP_FIRMWARE_UPDATE, versionId, valueStorageId));
+                }
             } else {
                 LOG.debug("Skipping " + serial + " as it doesn't support " + versionId);
             }
@@ -421,6 +471,18 @@ public class PhoneContextImpl extends SipxHibernateDaoSupport implements BeanFac
         if (updates.size() > 0) {
             m_jdbcTemplate.batchUpdate(updates.toArray(new String[] {}));
         }
+    }
+
+    private void applyGroupFirmwareVersion(Phone phone) {
+        ValueStorage vs = (ValueStorage) phone.getValueStorage() == null ? new ValueStorage()
+            : (ValueStorage) phone.getValueStorage();
+        int groupId = getPhoneGroupIdMinWeight(phone.getId());
+        String groupFirmwareVersion = getGroupFirmwareVersion(phone, groupId);
+        LOG.debug("Apply proposed group firmware setting value: "
+             + groupFirmwareVersion + " for phone: " + phone.getSerialNumber());
+        vs.setSettingValue(Phone.GROUP_VERSION_FIRMWARE_VERSION, groupFirmwareVersion);
+        phone.setValueStorage(vs);
+        getHibernateTemplate().merge(phone);
     }
 
     @Override
@@ -580,4 +642,40 @@ public class PhoneContextImpl extends SipxHibernateDaoSupport implements BeanFac
         });
         return alarms;
     }
+
+    @Override
+    public String getGroupFirmwareVersion(Phone phone, int groupId) {
+        //if null, device version is not applicable for phone
+        if (phone.getDeviceVersion() == null) {
+            return null;
+        }
+        Query q = getHibernateTemplate().getSessionFactory().getCurrentSession()
+                .createSQLQuery(String.format(QUERY_MODEL_FIRMWARE_VERSION, phone.getModelId(), groupId));
+
+        return q.list().size() > 0 ? (String) q.uniqueResult() : phone.getBeanId()
+            + phone.getDeviceVersion().getVersionId();
+    }
+
+    private int getPhoneGroupWeight(int phoneId) {
+        Query q = getHibernateTemplate().getSessionFactory().getCurrentSession()
+            .createSQLQuery(String.format(SQL_PHONE_GROUP_WEIGHT, phoneId));
+        return q.list().size() > 0 ? (Integer) q.uniqueResult() : 0;
+
+    }
+
+    private int getPhoneGroupIdMinWeight(int phoneId) {
+        Query q = getHibernateTemplate().getSessionFactory().getCurrentSession()
+            .createSQLQuery(String.format(SQL_PHONE_GROUP_MIN_WEIGHT, phoneId));
+        return q.list().size() > 0 ? (Integer) q.uniqueResult() : 0;
+
+    }
+
+    private int getGroupWeight(int groupId) {
+        Query q = getHibernateTemplate().getSessionFactory().getCurrentSession()
+            .createSQLQuery(String.format(SQL_GROUP_WEIGHT, groupId));
+        return q.list().size() > 0 ? (Integer) q.uniqueResult() : 0;
+
+    }
+
+
 }

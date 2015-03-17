@@ -246,7 +246,7 @@ bool RegDB::isRegisteredBinding(const Url& curl, bool preferPrimary)
 	  BaseDB::primaryPreferred(builder, query.obj());
 
 	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
-	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
+	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, readQueryMaxTimeMS(builder.obj()), 0, 0, 0, mongo::QueryOption_SlaveOk);
 
   if (!pCursor.get())
   {
@@ -336,7 +336,7 @@ bool RegDB::getUnexpiredContactsUser(const string& identity, unsigned long timeN
 	  BaseDB::primaryPreferred(builder, query.obj());
 
 	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
-	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
+	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, readQueryMaxTimeMS(builder.obj()), 0, 0, 0, mongo::QueryOption_SlaveOk);
 	if (!pCursor.get())
 	{
 	  throw mongo::DBException("mongo query returned null cursor", 0);
@@ -400,7 +400,7 @@ bool RegDB::getUnexpiredContactsUserContaining(const string& matchIdentity, unsi
 	  BaseDB::primaryPreferred(builder, query.obj());
 
 	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
-	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
+	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, readQueryMaxTimeMS(builder.obj()), 0, 0, 0, mongo::QueryOption_SlaveOk);
 
   if (!pCursor.get())
   {
@@ -474,7 +474,7 @@ bool RegDB::getUnexpiredContactsUserInstrument(const string& identity, const str
 	  BaseDB::primaryPreferred(builder, query.obj());
 
 	MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
-	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
+	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, readQueryMaxTimeMS(builder.obj()), 0, 0, 0, mongo::QueryOption_SlaveOk);
   if (!pCursor.get())
   {
    throw mongo::DBException("mongo query returned null cursor", 0);
@@ -517,7 +517,7 @@ bool RegDB::getUnexpiredContactsInstrument(const string& instrument, unsigned lo
 	  BaseDB::primaryPreferred(builder, query.obj());
 
     MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getReadQueryTimeout()));
-	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, builder.obj(), 0, 0, 0, mongo::QueryOption_SlaveOk);
+	auto_ptr<mongo::DBClientCursor> pCursor = conn->get()->query(_ns, readQueryMaxTimeMS(builder.obj()), 0, 0, 0, mongo::QueryOption_SlaveOk);
   if (!pCursor.get())
   {
    throw mongo::DBException("mongo query returned null cursor", 0);
@@ -561,8 +561,8 @@ void RegDB::clearAllBindings()
   
   MongoDB::UpdateTimer updateTimer(const_cast<RegDB&>(*this));
   
-	mongo::BSONObj all;
-    MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getWriteQueryTimeout()));
-    conn->get()->remove(_ns, all);
-	conn->done();
+  mongo::BSONObj all;
+  MongoDB::ScopedDbConnectionPtr conn(mongoMod::ScopedDbConnection::getScopedDbConnection(_info.getConnectionString().toString(), getWriteQueryTimeout()));
+  conn->get()->remove(_ns, all);
+  conn->done();
 }

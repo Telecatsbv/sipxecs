@@ -1,4 +1,5 @@
 %global         daemon mongod
+%define debug_package %{nil}
 
 Name:           mongodb
 Version:        2.6.7
@@ -26,6 +27,7 @@ BuildRequires:  scons
 BuildRequires:  openssl-devel
 BuildRequires:  boost-devel
 BuildRequires:  pcre-devel
+BuildRequires:  libpcap-devel
 
 %if 0%{?fedora} >= 15 || 0%{?rhel} >= 7
 Requires(post): systemd-units

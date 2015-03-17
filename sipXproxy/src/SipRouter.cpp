@@ -124,6 +124,7 @@ SipRouter::SipRouter(SipUserAgent& sipUserAgent,
    ,_lastDispatchYieldTime(0)
    ,_isDispatchYielding(false)
    ,_trustSbcRegisteredCalls(FALSE)
+   ,_suppressAlertIndicatorForTransfers(FALSE)
 {
    // Get Via info to use as defaults for route & realm
    UtlString dnsName;
@@ -406,6 +407,7 @@ void SipRouter::readConfig(OsConfigDb& configDb, const Url& defaultUri)
    }
    
    _trustSbcRegisteredCalls = configDb.getBoolean("SIPX_TRUST_SBC_REGISTERED_CALLS", FALSE);
+   _suppressAlertIndicatorForTransfers = configDb.getBoolean("SIPX_SUPPRESS_ALERT_INDICATOR_IN_TRANSFERS", FALSE);
    
 }
 
@@ -1464,6 +1466,24 @@ SipRouter::ProxyAction SipRouter::proxyMessage(SipMessage& sipRequest, SipMessag
                 internalRoute.toString(recordRoute);
                 sipRequest.addRecordRouteUri(recordRoute);
               }
+              else
+              {
+                //
+                // if the inbound transaction is not TLS but target is TLS
+                // insert a TLS record route on top to maintain the correct transport 
+                // for opposite directions
+                //
+                std::string rline(sipRequest.getFirstHeaderLine());
+                boost::to_lower(rline);
+                if (rline.find("transport=tls") != std::string::npos || rline.find("sips:") != std::string::npos)
+                {
+                  Url outboundRoute(mRouteHostSecurePort.data());
+                  outboundRoute.setUrlParameter("lr",NULL);
+                  outboundRoute.setUrlParameter("transport=tls",NULL);
+                  outboundRoute.toString(recordRoute);
+                  sipRequest.addRecordRouteUri(recordRoute);
+                }
+              }
            }
            
            //
@@ -1491,6 +1511,29 @@ SipRouter::ProxyAction SipRouter::proxyMessage(SipMessage& sipRequest, SipMessag
             route.toString(recordRoute);
             sipRequest.addRecordRouteUri(recordRoute);
         }
+        else if (
+          !bMessageWillSpiral &&
+          sipRequest.getSendProtocol() != OsSocket::SSL_SOCKET &&
+          sipRequest.isRecordRouteAccepted())
+        {
+          //
+          // if the inbound transaction is not TLS but target is TLS
+          // insert a TLS record route on top to maintain the correct transport 
+          // for opposite directions
+          //
+          std::string rline(sipRequest.getFirstHeaderLine());
+          boost::to_lower(rline);
+          if (rline.find("transport=tls") != std::string::npos || rline.find("sips:") != std::string::npos)
+          {
+            UtlString recordRoute;
+            Url outboundRoute(mRouteHostSecurePort.data());
+            outboundRoute.setUrlParameter("lr",NULL);
+            outboundRoute.setUrlParameter("transport=tls",NULL);
+            outboundRoute.toString(recordRoute);
+            sipRequest.addRecordRouteUri(recordRoute);
+          }
+        }
+        
      }        // end all extensions are supported
      else
      {

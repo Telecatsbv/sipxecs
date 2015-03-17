@@ -9,6 +9,7 @@
 //////
 
 // SYSTEM INCLUDES
+#include <boost/lexical_cast.hpp>
 
 // APPLICATION INCLUDES
 #include <net/SipClientWriteBuffer.h>
@@ -16,6 +17,9 @@
 #include <net/SipUserAgentBase.h>
 #include <net/Instrumentation.h>
 #include <os/OsLogger.h>
+
+#include "net/SipProtocolServerBase.h"
+#include "net/HttpMessage.h"
 
 // EXTERNAL FUNCTIONS
 // EXTERNAL VARIABLES
@@ -62,7 +66,8 @@ UtlBoolean SipClientWriteBuffer::handleMessage(OsMsg& eventMessage)
 
    int msgType = eventMessage.getMsgType();
    int msgSubType = eventMessage.getMsgSubType();
-
+   SipMessage* pCloneMsg = 0;
+   
    if (msgType == OsMsg::OS_SHUTDOWN)
    {
       // When shutting down, have to return all queued outgoing messages
@@ -76,6 +81,10 @@ UtlBoolean SipClientWriteBuffer::handleMessage(OsMsg& eventMessage)
            &&  (msgSubType == SipClientSendMsg::SIP_CLIENT_SEND
              || msgSubType == SipClientSendMsg::SIP_CLIENT_SEND_KEEP_ALIVE))
    {
+      bool sendCanFailover = false;
+      std::string failoverHost;
+      int failoverPort = 5060;
+          
       // Queued SIP message to send - normal path.
       if (msgSubType == SipClientSendMsg::SIP_CLIENT_SEND)
       {
@@ -83,9 +92,20 @@ UtlBoolean SipClientWriteBuffer::handleMessage(OsMsg& eventMessage)
           // the incoming eventMessage.
           SipClientSendMsg* sendMsg =
              dynamic_cast <SipClientSendMsg*> (&eventMessage);
+          
           if (sendMsg)
           {
-             insertMessage(sendMsg->detachMessage());
+             SipMessage* pMsg = sendMsg->detachMessage();
+             sendCanFailover = sendMsg->canFailover();
+             failoverHost = sendMsg->getAddress();
+             failoverPort = sendMsg->getPort();
+             
+             if (sendCanFailover && pMsg)
+             {
+               pCloneMsg = new SipMessage(*pMsg);
+             }
+              
+             insertMessage(pMsg);
              messageProcessed = TRUE;
           }
           else
@@ -108,10 +128,43 @@ UtlBoolean SipClientWriteBuffer::handleMessage(OsMsg& eventMessage)
       }
 
       // Write what we can.
-      writeMore();
-
+      if (!writeMore())
+      {
+        if (msgSubType == SipClientSendMsg::SIP_CLIENT_SEND && pCloneMsg && sendCanFailover)
+        {
+          //
+          // Queue the SIP message once more
+          //
+          if (!failoverHost.empty() && failoverPort > 0)
+          {       
+            OS_LOG_INFO(FAC_SIP, "SipClientWriteBuffer::handleMessage[" 
+              << mName.data() 
+              << "] - writeMore() failed.  Attempting to fail over for target: " 
+              << failoverHost << ":" << failoverPort);
+            mpSipServer->send(pCloneMsg, failoverHost.c_str(), failoverPort); 
+          }
+        }
+        else
+        {
+          OS_LOG_INFO(FAC_SIP, "SipClientWriteBuffer::handleMessage[" 
+            << mName.data() 
+            << "] - writeMore() failed.  No further flow is available for target: " 
+            << failoverHost << ":" << failoverPort);
+        }
+      }
+      
       // sendMsg will be deleted by ::run(), as usual.
       // Its destructor will free any storage owned by it.
+   }
+   
+  //
+  // sendTo() clones its own copy of the message
+  // delete it here
+  //
+   if (pCloneMsg)
+   {
+     delete pCloneMsg;
+     pCloneMsg = 0;
    }
 
    return (messageProcessed);
@@ -220,13 +273,13 @@ void SipClientWriteBuffer::insertMessage(UtlString* keepAlive)
 
 /// Write as much of the buffered messages as can be written.
 // Executed by the thread.
-void SipClientWriteBuffer::writeMore()
+bool SipClientWriteBuffer::writeMore()
 {
-   // 'exit_loop' will be set to TRUE if an attempt to write does
+   // 'writeStatus' will be set to FALSE if an attempt to write does
    // not write any bytes, and we will then return.
-   UtlBoolean exit_loop = FALSE;
    static const unsigned int WRITE_RETRY_MAX = 5;
    unsigned int write_retry = 0;
+   bool writeStatus = true;
 
    //
    // Get an exclusive lock in order for the write no to interfere with another thread
@@ -241,7 +294,7 @@ void SipClientWriteBuffer::writeMore()
                    mName.data(), mClientSocket->getSocketDescriptor());
    }
 
-   while (mWriteQueued && !exit_loop)
+   while (mWriteQueued && writeStatus)
    {
       if (mWritePointer >= mWriteString.length())
       {
@@ -326,6 +379,7 @@ void SipClientWriteBuffer::writeMore()
          {
             // No data sent, even though (in our caller) poll()
             // reported the socket was ready to write.
+
             Os::Logger::instance().log(FAC_SIP, PRI_DEBUG,
                           "SipClientWriteBuffer[%s]::writeMore "
                           "OsSocket::write() returned 0 when trying to send %zd bytes",
@@ -333,8 +387,9 @@ void SipClientWriteBuffer::writeMore()
             if (++write_retry > WRITE_RETRY_MAX)
             {
               emptyBuffer(TRUE);
+              mClientSocket->close();
               clientStopSelf();
-              exit_loop = TRUE;
+              writeStatus = false; // exit the loop and return false
             }
          }
          else
@@ -346,20 +401,28 @@ void SipClientWriteBuffer::writeMore()
                           getName().data(), ret, errno);
             // Return all buffered messages with a transport error indication.
             emptyBuffer(TRUE);
+            //
+            //Close the socket
+            //
+            mClientSocket->close();
             // Because TCP is a connection protocol, we know that we cannot
             // send successfully any more and so should shut down this client.
             clientStopSelf();
-            // Exit the loop so handleMessage() can process the stop request.
-            exit_loop = TRUE;
+            
+            // exit the loop and return false
+            writeStatus = false; 
          }
       }
    }
 
+   
    // unlock the socket object
    if (locked)
    {
      mClientSocket->unlock();
    }
+ 
+   return writeStatus;
 }
 
 /// Empty the buffer, if requested, return all messages in the queue to the SipUserAgent

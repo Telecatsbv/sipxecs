@@ -103,6 +103,7 @@ Requires: sipxcisco >= %version
 Requires: sipxconfig >= %version
 Requires: sipxconfig-ftp >= %version
 Requires: sipxconfig-tftp >= %version
+Requires: sipxcom
 Requires: sipxcounterpath >= %version
 #Requires: sipxgrandstream >= %version
 #Requires: sipxgtek >= %version

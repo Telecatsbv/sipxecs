@@ -136,6 +136,19 @@
       </type>
       <value>5000</value>
     </setting>
+    <setting name="ivr.transferByBridge">
+      <type>
+        <enum>
+          <option>
+            <value>true</value>
+          </option>
+          <option>
+            <value>false</value>
+          </option>
+        </enum>
+      </type>
+      <value>false</value>
+    </setting>
   </group>
   <group name="ivr_mail_overrides">
     <setting name="ivr.force_host">

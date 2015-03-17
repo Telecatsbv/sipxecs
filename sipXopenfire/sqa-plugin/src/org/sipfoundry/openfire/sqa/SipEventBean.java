@@ -41,9 +41,9 @@ public class SipEventBean {
 		m_dialogElements = new ArrayList<DialogElement>();
 		DialogElement element = null;
 		for (Dialog dialog : dialogs) {
+		    String id = dialog.getId();
 			State state = dialog.getState();
 			String direction = dialog.getDirection();
-			String id = dialog.getId();
 			DialogDirection dialogDirection = direction != null ? DialogDirection.getEnum(direction) : null;
 			if (m_direction == null && dialogDirection != null) {
 			    m_direction = dialogDirection;
@@ -62,6 +62,10 @@ public class SipEventBean {
 			}
 			m_dialogElements.add(element);
 		}
+	}
+
+	public List<DialogElement> getDialogs() {
+	    return m_dialogElements;
 	}
 
 	public boolean isOnHook() {
@@ -101,22 +105,22 @@ public class SipEventBean {
         return false;
 	}
 
-	private String getDialogIdWithState(DialogState state) {
+    private String getDialogIdWithState(DialogState state) {
         for (DialogElement element : m_dialogElements) {
             if(element.getDialogState().equals(state)) {
                 return element.getId();
             }
         }
         return null;
-	}
+    }
 
-	public String getConfirmedDialogId() {
-	    return getDialogIdWithState(DialogState.confirmed);
-	}
+    public String getConfirmedDialogId() {
+        return getDialogIdWithState(DialogState.confirmed);
+    }
 
-	public String getTerminatedDialogId() {
-	    return getDialogIdWithState(DialogState.terminated);
-	}
+    public String getTerminatedDialogId() {
+        return getDialogIdWithState(DialogState.terminated);
+    }
 
 	public String getObserverId() {
 		return m_observerId;
