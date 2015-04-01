@@ -274,7 +274,7 @@ SipSubscriptionMgr::operator=(const SipSubscriptionMgr& rhs)
 }
 
 // Set the address of the queue to which to send resend messages.
-void SipSubscriptionMgr::initialize(OsMsgQ* pMsgQ)
+UtlBoolean SipSubscriptionMgr::initialize(OsMsgQ* pMsgQ)
 {
    // Verify that mpResendMsgQ has not been initialized yet.
    // If it were, we might already have timers set to send messages to the

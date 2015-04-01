@@ -179,7 +179,7 @@ int proxy()
     osPrintf("SIPX_PROXY_DEFAULT_SERIAL_EXPIRES : %d\n", defaultSerialExpires);
     
     int sipRTT;
-    configDb.get("SIPX_PROXY_SIP_RTT", sipRTT);
+    osServiceOptions.getOption("SIPX_PROXY_SIP_RTT", sipRTT);
     if(sipRTT <= 0)
     {
         sipRTT = SIP_DEFAULT_RTT;

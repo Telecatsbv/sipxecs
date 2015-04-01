@@ -49,7 +49,7 @@ SipPersistentSubscriptionMgr::~SipPersistentSubscriptionMgr()
 }
 
 /* ============================ MANIPULATORS ============================== */
-void SipPersistentSubscriptionMgr::initialize(OsMsgQ* pMsgQ)
+UtlBoolean SipPersistentSubscriptionMgr::initialize(OsMsgQ* pMsgQ)
 {
    // initialize the base class
    SipSubscriptionMgr::initialize(pMsgQ);

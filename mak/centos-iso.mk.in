@@ -63,7 +63,7 @@ iso-clean-% :
 iso-disc-% :
 	test -d cd || mkdir cd
 	! test -d cd.tmp || rm -rf cd.tmp
-	sudo mount -o loop $(wildcard @ISO_DIR@/CentOS-$(CENTOS_VER)-$(ARCH)-minimal.iso) cd
+	sudo mount -o loop @ISO_DIR@/CentOS-$(CENTOS_VER)-$(ARCH)-minimal.iso cd
 	@echo "copying contents of disc..."
 	cp -ar cd cd.tmp
 	sudo umount cd
@@ -203,11 +203,11 @@ ISO_ADD_EPEL = \
   cloc-1.58-* \
   coffee-script-1.* \
   coffee-script-common-1.* \
-  fail2ban-0.8.10* \
-  js-* \
+  fail2ban-* \
   gperftools-libs-2.0-11* \
   gtest-1* \
   http-parser-devel-* \
+  js-* \
   libiodbc-3* \
   libev-4.* \
   libmcrypt-* \
@@ -241,7 +241,6 @@ ISO_ADD_EPEL = \
   shorewall-core-* \
   snappy-* \
   uglify-js-* \
-  uglify-js-common-* \
   v8-3.14.5.10* \
   v8-devel-3.14.5.10-* \
   wxBase-* \
@@ -755,7 +754,7 @@ ISO_ADD_TELECATS = \
   usermode-gtk-* \
   vim-common-* \
   vim-enhanced-* \
-  wireshark-[0-9]* \
+  wireshark-* \
   wireshark-gnome-* \
   xcb-util-[0-9]* \
   xdg-utils-* \
