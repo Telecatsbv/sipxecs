@@ -21,16 +21,16 @@ rest_PKGS = \
 	xmlrpc-client \
 	postgresql \
 	xmlrpc-server \
-	org.springframework.beans \
-        org.springframework.web \
-        org.springframework.context \
-        org.springframework.context.support \
-        org.springframework.core \
+	spring-beans \
+        spring-web \
+        spring-context \
+        spring-context-support \
+        spring-core \
         org.springframework.jdbc \
         org.springframework.transaction \
-        org.springframework.expression \
-        org.springframework.aop \
-        org.springframework.asm \
+        spring-expression \
+        spring-aop \
+        asm \
         spring-data-commons \
         spring-data-mongodb \
 	axis
