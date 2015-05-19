@@ -51,6 +51,12 @@ bundle edit_line registrar_config_contents() {
         insert_type => "file",
         expand_scalars => "true";
       "SIP_REGISTRAR_BIND_IP : $(sipx.bind_ip)";
+    chefsec::
+      "SIP_REDIRECT_AUTHORITY_LEVEL.140-CHEFSEC : 50";
+      "SIP_REDIRECT_HOOK_LIBRARY.140-CHEFSEC : $(sipx.SIPX_LIBDIR)/libRedirectorChefsec.so";
+    onnetselector::
+      "SIP_REDIRECT_HOOK_LIBRARY.990-ONNET : $(sipx.SIPX_LIBDIR)/libSipRedirectorOnnet.so";
+      "SIP_REDIRECT_AUTHORITY_LEVEL.990-ONNET : 100";
 
   delete_lines:
     any::
