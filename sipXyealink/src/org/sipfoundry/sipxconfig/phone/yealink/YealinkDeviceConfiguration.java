@@ -19,6 +19,7 @@ package org.sipfoundry.sipxconfig.phone.yealink;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 import org.sipfoundry.sipxconfig.device.ProfileContext;
 import org.sipfoundry.sipxconfig.speeddial.Button;
@@ -28,9 +29,16 @@ import org.sipfoundry.sipxconfig.speeddial.Button;
  */
 public class YealinkDeviceConfiguration extends ProfileContext {
 
+
     public YealinkDeviceConfiguration(YealinkPhone device, String profileTemplate) {
         super(device, profileTemplate);
     }
+    
+    @Override
+	public Map<String, Object> getContext() {
+		Map<String, Object> context = super.getContext();
+		return context;
+	}
 
     public Collection<Button> getSpeedDial() {
         YealinkPhone phone = (YealinkPhone) getDevice();

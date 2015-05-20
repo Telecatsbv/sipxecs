@@ -1,6 +1,7 @@
 yealink_PKGS = \
 	log4j \
 	dom4j \
+	commons-httpclient \
 	commons-lang \
 	commons-io \
 	commons-collections \
@@ -8,4 +9,5 @@ yealink_PKGS = \
 	spring-beans \
 	sipxcommons \
 	sipxconfig-neoconf \
+	plugins/sipXhotprovisioning \
 	velocity

@@ -45,6 +45,7 @@ ${prefix}${setting.profileName} = ${value}
 #end
 ##
 #macro (arraySettings $array)
+#set ($array = ${array})
 #set($settingsIndexMax = ${array.getSize()} - 1)
 #foreach ($settingIndex in [0..$settingsIndexMax])
 #foreach ($settingName in ${array.getSettingNames()})
@@ -57,6 +58,51 @@ ${array.name}.$math.add(${settingIndex},1).${settingName} = $!{s.value}
 #end
 #else
 ${array.name}.$math.add(${settingIndex},1).${settingName} = 
+#end
+#end
+#end
+#end
+##
+#macro (keySettings $array)
+#set ($array = ${array})
+#set($settingsIndexMax = ${array.getSize()} - 1)
+#set ($i = 0)
+#foreach ($settingIndex in [0..$settingsIndexMax])
+#set($type = ${array.getSetting($settingIndex,"type")})
+#set ($sIndex = $settingIndex + 1)
+#if ($type.value == "47")
+## this means we have an auto speeddial key, do things differently
+#if ($i >= $cfg.SpeedDial.size())
+${array.name}.${sIndex}.type = 0
+${array.name}.${sIndex}.value = %NULL%
+${array.name}.${sIndex}.line = %NULL%
+${array.name}.${sIndex}.pickup_value = %NULL%
+${array.name}.${sIndex}.label = %NULL%
+#else
+#if ($cfg.SpeedDial.get($i).Blf == "false")
+${array.name}.${sIndex}.type = 13
+${array.name}.${sIndex}.value = $cfg.SpeedDial.get($i).Number
+${array.name}.${sIndex}.line = ${array.getSetting($settingIndex,"line").value}
+${array.name}.${sIndex}.pickup_value = ${array.getSetting($settingIndex,"pickup_value").value}
+${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Number
+#else
+${array.name}.${sIndex}.type = 16
+${array.name}.${sIndex}.value = $cfg.SpeedDial.get($i).Number
+${array.name}.${sIndex}.line = ${array.getSetting($settingIndex,"line").value}
+${array.name}.${sIndex}.pickup_value = ${array.getSetting($settingIndex,"pickup_value").value}
+${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Number
+#end
+#end
+#set ($i = $i + 1)
+#else
+## no autospeeddial key
+#foreach ($settingName in ${array.getSettingNames()})
+#set($s = ${array.getSetting($settingIndex,$settingName)})
+#if(${s.Value})
+${array.name}.${sIndex}.${settingName} = $!{s.value}
+#else
+${array.name}.${sIndex}.${settingName} = 
+#end
 #end
 #end
 #end
@@ -85,7 +131,11 @@ account.${account}.codec.${i}.payload_type = $!{pt}
 ##
 #macro (phoneSetting $settings)
 #if(${settings.getSize()})
+#if(${settings.name} == "memorykey" )
+#keySettings($settings)
+#else
 #arraySettings($settings)
+#end
 #else
 #foreach ($s in $settings.Values)
 #if(${s.isLeaf()})
@@ -106,6 +156,7 @@ ${s.ProfileName} =
 #end
 #end
 #end
+##
 
 # Enable configured lines
 #foreach ($line in $phone.lines)

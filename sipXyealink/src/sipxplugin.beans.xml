@@ -14,6 +14,9 @@
       class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
 <bean id="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_7X"
       class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+<bean id="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_8X"
+      class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+
 
 <bean id="yealinkModel" class="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel" parent="abstractPhoneModel" abstract="true">
 	<property name="beanId" value="yealinkPhone" />
@@ -21,14 +24,18 @@
 	<property name="restartSupported" value="true" />
 	<property name="versions">
 	    <list>
-		<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_7X"/>
+			<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_6X"/>
+			<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_7X"/>
+			<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_8X"/>
 	    </list>
 	</property>
 	<property name="defaultVersion">
 	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_7X"/>
 	</property>
 	<property name="profileTemplate" value="yealinkPhone/config_v6x_titan.vm" />
+	<property name="xmlProfileTemplate" value="yealinkPhone/config_v7x.prov.xml.vm"/>
 	<property name="directoryProfileTemplate" value="yealinkPhone/directory.xml.vm" />
+    <property name="parentDir" value="${sysdir.phone}/profile/tftproot"/>
 </bean>
 
 <bean id="yealinkPhoneSIPT12P" parent="yealinkModel">
@@ -54,6 +61,16 @@
 	<property name="supportedFeatures">
 	    <set>
 	    </set>
+	</property>
+</bean>
+
+<bean id="yealinkPhoneSIPT19P" parent="yealinkModel">
+	<property name="label" value="Yealink SIP-T19(P)" />
+	<property name="name" value="T19" />
+	<property name="maxLineCount" value="1" />
+	<property name="supportedFeatures">
+		<set>
+		</set>
 	</property>
 </bean>
 

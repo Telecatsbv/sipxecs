@@ -19,17 +19,25 @@ package org.sipfoundry.sipxconfig.phone.yealink;
 
 import org.sipfoundry.sipxconfig.device.DeviceVersion;
 import org.sipfoundry.sipxconfig.phone.PhoneModel;
+import org.sipfoundry.sipxconfig.speeddial.SpeedDialManager;
 
 /**
  * Static differences in yealink models
 */
 public final class YealinkModel extends PhoneModel {
-    /** Firmware 6x or beyond */
+	private SpeedDialManager m_speedDialManager;
+	private String m_XmlProfileTemplate;
+	private String m_parentDir;
+
+
+	/** Firmware 6x or beyond */
     public static final DeviceVersion VER_6X = new DeviceVersion(YealinkPhone.BEAN_ID, "6X");
     public static final DeviceVersion VER_7X = new DeviceVersion(YealinkPhone.BEAN_ID, "7X");
+    public static final DeviceVersion VER_8X = new DeviceVersion(YealinkPhone.BEAN_ID, "8X");
     public static final DeviceVersion[] SUPPORTED_VERSIONS = new DeviceVersion[] {
         VER_6X,
-        VER_7X
+        VER_7X,
+        VER_8X
     };
 
     private DeviceVersion m_deviceVersion;
@@ -113,4 +121,24 @@ public final class YealinkModel extends PhoneModel {
     public void setMaxDSSKeyCount(int value) {
         m_dSSKeyCount = value;
     }
+    
+	public SpeedDialManager getSpeedDialManager() {
+		return m_speedDialManager;
+	}
+	
+	public void setXmlProfileTemplate(String name) {
+		m_XmlProfileTemplate = name;
+	}
+
+	public String getXmlProfileTemplate() {
+		return m_XmlProfileTemplate;
+	}
+
+	public String getParentDir() {
+		return m_parentDir;
+	}
+
+	public void setParentDir(String parentDir) {
+		this.m_parentDir = parentDir;
+	}
 }

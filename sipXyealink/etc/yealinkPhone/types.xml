@@ -110,7 +110,7 @@
 	<option><value>3</value></option>
     </enum>
 </type>
-<type id="DSSKeyType_6X_type">
+<type id="DSSKeyType_6x_type">
     <enum>
 	<option><value>0</value></option>
 	<option><value>2</value></option>
