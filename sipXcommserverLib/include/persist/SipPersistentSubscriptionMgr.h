@@ -129,6 +129,9 @@ private:
 
    SubscribeDB& mDB;
    
+   //! Marks whether the base class was initialized or not (i.e. SipSubscriptionMgr::initialize() was called)
+   UtlBoolean mBaseInitialized;
+
    //! Copy constructor NOT ALLOWED
    SipPersistentSubscriptionMgr(const SipPersistentSubscriptionMgr& rSipPersistentSubscriptionMgr);
 
