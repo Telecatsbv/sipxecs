@@ -282,6 +282,8 @@ UtlBoolean SipSubscriptionMgr::initialize(OsMsgQ* pMsgQ)
    assert(!mpResendMsgQ);
 
    mpResendMsgQ = pMsgQ;
+
+   return TRUE;
 }
 
 UtlBoolean SipSubscriptionMgr::updateDialogInfo(const SipMessage& subscribeRequest,

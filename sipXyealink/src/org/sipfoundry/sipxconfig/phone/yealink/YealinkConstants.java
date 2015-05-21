@@ -114,6 +114,7 @@ public abstract class YealinkConstants {
     public static final String AUTOPROVISIONING_SERVER_ADDRESS_V6X_SETTING = "upgrade/autoprovision/server_address";
     public static final String ADVANCED_MUSIC_SERVER_URI_V6X_SETTING = "account/MusicServerUri";
     public static final String ADVANCED_MUSIC_SERVER_URI_V7X_SETTING = "advanced/music_server_uri";
+	public static final String ADVANCED_BLF_SERVER_URI_V7X_SETTING = "advanced/blf.blf_list_uri";
     // T2X except T20
     public static final String LOGO_FILE_NAME_V6X_SETTING = "upgrade/Logo/server_address";
     public static final String LOGO_FILE_NAME_V7X_SETTING = "features/GENERAL/lcd_logo.url";
