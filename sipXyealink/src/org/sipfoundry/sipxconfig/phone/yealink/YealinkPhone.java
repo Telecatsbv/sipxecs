@@ -118,7 +118,7 @@ public class YealinkPhone extends Phone implements HotProvisionable{
     private UploadManager m_uploadManager;
 
     private AddressManager m_addressManager;
-    
+
     public YealinkPhone() {
         if (null == getSerialNumber()) {
             setSerialNumber(YealinkConstants.MAC_PREFIX);
@@ -188,7 +188,13 @@ public class YealinkPhone extends Phone implements HotProvisionable{
     }
 
     public String getTftpServer() {
-        Address serverAddress = m_addressManager.getSingleAddress(FtpManager.TFTP_ADDRESS);
+        try {
+          Address serverAddress = m_addressManager.getSingleAddress(FtpManager.TFTP_ADDRESS);
+        } catch(NullPointerException e) {
+          LOG.error("YealinkPhone getTftpServer(): Nullpointer Exception caught: "+ e);
+          return "";
+        }
+
         if (null != serverAddress) {
             return String.format("tftp://%s/", serverAddress.getAddress());
         } else {
@@ -432,7 +438,7 @@ public class YealinkPhone extends Phone implements HotProvisionable{
                 }
             }
         }
-        
+
 		final XmlProvisionProfile xmlProvProfile = new XmlProvisionProfile(
 				getHotProvisionFilename());
 		profileTypes = (Profile[]) ArrayUtils.add(profileTypes, xmlProvProfile);
@@ -559,7 +565,7 @@ public class YealinkPhone extends Phone implements HotProvisionable{
         protected ProfileContext createContext(Device device) {
             YealinkPhone phone = (YealinkPhone) device;
             YealinkModel model = (YealinkModel) phone.getModel();
-            
+
             return new YealinkDeviceConfiguration(phone, model.getProfileTemplate());
         }
     }
@@ -597,7 +603,7 @@ public class YealinkPhone extends Phone implements HotProvisionable{
             return m_model.matches(expression);
         }
     }
-    
+
 	static class XmlProvisionProfile extends Profile {
 		private static final String APPLICATION_XML = "application/xml";
 
@@ -916,7 +922,7 @@ public class YealinkPhone extends Phone implements HotProvisionable{
             return null;
         }
     }
-    
+
 	@Override
 	public void performHotProvisioning(HashMap<String, String> hotProvProps) {
 		String sipContactHost = hotProvProps.get("sipContactHost");
@@ -962,11 +968,11 @@ public class YealinkPhone extends Phone implements HotProvisionable{
 		LOG.debug("yealink: hotProvXmlFile age:" + age);
 		pushXmlToPhone(sipContactHost, configFilePath);
 	}
-    	
+
 	private String getHotProvisionFilename() {
 		return getSerialNumber().toUpperCase() + ".prov.xml";
 	}
-	
+
 	public void pushXmlToPhone(String sipContactHost, String configFilePath) {
 		LOG.info("yealink: pushXmlToPhone, sipContactHost:" + sipContactHost);
 		LOG.debug("yealink: configFilePath:" + configFilePath);
