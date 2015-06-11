@@ -384,8 +384,6 @@ public class YealinkPhone extends Phone implements HotProvisionable{
     public void initialize() {
         addDefaultBeanSettingHandler(new YealinkPhoneDefaults(getPhoneContext().getPhoneDefaults(), this));
         addDefaultSettingHandler(new DynamicDefaults(getPhoneContext().getSpeedDial(this)));
-        YealinkUpload yealinkupload = new YealinkUpload();
-        yealinkupload.yealinkDefaultFiles();
     }
 
 
