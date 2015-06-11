@@ -22,6 +22,7 @@ import static java.lang.String.format;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import org.apache.commons.io.FileUtils;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -188,18 +189,19 @@ public class YealinkPhone extends Phone implements HotProvisionable{
     }
 
     public String getTftpServer() {
-        try {
-          Address serverAddress = m_addressManager.getSingleAddress(FtpManager.TFTP_ADDRESS);
-        } catch(NullPointerException e) {
-          LOG.error("YealinkPhone getTftpServer(): Nullpointer Exception caught: "+ e);
-          return "";
-        }
+      try {
+        Address serverAddress = m_addressManager.getSingleAddress(FtpManager.TFTP_ADDRESS);
 
         if (null != serverAddress) {
             return String.format("tftp://%s/", serverAddress.getAddress());
         } else {
             return "";
         }
+      }catch(NullPointerException e) {
+        LOG.error("YealinkPhone getTftpServer(): Caught NullPointerException: "+ e);
+        return "";
+      }
+
     }
 
     public int getMaxLineCount() {
@@ -382,7 +384,10 @@ public class YealinkPhone extends Phone implements HotProvisionable{
     public void initialize() {
         addDefaultBeanSettingHandler(new YealinkPhoneDefaults(getPhoneContext().getPhoneDefaults(), this));
         addDefaultSettingHandler(new DynamicDefaults(getPhoneContext().getSpeedDial(this)));
+        YealinkUpload yealinkupload = new YealinkUpload();
+        yealinkupload.yealinkDefaultFiles();
     }
+
 
     @Override
     public void initializeLine(Line line) {
