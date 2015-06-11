@@ -99,4 +99,36 @@ public class YealinkUpload extends Upload {
             victim.delete();
         }
     }
+
+    /* Make sure these files exist on the TFTProot.
+     * When these files do not exist the booting of a yealink phone slows down dramatically.
+     * Example: The yealink phone will try to download y000000000000.cfg, when that fails it will
+     * timeout and try again for 3 more times.
+     * Solution: Put empty files in place so that the yealink can download them and wont try again.
+     */
+    public void yealinkDefaultFiles() {
+      String[] yealinkEmptyFiles = {
+        "y000000000000.cfg",
+        "y000000000004.cfg",
+        "y000000000005.cfg",
+        "y000000000007.cfg",
+        "y000000000028.cfg",
+        "y000000000029.cfg",
+        "y000000000031.cfg",
+        "y000000000034.cfg",
+        "y000000000037.cfg",
+        "yealink/Contacts/search.xml"
+      };
+
+      for(String file: yealinkEmptyFiles) {
+        File victim = new File("/usr/local/sipx/var/sipxdata/configserver/phone/profile/tftproot/"+file);
+        if(!victim.exists()) {
+          try {
+            FileUtils.writeStringToFile(victim, "");
+          }catch(IOException e) {
+            LOG.error("YealinkUpload deploy(): IOException caught."+ e);
+          }
+        }
+      }
+    }
 }
