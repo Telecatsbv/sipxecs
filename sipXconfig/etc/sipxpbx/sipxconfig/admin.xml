@@ -62,6 +62,10 @@
       <type refid="true-false"/>
       <value>true</value>
     </setting>
+    <setting name="hazelcastNotification">
+      <type refid="true-false"/>
+      <value>true</value>
+    </setting>
     <setting name="password-policy">
       <type refid="policy-type" />
     </setting>
@@ -69,12 +73,17 @@
       <type>
         <string minLen="8" password="yes"/>
       </type>
-    </setting>
+    </setting>    
     <setting name="vmpin-default">
       <type>
         <string minLen="4" password="yes"/>
       </type>
     </setting>
+    <setting name="postgres-pwd">
+      <type>
+        <string minLen="8" password="yes"/>
+      </type>
+    </setting>    
     <setting name="externalAliases.aliasAddins" advanced="yes">
       <type>
         <string/>
@@ -151,6 +160,12 @@
       </type>
       <value>false</value>
     </setting>
+    <setting name="newUserGroupPrefix">
+      <type>
+    	<string/>
+      </type>
+      <value>New_LDAP</value>
+    </setting>    
   </group>
   <group name="user-portal">
     <setting name="old-portal">

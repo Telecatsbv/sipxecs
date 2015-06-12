@@ -34,14 +34,13 @@ BUILD_EPEL = \
 	Canna-libs-* \
 	ccache-* \
 	compface-1.5*\
-	erlang-getopt-* \
-	erlang-mustache-* \
-	erlang-protobuffs-* \
+	erlang-* \
 	gperftools-devel-* \
 	gtest-devel-* \
 	gyp-* \
 	http-parser-* \
 	http-parser-devel-* \
+	libmcrypt-devel-* \
 	libdnet-* \
 	libdnet-devel-* \
 	libev-* \

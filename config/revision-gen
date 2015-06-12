@@ -27,6 +27,14 @@ VERSION=$1
 #<<<<<<< HEAD
 #VER_REV=`git describe --abbrev=5 --match="v${VERSION}" HEAD --long`
 #=======
+=======
+if [ $VERSION == "15.06" ]; then
+    VERSION="4.6.0"
+fi
+if [ $VERSION == "15.05" ]; then
+    VERSION="4.6.0"
+fi
+>>>>>>> upstream/release-15.06
 if [ $VERSION == "15.04" ]; then
     VERSION="4.6.0"
 fi

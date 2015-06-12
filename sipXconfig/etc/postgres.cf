@@ -24,6 +24,8 @@ bundle agent postgres {
       "any" usebundle => postgres_sysctl_running;
     !fedora16_or_greater::
       "any" usebundle => postgres_sysv_running;
+    postgres.change_password::  
+      "any" usebundle => postgres_activate_new_password;
 }
 
 bundle agent postgres_init {
@@ -52,6 +54,7 @@ bundle agent postgres_init {
     # starting and stopping server. Although you could call
     # initdb directly there is various other housekeeping that
     # the service script handles so leverage it here.
+
     fedora16_or_greater.initdb::
       "/usr/bin/postgresql-setup"
         comment => "initialize postgres",
@@ -89,6 +92,7 @@ bundle agent postgres_config {
         edit_line => replace_contents("-i");
 }
 
+
 bundle edit_line postgresql_conf {
   insert_lines:
     any::
@@ -120,12 +124,23 @@ bundle edit_line postgresql_conf {
 }
 
 bundle edit_line pg_hba_conf {
+  classes:
+    "trust" expression => strcmp("",'$(sipx.NEW_POSTGRESQL_PASSWORD)');
+    "pwdfile_exists" expression  => fileexists("$(sipx.SIPX_CFDATA)/$(sipx.location_id)/postgres-pwd.cfdat");
   insert_lines:
-    "local all all trust";
-    "host all all 127.0.0.1/32 trust";
-    "host all all ::1/128 trust";
-    # any node in the cluster can connect to postgresql
-    "host all all 0.0.0.0/0 trust";
+    pwdfile_exists.!trust::
+      "local all all md5";
+      "host all all 127.0.0.1/32 md5";
+      "host all all ::1/128 md5";
+      # any node in the cluster can connect to postgresql
+      "host all all 0.0.0.0/0 md5";
+    !pwdfile_exists|trust::
+      "local all all trust";
+      "host all all 127.0.0.1/32 trust";
+      "host all all ::1/128 trust";
+      # any node in the cluster can connect to postgresql
+      "host all all 0.0.0.0/0 trust";
+      
   delete_lines:
     "(host|local).*";
 }
@@ -153,8 +168,13 @@ bundle agent postgres_sysv_running {
       "$(sipx.PG_DAEMON)"
         comment => "start postgres",
         args => "start";
+        
+    postgres.change_password::
+       "$(sipx.SIPX_BINDIR)/postgres_change_pwd"
+         comment => "change postgres password ",
+         args => '$(sipx.NEW_POSTGRESQL_PASSWORD)';        
 
-    postgres.postgres_running.restart_postgres::
+    postgres.postgres_running.(restart_postgres|change_password)::
       "$(sipx.PG_DAEMON)"
         comment => "restart postgres",
         args => "restart";
@@ -187,9 +207,38 @@ bundle agent postgres_sysctl_running {
       "$(sipx.systemctl)"
         comment => "enable $(service)",
         args => "enable $(service)";
-
-    postgres.postgres_running.restart_postgres::
+    
+    postgres.change_password::
+       "$(sipx.SIPX_BINDIR)/postgres_change_pwd"
+         comment => "change postgres password",
+         args => '$(sipx.NEW_POSTGRESQL_PASSWORD)';
+         
+    postgres.postgres_running.(restart_postgres|change_password)::
       "$(sipx.systemctl)"
         comment => "restart $(service)",
-        args => "restart $(service)";
+        args => "restart $(service)";    
+}
+
+bundle agent postgres_activate_new_password {
+  files:
+    "/root/.pgpass"
+      comment => "create postgress pgpass file",
+      create => "true",
+      perms => mog("600", root, root),
+      edit_line => postgres_pgpass;
+    
+    "$(sipx.PGDATA)/../.pgpass"
+      comment => "create postgress pgpass file",
+      create => "true",
+      perms => mog("600", "$(sipx.POSTGRESQL_USER)","$(sipx.POSTGRESQL_GROUP)"),
+      edit_line => postgres_pgpass;
+}
+
+bundle edit_line postgres_pgpass {
+  insert_lines:
+    any::
+      'localhost:5432:*:postgres:$(sipx.NEW_POSTGRESQL_PASSWORD)';
+  delete_lines:  
+    any::
+      ".*";  
 }
