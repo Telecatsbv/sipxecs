@@ -16,6 +16,8 @@
 #
 
 bundle agent 00_sipxconfig {
+  classes:
+  "postgres_pwd_conf" expression => fileexists("$(sipx.SIPX_CONFDIR)/postgres-pwd.properties");
   methods:
     primary::
       # normally not nec but mongodb need 00_ssh to run first
@@ -45,7 +47,20 @@ bundle agent 00_sipxconfig {
         create => "true",
         perms => mog("644", "root", "root"),
         edit_defaults => empty,
-        edit_line => sipxconfig_config;
+        edit_line => sipxconfig_config;       
+    postgres.!postgres_pwd_conf::
+      "$(sipx.SIPX_CONFDIR)/postgres-pwd.properties"
+        comment => "initialize postgres pwd file config",
+        create => "true",
+        perms => mog("644", "$(sipx.SIPXPBXUSER)", "$(sipx.SIPXPBXGROUP)"),
+        edit_defaults => empty,
+        edit_line => empty_postgres_pwd;        
+    postgres::    
+      "$(sipx.SIPX_CONFDIR)/postgres-pwd.properties"
+        comment => "change postgresql password",
+        copy_from => copy_from_cfdata("$(sipx.location_id)/postgres-pwd.properties"),
+        perms => mog("644", "$(sipx.SIPXPBXUSER)", "$(sipx.SIPXPBXGROUP)"),
+        classes => if_repaired("change_password");          
 
   commands:
     primary.setup::
@@ -96,4 +111,12 @@ mongoReplicaSetManager.primaryFqdn=$(sipx.host).$(sipx.net_domain)
     "$(ui_config)"
       expand_scalars => "true",
       insert_type => "file";
+}
+
+bundle edit_line empty_postgres_pwd {
+  insert_lines:
+      "password=";     
+  delete_lines:  
+    any::
+      ".*";  
 }

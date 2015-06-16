@@ -217,6 +217,10 @@ public class AdminContextImpl extends HibernateDaoSupport implements AdminContex
         return getSettings().isAuthEmailAddress();
     }
 
+    public String getNewLdapUserGroupNamePrefix() {
+        return getSettings().getNewLdapUserGroupNamePrefix();
+    }
+
     @Required
     public void setDomainManager(DomainManager domainManager) {
         m_domainManager = domainManager;
@@ -225,5 +229,10 @@ public class AdminContextImpl extends HibernateDaoSupport implements AdminContex
     @Override
     public boolean isSystemAuditEnabled() {
         return (Boolean) getSettings().getSettingTypedValue(AdminSettings.SYSTEM_AUDIT);
+    }
+
+    @Override
+    public boolean isHazelcastEnabled() {
+        return (Boolean) getSettings().getSettingTypedValue(AdminSettings.HAZELCAST_NOTIFICATION);
     }
 }

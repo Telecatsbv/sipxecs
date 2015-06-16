@@ -9,6 +9,7 @@ sipx_core = \
   sipXportLib \
   sipXtackLib \
   sipXresiprocate \
+  oss_core \
   sipXmediaLib \
   sipXmediaAdapterLib \
   sipXcallLib \
@@ -53,6 +54,7 @@ sipx_extra = \
   sipXrecording \
   sipXhomer \
   sipXcallQueue \
+  sipXAocBilling \
   sipXtools
 
 # sipxecs projects that are NOT essential for a running communication system
@@ -159,7 +161,7 @@ sipXopenfire_DEPS = sipXconfig sipXsqa
 sipXcounterpath_DEPS = sipXconfig
 sipXaudiocodes_DEPS = sipXconfig
 sipXivr_DEPS = sipXconfig
-sipXproxy_DEPS = sipXcommserverLib
+sipXproxy_DEPS = sipXcommserverLib oss_core
 sipXpublisher_DEPS = sipXcommserverLib
 sipXregistry_DEPS = sipXcommserverLib
 sipXpage_DEPS = sipXcommons
@@ -169,6 +171,7 @@ sipXsaa_DEPS = sipXsqa sipXcallLib sipXcommserverLib
 sipXhomer_DEPS = sipXsqa sipXresiprocate
 sipXsbc_DEPS = sipXconfig sipXsqa sipXregistry
 sipXcallQueue_DEPS = sipXconfig
+sipXAocBilling_DEPS = sipXconfig
 sipXexample_DEPS = sipXcommserverLib sipXconfig
 sipXsss_DEPS = sipXsqa sipXcommserverLib sipXresiprocate
 sipXyard = sipXcommserverLib

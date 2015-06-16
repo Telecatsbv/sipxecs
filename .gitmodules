@@ -57,7 +57,7 @@
 	url = git://github.com/sipXcom/sipXlang-zh.git
 [submodule "oss_core"]
 	path = oss_core
-	url = git://github.com/ezuce/oss_core.git
+	url = git://github.com/joegen/oss_core.git
 [submodule "sipXsbc"]
 	path = sipXsbc
 	url = git://github.com/ezuce/sipXsbc.git
@@ -121,3 +121,6 @@
 [submodule "freeswitch_edge"]
 	path = freeswitch_edge
 	url = git://github.com/sipXcom/freeswitch.git
+[submodule "sipXAocBilling"]
+	path = sipXAocBilling
+	url = https://github.com/sipXcom/sipXAocBilling.git

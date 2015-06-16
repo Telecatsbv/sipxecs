@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Required;
 public class AdminSettings extends PersistableSettings implements DeployConfigOnEdit {
 
     public static final String SYSTEM_AUDIT = "configserver-config/systemAudit";
+    public static final String HAZELCAST_NOTIFICATION = "configserver-config/hazelcastNotification";
     private static final Log LOG = LogFactory.getLog(AdminSettings.class);
 
     private static final String LDAP_MANAGEMENT_DISABLE = "ldap-management/disable";
@@ -43,6 +44,8 @@ public class AdminSettings extends PersistableSettings implements DeployConfigOn
     private static final String AUTHENTICATION_AUTH_ACC_NAME = "configserver-config/account-name";
     private static final String AUTHENTICATION_EMAIL_ADDRESS = "configserver-config/email-address";
     private static final String CORS_DOMAIN_SETTING = "configserver-config/corsDomains";
+    private static final String NEW_LDAP_USERS_GROUP_PREFIX = "ldap-management/newUserGroupPrefix";
+    private static final String POSTGRES_PASSWORD = "configserver-config/postgres-pwd";
 
     private PasswordPolicy m_passwordPolicy;
     private String[] m_logLevelKeys;
@@ -72,6 +75,10 @@ public class AdminSettings extends PersistableSettings implements DeployConfigOn
         return getSettingValue("configserver-config/password-default");
     }
 
+    public String getPostgresPassword() {
+        return getSettingValue(POSTGRES_PASSWORD);
+    }
+
     public String getDefaultVmPin() {
         return getSettingValue("configserver-config/vmpin-default");
     }
@@ -90,6 +97,10 @@ public class AdminSettings extends PersistableSettings implements DeployConfigOn
 
     public boolean isDelete() {
         return (Boolean) getSettingTypedValue(LDAP_MANAGEMENT_DELETE);
+    }
+
+    public String getNewLdapUserGroupNamePrefix() {
+        return (String) getSettingTypedValue(NEW_LDAP_USERS_GROUP_PREFIX);
     }
 
     public void setDisable(boolean disable) {
@@ -132,6 +143,14 @@ public class AdminSettings extends PersistableSettings implements DeployConfigOn
 
     public void setSystemAuditEnabled(boolean systemAuditEnabled) {
         setSettingTypedValue(SYSTEM_AUDIT, systemAuditEnabled);
+    }
+
+    public void setHazelcastNotification(boolean notification) {
+        setSettingTypedValue(HAZELCAST_NOTIFICATION, notification);
+    }
+
+    public boolean isHazelcastNotification() {
+        return (Boolean) getSettingTypedValue(HAZELCAST_NOTIFICATION);
     }
 
     protected static String validateDomainList(String corsDomains) {

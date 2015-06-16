@@ -39,6 +39,12 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/thread/pthread/mutex.hpp>
 
+#include "OSS/SIP/SIPMessage.h"
+#include "OSS/SIP/SIPURI.h"
+#include "OSS/SIP/SIPContact.h"
+#include "OSS/SIP/SIPRequestLine.h"
+#include "OSS/SIP/SIPFrom.h"
+
 // DEFINES
 //#define TEST_PRINT 1
 
@@ -236,6 +242,8 @@ SipRouter::SipRouter(SipUserAgent& sipUserAgent,
    mpSipUserAgent->setPreDispatchEvaluator(boost::bind(&SipRouter::preDispatch, this, _1));
    
    mpSipUserAgent->setFinalResponseHandler(boost::bind(&SipRouter::modifyFinalResponse, this, _1, _2, _3));
+   
+   mpSipUserAgent->setPreprocesor(boost::bind(&SipRouter::preprocessMessage, this, _1, _2, _3));
      
    // All is in readiness... Let the proxying begin...
    mpSipUserAgent->start();
@@ -685,7 +693,7 @@ SipRouter::handleMessage( OsMsg& eventMessage )
                               << " application: " << appQueueSize << "/" << appMaxQueueSize
                               << " transport: " << queueSize << "/" <<  maxQueueSize 
                               << " which exceeds " << _rejectOnFilledQueuePercent << "%");
-                          finalResponse.setResponseData(sipRequest, SIP_5XX_CLASS_CODE, "Queue Size Is Too High");
+                          finalResponse.setResponseData(sipRequest, SIP_SERVICE_UNAVAILABLE_CODE, "Queue Size Is Too High");
                           mpSipUserAgent->send(finalResponse);
                           return TRUE; // Simply return true to indicate we have handled the request
                         }
@@ -730,7 +738,7 @@ SipRouter::handleMessage( OsMsg& eventMessage )
                   else if (!_threadPool.schedule(boost::bind(&SipRouter::handleRequest, this, _1), pMsg))
                   {
                     SipMessage finalResponse;
-                    finalResponse.setResponseData(pMsg, SIP_5XX_CLASS_CODE, "No Thread Available");
+                    finalResponse.setResponseData(pMsg, SIP_SERVICE_UNAVAILABLE_CODE, "No Thread Available");
                     mpSipUserAgent->send(finalResponse);
 
                     OS_LOG_ERROR(FAC_SIP, "SipRouter::handleMessage failed to create pooled thread!  Threadpool size="
@@ -790,7 +798,7 @@ SipRouter::handleMessage( OsMsg& eventMessage )
     if (!message.isResponse())
     {
       SipMessage finalResponse;
-      finalResponse.setResponseData(&message, SIP_5XX_CLASS_CODE, errorString.c_str());
+      finalResponse.setResponseData(&message, SIP_SERVICE_UNAVAILABLE_CODE, errorString.c_str());
       mpSipUserAgent->send(finalResponse);
     }
   }
@@ -1571,7 +1579,7 @@ SipRouter::ProxyAction SipRouter::proxyMessage(SipMessage& sipRequest, SipMessag
    // respond with 5XX code in case an exception was caught
    if (!errorString.empty())
    {
-     sipResponse.setResponseData(&sipRequest, SIP_5XX_CLASS_CODE, errorString.c_str());
+     sipResponse.setResponseData(&sipRequest, SIP_SERVICE_UNAVAILABLE_CODE, errorString.c_str());
      returnedAction = SendResponse;
    }
 
@@ -2184,4 +2192,110 @@ void SipRouter::modifyFinalResponse(SipTransaction* pTransaction, const SipMessa
   {
     (*iter)->modifyFinalResponse(pTransaction, request, finalResponse);
   }
+}
+
+
+bool SipRouter::preprocessMessage(SipMessage& parsedMsg,
+                                  const UtlString& msgText,
+                                  int msgLength)
+{
+  //
+  // Due to a bug in the sipx URI parser, we will be dropping messages that has a comma in the user part
+  // See: http://jira.sipxcom.org/browse/XX-11602?filter=-2
+  //
+  try
+  {
+    OSS::SIP::SIPMessage msg(msgText.data());
+
+    if (msg.isRequest())
+    {
+      //
+      // Validate contact-uri
+      //
+      std::vector<std::string> bindings;
+      OSS::SIP::SIPContact::msgGetContacts(&msg, bindings);
+
+      if (bindings.empty() && (msg.isRequest("INVITE") || msg.isRequest("SUBSCRIBE")))
+      {
+        OS_LOG_WARNING(FAC_SIP, "Unable to parse any contact in message - \n" << msgText.data());
+        return false;
+      }
+
+      for (std::vector<std::string>::iterator iter = bindings.begin(); iter != bindings.end(); iter++)
+      {
+        std::string& contact = *iter;
+        OSS::SIP::ContactURI hContact(contact);
+        std::string user = hContact.getUser();
+        
+        //
+        // First validate the entire URI
+        //
+        std::string uri = hContact.getURI();
+        if (!OSS::SIP::SIPURI::verify(uri.c_str()))
+        {
+          OS_LOG_WARNING(FAC_SIP, "Dropping message with invalid contact-uri " << uri.c_str() << "\n" << msgText.data());
+          return false;
+        }
+
+        //
+        // Commas are LEGAL characters in the user-info ABNF definition for a URI.
+        // We intentionally drop these messages because of a bug in the sipX URI
+        // parser.  It is too risky to fix that currently or I'm just too lazy.
+        // If you had the mileage to fix the parser, feel free to comment this check out.
+        //
+        // Hint:  The URI parser treats commas as header boundaries, then it miserably chokes on it.
+        if (user.find(',') != std::string::npos)
+        {
+          OS_LOG_WARNING(FAC_SIP, "Dropping message with comma in contact-user - \n" << msgText.data());
+          return false;
+        }
+      }
+      
+      // See: http://jira.sipxcom.org/browse/SIPX-17
+      
+      //
+      // Validate request-line
+      //
+      OSS::SIP::SIPRequestLine rLine;
+      rLine = msg.startLine();
+      std::string ruri;
+      rLine.getURI(ruri);
+      if (!OSS::SIP::SIPURI::verify(ruri.c_str()))
+      {
+        OS_LOG_WARNING(FAC_SIP, "Dropping message with invalid request-uri " << ruri.c_str() << "\n" << msgText.data());
+        return false;
+      }
+      
+      //
+      // Validate the from-uri
+      //
+      const std::string& from = msg.hdrGet(OSS::SIP::HDR_FROM);
+      OSS::SIP::SIPFrom hFrom(from);
+      std::string furi = hFrom.getURI();
+      if (!OSS::SIP::SIPURI::verify(furi.c_str()))
+      {
+        OS_LOG_WARNING(FAC_SIP, "Dropping message with invalid from-uri " << furi.c_str() << "\n" << msgText.data());
+        return false;
+      }
+      
+      //
+      // Validate the to-uri
+      //
+      const std::string& to = msg.hdrGet(OSS::SIP::HDR_TO);
+      OSS::SIP::SIPTo hTo(to);
+      std::string turi = hTo.getURI();
+      if (!OSS::SIP::SIPURI::verify(turi.c_str()))
+      {
+        OS_LOG_WARNING(FAC_SIP, "Dropping message with invalid to-uri " << turi.c_str() << "\n" << msgText.data());
+        return false;
+      }
+    }
+  }
+  catch(...)
+  {
+    OS_LOG_WARNING(FAC_SIP, "Unable to parse incoming message - \n" << msgText.data());
+    return false;
+  }
+  
+  return true;
 }
