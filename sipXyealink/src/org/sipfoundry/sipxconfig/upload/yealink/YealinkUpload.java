@@ -33,6 +33,7 @@ public class YealinkUpload extends Upload {
     public static final String DIR_SCREENSAVERS = "/ScreenSavers";
     public static final String DIR_LANGUAGES = "/Languages";
     private static final Log LOG = LogFactory.getLog(YealinkUpload.class);
+    private String m_parentDir;
 
     public YealinkUpload() {
     }
@@ -100,6 +101,13 @@ public class YealinkUpload extends Upload {
         }
     }
 
+  	public String getParentDir() {
+  		return m_parentDir;
+  	}
+
+  	public void setParentDir(String parentDir) {
+  		this.m_parentDir=parentDir;
+  	}
     /* Make sure these files exist on the TFTProot.
      * When these files do not exist the booting of a yealink phone slows down dramatically.
      * Example: The yealink phone will try to download y000000000000.cfg, when that fails it will
@@ -117,18 +125,26 @@ public class YealinkUpload extends Upload {
         "y000000000031.cfg",
         "y000000000034.cfg",
         "y000000000037.cfg",
+        "y000000000045.cfg",
+        "yealinkWallpaper.jpg",
+        "lang+English.txt",
         "yealink/Contacts/search.xml"
       };
+      String dir = getParentDir();
+      LOG.error("yealinkDefaultFiles 0xbla parentDir: "+ dir);
 
-      for(String file: yealinkEmptyFiles) {
-        File victim = new File("/usr/local/sipx/var/sipxdata/configserver/phone/profile/tftproot/"+file);
-        if(!victim.exists()) {
-          try {
-            FileUtils.writeStringToFile(victim, "");
-          }catch(IOException e) {
-            LOG.error("YealinkUpload deploy(): IOException caught."+ e);
-          }
-        }
-      }
+      if(null != dir)
+      {
+	  for(String file: yealinkEmptyFiles) {
+		File victim = new File(dir+"/"+file);
+		if(!victim.exists()) {
+		  try {
+			FileUtils.writeStringToFile(victim, "");
+		  }catch(IOException e) {
+			LOG.error("YealinkUpload deploy(): IOException caught."+ e);
+		  }
+		}
+	  }
+       }
     }
 }
