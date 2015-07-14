@@ -382,11 +382,18 @@ public class YealinkPhone extends Phone implements HotProvisionable{
 
     @Override
     public void initialize() {
+
+      YealinkModel model = (YealinkModel) getModel();
+  LOG.error("yealinkInitialize ");
+      if( null != model ) {
+          String parentDir=model.getParentDir();
+          LOG.error("yealinkInitialize parentDir: "+ parentDir);
+          YealinkUpload yealinkupload = new YealinkUpload();
+	  yealinkupload.setParentDir(parentDir);
+          yealinkupload.yealinkDefaultFiles();
+      }
       addDefaultBeanSettingHandler(new YealinkPhoneDefaults(getPhoneContext().getPhoneDefaults(), this));
       addDefaultSettingHandler(new DynamicDefaults(getPhoneContext().getSpeedDial(this)));
-
-      YealinkUpload yealinkupload = new YealinkUpload();
-      yealinkupload.yealinkDefaultFiles();
     }
 
 
