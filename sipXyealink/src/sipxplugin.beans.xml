@@ -101,11 +101,41 @@
 	</property>
 </bean>
 
+<bean id="yealinkPhoneSIPT23P" parent="yealinkModel">
+	<property name="label" value="Yealink SIP-T23(P)" />
+	<property name="name" value="T23" />
+	<property name="maxLineCount" value="3" />
+	<property name="supportedFeatures">
+	    <set>
+		<value>hasHDSound</value>
+		<value>hasPhoneBook</value>
+		<value>hasRingTones</value>
+		<value>hasLanguages</value>
+	    </set>
+	</property>
+</bean>
+
 <bean id="yealinkPhoneSIPT26P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T26(P)" />
 	<property name="name" value="T26" />
 	<property name="maxLineCount" value="3" />
 	<property name="maxDSSKeyCount" value="10" />
+	<property name="supportedFeatures">
+	    <set>
+		<value>hasHDSound</value>
+		<value>hasPhoneBook</value>
+		<value>hasRingTones</value>
+		<value>hasExpansionPanels</value>
+		<value>hasLanguages</value>
+	    </set>
+	</property>
+</bean>
+
+<bean id="yealinkPhoneSIPT27P" parent="yealinkModel">
+	<property name="label" value="Yealink SIP-T27(P/G)" />
+	<property name="name" value="T27" />
+	<property name="maxLineCount" value="6" />
+	<property name="maxDSSKeyCount" value="21" />
 	<property name="supportedFeatures">
 	    <set>
 		<value>hasHDSound</value>
@@ -133,8 +163,24 @@
 	</property>
 </bean>
 
+<bean id="yealinkPhoneSIPT29G" parent="yealinkModel">
+	<property name="label" value="Yealink SIP-T29(G)" />
+	<property name="name" value="T29" />
+	<property name="maxLineCount" value="6" />
+	<property name="maxDSSKeyCount" value="10" />
+	<property name="supportedFeatures">
+	    <set>
+		<value>hasHDSound</value>
+		<value>hasPhoneBook</value>
+		<value>hasRingTones</value>
+		<value>hasExpansionPanels</value>
+		<value>hasLanguages</value>
+	    </set>
+	</property>
+</bean>
+
 <bean id="yealinkPhoneSIPT32G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T32G" />
+	<property name="label" value="Yealink SIP-T32(G)" />
 	<property name="name" value="T32" />
 	<property name="maxLineCount" value="3" />
 	<property name="maxDSSKeyCount" value="10" />
@@ -151,7 +197,7 @@
 </bean>
 
 <bean id="yealinkPhoneSIPT38G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T38G" />
+	<property name="label" value="Yealink SIP-T38(G)" />
 	<property name="name" value="T38" />
 	<property name="maxLineCount" value="6" />
 	<property name="maxDSSKeyCount" value="10" />
@@ -169,7 +215,7 @@
 </bean>
 
 <bean id="yealinkPhoneVP530" parent="yealinkModel">
-	<property name="label" value="Yealink VP530" />
+	<property name="label" value="Yealink SIP-VP530" />
 	<property name="name" value="VP530" />
 	<property name="maxLineCount" value="4" />
 	<property name="maxDSSKeyCount" value="10" />
@@ -185,7 +231,7 @@
 </bean>
 
 <bean id="yealinkPhoneSIPT41P" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T41P" />
+	<property name="label" value="Yealink SIP-T41(P)" />
 	<property name="name" value="T41" />
 	<property name="maxLineCount" value="3" />
 	<property name="maxDSSKeyCount" value="10" />
@@ -199,7 +245,7 @@
 </bean>
 
 <bean id="yealinkPhoneSIPT42G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T42G" />
+	<property name="label" value="Yealink SIP-T42(G)" />
 	<property name="name" value="T42" />
 	<property name="maxLineCount" value="3" />
 	<property name="maxDSSKeyCount" value="12" />
@@ -213,7 +259,7 @@
 </bean>
 
 <bean id="yealinkPhoneSIPT46G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T46G" />
+	<property name="label" value="Yealink SIP-T46(G)" />
 	<property name="name" value="T46" />
 	<property name="maxLineCount" value="6" />
 	<property name="maxDSSKeyCount" value="21" />
@@ -231,7 +277,7 @@
 </bean>
 
 <bean id="yealinkPhoneSIPT48G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T48G" />
+	<property name="label" value="Yealink SIP-T48(G)" />
 	<property name="name" value="T48" />
 	<property name="maxLineCount" value="6" />
 	<property name="maxDSSKeyCount" value="21" />
@@ -249,7 +295,7 @@
 </bean>
 
 <bean id="yealinkPhoneW52" parent="yealinkModel">
-	<property name="label" value="Yealink W52" />
+	<property name="label" value="Yealink SIP-W52(P)" />
 	<property name="name" value="W52" />
 	<property name="maxLineCount" value="5" />
 	<property name="supportedFeatures">
