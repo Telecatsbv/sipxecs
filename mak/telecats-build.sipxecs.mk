@@ -6,8 +6,6 @@ telecats_build = \
   sipXcdrLog \
   sipXevent \
   sipXrecording \
-  sipXsbc \
-  sipXhomer \
   sipXcisco \
   sipXcallQueue \
   $(telecats-sipXaddons)
