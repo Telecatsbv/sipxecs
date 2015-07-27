@@ -113,6 +113,9 @@ bundle edit_line sipXproxy_config_contents() {
     chefsec::
       "SIPX_PROXY_HOOK_LIBRARY.800_chefsec : $(sipx.SIPX_LIBDIR)/authplugins/libChefsecCallerId.so";
     custom_caller_id::
+      "$(sipx.SIPX_CFDATA)/$(sipx.location_id)/custom_caller_id.properties.part"
+        insert_type => "file",
+        expand_scalars => "true";
       "SIPX_PROXY_HOOK_LIBRARY.720_customcallerid : $(sipx.SIPX_LIBDIR)/authplugins/libsipxcustomcallerid.so";
     hotdesking::
         "SIPX_PROXY_HOOK_LIBRARY.203_hotdesking : $(sipx.SIPX_LIBDIR)/authplugins/libHotdesking.so";
