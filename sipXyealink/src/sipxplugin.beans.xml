@@ -134,7 +134,7 @@
 <bean id="yealinkPhoneSIPT27P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T27(P/G)" />
 	<property name="name" value="T27" />
-	<property name="maxLineCount" value="6" />
+	<property name="maxLineCount" value="21" />
 	<property name="maxDSSKeyCount" value="21" />
 	<property name="supportedFeatures">
 	    <set>
