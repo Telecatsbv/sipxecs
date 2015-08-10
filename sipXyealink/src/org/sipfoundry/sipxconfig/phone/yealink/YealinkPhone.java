@@ -385,10 +385,8 @@ public class YealinkPhone extends Phone implements HotProvisionable{
     public void initialize() {
 
       YealinkModel model = (YealinkModel) getModel();
-  LOG.error("yealinkInitialize ");
       if( null != model ) {
           String parentDir=model.getParentDir();
-          LOG.error("yealinkInitialize parentDir: "+ parentDir);
           YealinkUpload yealinkupload = new YealinkUpload();
 	  yealinkupload.setParentDir(parentDir);
           yealinkupload.yealinkDefaultFiles();
