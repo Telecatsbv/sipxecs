@@ -40,8 +40,10 @@ import org.sipfoundry.sipxconfig.setting.SettingDao;
 import org.sipfoundry.sipxconfig.setting.SettingFilter;
 import org.sipfoundry.sipxconfig.setting.SettingUtil;
 import org.sipfoundry.sipxconfig.setting.type.EnumSetting;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
-public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeginRenderListener {    
+public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeginRenderListener {
 
     public static final String PAGE = "phone/EditPhoneDefaults";
 
@@ -52,6 +54,7 @@ public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeg
     private static final int LINE_SETTITNGS = 1;
 
     public static final int GROUP_VERSION = 2;
+    private static final Log LOG = LogFactory.getLog(EditPhoneDefaults.class);
 
     @InjectObject(value = "spring:hotelingLocator")
     public abstract HotelingLocator getHotellingLocator();
@@ -142,7 +145,11 @@ public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeg
     }
 
     public IPage ok(IRequestCycle cycle) {
-        apply();
+	    try {
+                apply();
+	    } catch(NullPointerException e) {
+	           LOG.error("Caught NullPointerException: "+ e);
+	    }
         return getReturnPage(cycle);
     }
 
@@ -176,18 +183,18 @@ public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeg
         phone = getPhoneContext().newPhone(getPhoneModel());
         Line line = phone.createLine();
         phone.addLine(line);
-        
+
         setPhone(phone);
-        
+
         String groupVersion = getPhoneContext().getGroupFirmwareVersion(getPhone(), group.getId());
         if (groupVersion != null) {
             phone.setSettingValue(Phone.GROUP_VERSION_FIRMWARE_VERSION, groupVersion);
             DeviceVersion deviceVersion = getDeviceVersion();
-            if (deviceVersion == null) {                    
+            if (deviceVersion == null) {
                 setDeviceVersion(DeviceVersion.getDeviceVersion(groupVersion));
             } else {
                 phone.setDeviceVersion(deviceVersion);
-            }            
+            }
         }
 
         String editSettingsName = getEditFormSettingName();
