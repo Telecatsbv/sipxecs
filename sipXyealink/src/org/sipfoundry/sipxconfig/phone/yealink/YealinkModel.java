@@ -32,12 +32,16 @@ public final class YealinkModel extends PhoneModel {
 
 	/** Firmware 6x or beyond */
     public static final DeviceVersion VER_6X = new DeviceVersion(YealinkPhone.BEAN_ID, "6X");
-    public static final DeviceVersion VER_7X = new DeviceVersion(YealinkPhone.BEAN_ID, "7X");
-    public static final DeviceVersion VER_8X = new DeviceVersion(YealinkPhone.BEAN_ID, "8X");
+    public static final DeviceVersion VER_70 = new DeviceVersion(YealinkPhone.BEAN_ID, "70");
+    public static final DeviceVersion VER_72 = new DeviceVersion(YealinkPhone.BEAN_ID, "72");
+    public static final DeviceVersion VER_73 = new DeviceVersion(YealinkPhone.BEAN_ID, "73");
+    public static final DeviceVersion VER_80 = new DeviceVersion(YealinkPhone.BEAN_ID, "80");
     public static final DeviceVersion[] SUPPORTED_VERSIONS = new DeviceVersion[] {
         VER_6X,
-        VER_7X,
-        VER_8X
+        VER_70,
+        VER_72,
+        VER_73,
+        VER_80
     };
 
     private DeviceVersion m_deviceVersion;
@@ -61,7 +65,7 @@ public final class YealinkModel extends PhoneModel {
                 return deviceVersion;
             }
         }
-        return VER_7X;
+        return VER_72;
     }
 
     public void setDefaultVersion(DeviceVersion value) {

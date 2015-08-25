@@ -132,7 +132,57 @@
 	<option><value>44</value></option>
 	<option><value>45</value></option>
 	<option><value>46</value></option>
-	<option><value>47</value></option>
+	<option><value>99</value></option>
+    </enum>
+</type>
+<type id="DSSKeyType_7x_type">
+    <enum>
+	<option><value>0</value></option>
+	<option><value>2</value></option>
+	<option><value>5</value></option>
+	<option><value>6</value></option>
+	<option><value>7</value></option>
+	<option><value>8</value></option>
+	<option><value>9</value></option>
+	<option><value>13</value></option>
+	<option><value>22</value></option>
+	<option><value>28</value></option>
+	<option><value>29</value></option>
+	<option><value>30</value></option>
+	<option><value>31</value></option>
+	<option><value>32</value></option>
+	<option><value>33</value></option>
+	<option><value>39</value></option>
+	<option><value>43</value></option>
+	<option><value>44</value></option>
+	<option><value>45</value></option>
+	<option><value>46</value></option>
+	<option><value>99</value></option>
+    </enum>
+</type>
+<type id="DSSKeyType_8x_type">
+    <enum>
+	<option><value>0</value></option>
+	<option><value>2</value></option>
+	<option><value>5</value></option>
+	<option><value>6</value></option>
+	<option><value>7</value></option>
+	<option><value>8</value></option>
+	<option><value>9</value></option>
+	<option><value>13</value></option>
+	<option><value>22</value></option>
+	<option><value>28</value></option>
+	<option><value>29</value></option>
+	<option><value>30</value></option>
+	<option><value>31</value></option>
+	<option><value>32</value></option>
+	<option><value>33</value></option>
+	<option><value>39</value></option>
+	<option><value>43</value></option>
+	<option><value>44</value></option>
+	<option><value>45</value></option>
+	<option><value>46</value></option>
+	<option><value>99</value></option>
     </enum>
 </type>
 <type id="jb_type">

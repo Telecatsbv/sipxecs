@@ -125,13 +125,13 @@ public class YealinkUpload extends Upload {
         "y000000000031.cfg",
         "y000000000034.cfg",
         "y000000000037.cfg",
+        "y000000000044.cfg",
         "y000000000045.cfg",
         "yealinkWallpaper.jpg",
         "lang+English.txt",
         "yealink/Contacts/search.xml"
       };
       String dir = getParentDir();
-      LOG.error("yealinkDefaultFiles 0xbla parentDir: "+ dir);
 
       if(null != dir)
       {
