@@ -9,7 +9,7 @@
 #foreach ($settingIndex in [0..$settingsIndexMax])
 #set($type = ${array.getSetting($settingIndex,"type")})
 #set ($sIndex = $settingIndex + 1)
-#if ($type.value == "47")
+#if ($type.value == "99")
 ## this means we have an auto speeddial key, do things differently
 #if ($i >= $cfg.SpeedDial.size())
 	<Item>${array.name}.${sIndex}.type = 0</Item>
@@ -23,13 +23,13 @@
 	<Item>${array.name}.${sIndex}.value = $cfg.SpeedDial.get($i).Number</Item>
 	<Item>${array.name}.${sIndex}.line = ${array.getSetting($settingIndex,"line").value}</Item>
 	<Item>${array.name}.${sIndex}.pickup_value = ${array.getSetting($settingIndex,"pickup_value").value}</Item>
-	<Item>${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Number</Item>
+	<Item>${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Label</Item>
 #else
 	<Item>${array.name}.${sIndex}.type = 16</Item>
 	<Item>${array.name}.${sIndex}.value = $cfg.SpeedDial.get($i).Number</Item>
 	<Item>${array.name}.${sIndex}.line = ${array.getSetting($settingIndex,"line").value}</Item>
 	<Item>${array.name}.${sIndex}.pickup_value = ${array.getSetting($settingIndex,"pickup_value").value}</Item>
-	<Item>${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Number</Item>
+	<Item>${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Label</Item>
 #end
 #end
 #set ($i = $i + 1)
@@ -80,6 +80,8 @@ xml=<?xml version="1.0" encoding="ISO-8859-1"?>
 #macro (phoneSetting $settings)
 #if (${settings.getSize()})
 #if (${settings.name} == "memorykey")
+#keySettings ($settings)
+#elseif (${settings.name} == "linekey")
 #keySettings ($settings)
 #end
 #else

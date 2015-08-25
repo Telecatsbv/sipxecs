@@ -28,15 +28,18 @@ public abstract class YealinkConstants {
     public static final String VENDOR = "Yealink";
     public static final String MAC_PREFIX = "001565";
 
-    public static final String PKTYPES_V6X = "0,2,5,6,7,8,13,22,28,29,30,31,32,33,39,43,44,45,46,47";
-    public static final String PKTYPES_V70 = "0,2,5,6,7,8,9,13,14,22,23,27,28,29,30,32,33,43,44,45,46,47,48,49,50";
+    public static final String PKTYPES_V6X = "0,2,5,6,7,8,13,22,28,29,30,31,32,33,39,43,44,45,46,99";
+    public static final String PKTYPES_V70 = "0,2,5,6,7,8,9,13,14,22,23,27,28,29,30,32,33,43,44,45,46,99,48,49,50";
     public static final String DKTYPES_V70 = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,"
-            + "27,34,35,38,39,40,41,42,45,46,47";
-    public static final String DKTYPES_V71 = "0,11,12,13,14,15,16,17,18,22,23,24,25,27,34,35,38,40";
+            + "27,34,35,38,39,40,41,42,45,46,99";
+    public static final String DKTYPES_V71 = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,"
+            + "27,34,35,38,39,40,41,42,45,46,99";
+    //public static final String DKTYPES_V71 = "0,11,12,13,14,15,16,17,18,22,23,24,25,27,34,35,38,40";
 
     // Line specific settings used in /etc/yealinkPhone/line_XX.xml
     public static final String USER_ID_V6X_SETTING = "account/UserName";
     public static final String USER_ID_V7X_SETTING = "basic/user_name";
+    public static final String USER_ID_V80_SETTING = "basic/user_name";
     public static final String AUTH_ID_V6X_SETTING = "account/AuthName";
     public static final String AUTH_ID_V7X_SETTING = "basic/auth_name";
     public static final String DISPLAY_NAME_V6X_SETTING = "account/DisplayName";

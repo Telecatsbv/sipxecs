@@ -144,20 +144,31 @@ public class YealinkPhone extends Phone implements HotProvisionable{
         DeviceVersion myVersion = getDeviceVersion();
         YealinkModel model = (YealinkModel) getModel();
 
-        if (myVersion == YealinkModel.VER_6X) {
+  	if (myVersion == YealinkModel.VER_6X) {
         	model.setProfileTemplate("yealinkPhone/config_v6x.vm");
         	model.setSettingsFile("phone-6X.xml");
         	model.setLineSettingsFile("line-6X.xml");
-        } else if (myVersion == YealinkModel.VER_7X) {
-            model.setProfileTemplate("yealinkPhone/config_v7x.vm");
-            model.setSettingsFile("phone-7X.xml");
-            model.setLineSettingsFile("line-7X.xml");
-            model.setXmlProfileTemplate("yealinkPhone/config_v7x.prov.xml.vm");
-        } else if (myVersion == YealinkModel.VER_8X) {
-        	model.setProfileTemplate("yealinkPhone/config_v8x.vm");
-        	model.setSettingsFile("phone-8X.xml");
-        	model.setLineSettingsFile("line-8X.xml");
-            model.setXmlProfileTemplate("yealinkPhone/config_v8X.prov.xml.vm");
+
+        } else if (myVersion == YealinkModel.VER_70) {
+            model.setProfileTemplate("yealinkPhone/config_v70.vm");
+            model.setSettingsFile("phone-70.xml");
+            model.setLineSettingsFile("line-70.xml");
+            model.setXmlProfileTemplate("yealinkPhone/config_v70.prov.xml.vm");
+	} else if (myVersion == YealinkModel.VER_72) {
+            model.setProfileTemplate("yealinkPhone/config_v72.vm");
+            model.setSettingsFile("phone-72.xml");
+            model.setLineSettingsFile("line-72.xml");
+            model.setXmlProfileTemplate("yealinkPhone/config_v72.prov.xml.vm");
+	} else if (myVersion == YealinkModel.VER_73) {
+            model.setProfileTemplate("yealinkPhone/config_v73.vm");
+            model.setSettingsFile("phone-73.xml");
+            model.setLineSettingsFile("line-73.xml");
+            model.setXmlProfileTemplate("yealinkPhone/config_v73.prov.xml.vm");
+        } else if (myVersion == YealinkModel.VER_80) {
+        	model.setProfileTemplate("yealinkPhone/config_v80.vm");
+        	model.setSettingsFile("phone-80.xml");
+        	model.setLineSettingsFile("line-80.xml");
+            model.setXmlProfileTemplate("yealinkPhone/config_v80.prov.xml.vm");
         }
     }
 
@@ -825,11 +836,14 @@ public class YealinkPhone extends Phone implements HotProvisionable{
             Integer result = 0;
             Integer bLFIndex = m_bLF.get(i);
             if (isLineKey(i)) {
+		LOG.error("tuxx1: isLineKey");
                 return 15;
             } else if (null != bLFIndex) {
                 Button sdButton = m_sdButtons.get(bLFIndex);
                 result = sdButton.isBlf() ? 16 : 13;
+		LOG.error("tuxx2: result: "+ result);
             }
+	    LOG.error("tuxx: i: "+i+", result: "+ result +", blfIndex: "+ bLFIndex);
             return result;
         }
 

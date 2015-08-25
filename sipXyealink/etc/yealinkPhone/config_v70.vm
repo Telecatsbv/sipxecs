@@ -24,8 +24,8 @@ remote_phonebook.data.${pbId}.name = $book_key
 #end
 #set ($pbLast = ${selected.size()} + 1)
 #foreach($pbId in [${pbLast}..5])
-remote_phonebook.data.${pbId}.url = 
-remote_phonebook.data.${pbId}.name = 
+remote_phonebook.data.${pbId}.url =
+remote_phonebook.data.${pbId}.name =
 #end
 #end
 ##
@@ -57,7 +57,7 @@ ${prefix}${setting.profileName} = ${value}
 ${array.name}.$math.add(${settingIndex},1).${settingName} = $!{s.value}
 #end
 #else
-${array.name}.$math.add(${settingIndex},1).${settingName} = 
+${array.name}.$math.add(${settingIndex},1).${settingName} =
 #end
 #end
 #end
@@ -70,7 +70,7 @@ ${array.name}.$math.add(${settingIndex},1).${settingName} =
 #foreach ($settingIndex in [0..$settingsIndexMax])
 #set($type = ${array.getSetting($settingIndex,"type")})
 #set ($sIndex = $settingIndex + 1)
-#if ($type.value == "47")
+#if ($type.value == "99")
 ## this means we have an auto speeddial key, do things differently
 #if ($i >= $cfg.SpeedDial.size())
 ${array.name}.${sIndex}.type = 0
@@ -84,13 +84,13 @@ ${array.name}.${sIndex}.type = 13
 ${array.name}.${sIndex}.value = $cfg.SpeedDial.get($i).Number
 ${array.name}.${sIndex}.line = ${array.getSetting($settingIndex,"line").value}
 ${array.name}.${sIndex}.pickup_value = ${array.getSetting($settingIndex,"pickup_value").value}
-${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Number
+${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Label
 #else
 ${array.name}.${sIndex}.type = 16
 ${array.name}.${sIndex}.value = $cfg.SpeedDial.get($i).Number
 ${array.name}.${sIndex}.line = ${array.getSetting($settingIndex,"line").value}
 ${array.name}.${sIndex}.pickup_value = ${array.getSetting($settingIndex,"pickup_value").value}
-${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Number
+${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Label
 #end
 #end
 #set ($i = $i + 1)
@@ -101,7 +101,7 @@ ${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Number
 #if(${s.Value})
 ${array.name}.${sIndex}.${settingName} = $!{s.value}
 #else
-${array.name}.${sIndex}.${settingName} = 
+${array.name}.${sIndex}.${settingName} =
 #end
 #end
 #end
@@ -121,7 +121,7 @@ account.${account}.codec.${i}.enable = 1
 account.${account}.codec.${i}.priority = $!{selected.indexOf($key)}
 #else
 account.${account}.codec.${i}.enable = 0
-account.${account}.codec.${i}.priority = 
+account.${account}.codec.${i}.priority =
 #end
 account.${account}.codec.${i}.rtpmap = $!{m}
 account.${account}.codec.${i}.payload_type = $!{pt}
@@ -132,6 +132,8 @@ account.${account}.codec.${i}.payload_type = $!{pt}
 #macro (phoneSetting $settings)
 #if(${settings.getSize()})
 #if(${settings.name} == "memorykey" )
+#keySettings($settings)
+#elseif(${settings.name} == "linekey" )
 #keySettings($settings)
 #else
 #arraySettings($settings)
@@ -147,7 +149,7 @@ account.${account}.codec.${i}.payload_type = $!{pt}
 #if(${s.Value})
 ${s.ProfileName} = $!{s.Value}
 #else
-${s.ProfileName} = 
+${s.ProfileName} =
 #end
 #end
 #else
@@ -181,7 +183,7 @@ account.${lastLineID}.user_name = $!{setting.Value}
 #if (${setting.Value})
 account.${lastLineID}.${setting.ProfileName} = $!{setting.Value}
 #else
-account.${lastLineID}.${setting.ProfileName} = 
+account.${lastLineID}.${setting.ProfileName} =
 #end
 #end
 #end
@@ -198,19 +200,19 @@ account.${lastLineID}.sip_listen_port = 0
 #set ($SLP = $SLP * 10)
 #set ($SLP = $SLP + 5060)
 account.${L}.enable = 0
-account.${L}.label = 
-account.${L}.display_name = 
-account.${L}.user_name = 
-account.${L}.auth_name = 
-account.${L}.password = 
+account.${L}.label =
+account.${L}.display_name =
+account.${L}.user_name =
+account.${L}.auth_name =
+account.${L}.password =
 account.${L}.sip_listen_port = 0
-account.${L}.sip_server_host = 
+account.${L}.sip_server_host =
 account.${L}.sip_server_port = 0
 account.${L}.outbound_proxy_enable = 0
-account.${L}.outbound_host = 
+account.${L}.outbound_host =
 account.${L}.outbound_port = 0
 account.${L}.transport = 3
-account.${L}.backup_outbound_host = 
+account.${L}.backup_outbound_host =
 account.${L}.backup_outbound_port = 0
 #end
 #end
