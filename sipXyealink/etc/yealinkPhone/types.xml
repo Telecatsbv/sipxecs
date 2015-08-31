@@ -646,8 +646,8 @@
 </type>
 <type id="codecs_type">
     <multi-enum>
-        <option><value>9:G722</value></option>
         <option><value>8:PCMA</value></option>
+        <option><value>9:G722</value></option>
         <option><value>18:G729</value></option>
         <option><value>0:PCMU</value></option>
         <option><value>4:G723_53</value></option>
