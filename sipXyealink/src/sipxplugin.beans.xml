@@ -166,7 +166,7 @@
 <bean id="yealinkPhoneSIPT29G" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T29(G)" />
 	<property name="name" value="T29" />
-	<property name="maxLineCount" value="6" />
+	<property name="maxLineCount" value="10" />
 	<property name="maxDSSKeyCount" value="10" />
 	<property name="supportedFeatures">
 	    <set>
