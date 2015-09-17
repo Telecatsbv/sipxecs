@@ -939,7 +939,7 @@
 	    <setting name="security.user_password"><type><string/></type><value>admin:admin</value></setting>
 	    <!--// Enable or disable the 3-level permissions (open var); 0-Disabled (default), 1-Enabled;
 	    Require reboot; //-->
-	    <setting name="security.var_enable" if="yealinkPhone(SIPT[1-4]).*"><type><boolean/></type><value>1</value></setting>
+	    <setting name="security.var_enable" if="yealinkPhone(SIPT[1-4]).*"><type><boolean/></type><value>0</value></setting>
 	    <!--//
 	    #######################################################################################
 	    ##     Configuration files for Var                                                   ##
