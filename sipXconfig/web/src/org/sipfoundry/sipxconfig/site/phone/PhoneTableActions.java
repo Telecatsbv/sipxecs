@@ -22,9 +22,13 @@ import org.sipfoundry.sipxconfig.components.TapestryUtils;
 import org.sipfoundry.sipxconfig.device.RestartManager;
 import org.sipfoundry.sipxconfig.phone.Phone;
 import org.sipfoundry.sipxconfig.phone.PhoneContext;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 @ComponentClass(allowBody = false, allowInformalParameters = false)
 public abstract class PhoneTableActions extends BaseComponent {
+    public static final Log LOG = LogFactory.getLog(PhoneTableActions.class);
+
     @Parameter(required = true)
     public abstract SelectMap getSelections();
 
@@ -65,7 +69,7 @@ public abstract class PhoneTableActions extends BaseComponent {
     public void restart() {
         Collection phoneIds = getSelections().getAllSelected();
         getRestartManager().restart(phoneIds, null);
-        String msg = getMessages().format("msg.success.restart", Integer.toString(phoneIds.size()));
+	String msg = getMessages().format("msg.success.restart", phoneIds.size());
         TapestryUtils.recordSuccess(this, msg);
     }
 
