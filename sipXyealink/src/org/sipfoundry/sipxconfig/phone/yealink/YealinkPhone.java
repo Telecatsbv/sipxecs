@@ -89,6 +89,7 @@ public class YealinkPhone extends Phone implements HotProvisionable{
     private static final Log LOG = LogFactory.getLog(YealinkPhone.class);
     private static final String SIPT46_PATTERN = "yealinkPhoneSIPT4[6-8].*";
     private static final String SIPT412_PATTERN = "yealinkPhoneSIPT4[12].*";
+    private static final String SIPT2327_PATTERN = "yealinkPhoneSIPT[23-27].*";
     private static final String SIPT4_PATTERN = "yealinkPhoneSIPT4.*";
     private static final String SIPT13_PATTERN = "yealinkPhoneSIPT[1-3].*";
     private static final String ENUM = "enum";
@@ -257,7 +258,10 @@ public class YealinkPhone extends Phone implements HotProvisionable{
 
     // DSS keys routines
     private boolean isDSSLineKey(Integer i) {
-        if (getModel().getModelId().matches(SIPT46_PATTERN)) {
+        LOG.error("isDSSLineKey: i: "+ i +", ModelId:"+ getModel().getModelId());
+        if (getModel().getModelId().matches(SIPT2327_PATTERN) && i > 1) {
+            return false;
+        }else if (getModel().getModelId().matches(SIPT46_PATTERN)) {
             return (i > 4) && (i < 4 + 1 + getModel().getMaxLineCount());
         } else if (getModel().getModelId().matches(SIPT412_PATTERN)) {
             return (i > 2) && (i < 2 + 1 + getModel().getMaxLineCount());
@@ -835,15 +839,14 @@ public class YealinkPhone extends Phone implements HotProvisionable{
         private Integer getLineKeyType(Integer i) {
             Integer result = 0;
             Integer bLFIndex = m_bLF.get(i);
-            if (isLineKey(i)) {
-		LOG.error("tuxx1: isLineKey");
-                return 15;
-            } else if (null != bLFIndex) {
+            if (null != bLFIndex) {
                 Button sdButton = m_sdButtons.get(bLFIndex);
                 result = sdButton.isBlf() ? 16 : 13;
-		LOG.error("tuxx2: result: "+ result);
+            }else if (isLineKey(i) && i > 0) {
+                return 99;
+            }else{
+                return 15;
             }
-	    LOG.error("tuxx: i: "+i+", result: "+ result +", blfIndex: "+ bLFIndex);
             return result;
         }
 
