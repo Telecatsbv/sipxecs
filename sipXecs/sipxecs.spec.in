@@ -151,7 +151,6 @@ Requires: sipxtccustomcallerid >= %version
 
 # Might not be the best place, but Telecats requires additional packages:
 Requires: gdb
-Requires: yum-downloadonly
 Requires: wget
 Requires: vim-enhanced
 Requires: mlocate
