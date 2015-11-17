@@ -76,6 +76,11 @@ static const int DISPATCH_MAX_YIELD_TIME_IN_SEC = 32;
 static const int MAX_DISPATCH_DELAY_IN_MS = 200; // This is 5 messages per sec which is so poor!
 static const int ALARM_ON_CONSECUTIVE_YIELD = 5;
 
+static const char* X_SIPX_CALLER_LOCATIONS = "X-Sipx-Caller-Locations";
+static const char* X_SIPX_CALLER_LOCATION_FALLBACK = "X-Sipx-Caller-Location-Fallback";
+static const char* X_SIPX_CALLER_LOCATIONS_DONE = "X-Sipx-Caller-Locations-Done";
+
+
 // STRUCTS
 // TYPEDEFS
 // FORWARD DECLARATIONS
@@ -916,6 +921,108 @@ void SipRouter::addRuriParams(SipMessage& sipRequest, const UtlString& ruriParam
   }
 }
 
+void SipRouter::identifyCallerLocation(SipMessage& sipRequest)
+{
+  UtlString method;
+  sipRequest.getRequestMethod(&method);
+  if (method.compareTo( SIP_INVITE_METHOD ) != 0)
+  {
+    return;
+  }
+  
+ 
+  if(!sipRequest.getHeaderValue( 0, X_SIPX_CALLER_LOCATIONS ) && !sipRequest.getHeaderValue( 0, X_SIPX_CALLER_LOCATIONS_DONE ))
+  {
+    UtlString sendAddress;
+    int sendPort;
+    Url fromUrl;
+    Url toUrl;
+    UtlString toTag;
+    UtlString identity;
+    
+    UtlString host;
+    EntityDB::CallerLocations callerLocations;
+    std::string fallbackLocation;
+    
+    sipRequest.getSendAddress(&sendAddress, &sendPort);
+    
+    if (sendAddress.isNull())
+    {
+      OS_LOG_ERROR(FAC_SIP, "SipRouter::identifyCallerLocation - Unable to identity address.  CIDR matching can not be done.");
+    }
+    
+    sipRequest.getFromUrl(fromUrl);
+    sipRequest.getToUrl(toUrl);
+    fromUrl.getIdentity(identity);
+    fromUrl.getHostAddress(host);
+    toUrl.getFieldParameter("tag", toTag);
+    
+    if (!toTag.isNull())
+    {
+      //
+      // This is a mid-dialog request
+      //
+      return;
+    }
+    //
+    // final check if the identity is an alias
+    //
+    if (mDomainName.compareTo(host.data()) != 0 && isLocalDomain(fromUrl, true))
+    {
+      host = mDomainName;
+      std::ostringstream realIdentity;
+      UtlString user;
+      fromUrl.getUserId(user);
+      realIdentity << user.data() << "@" << mDomainName.data();
+
+      OS_LOG_INFO(FAC_SIP, "SipRouter::identifyCallerLocation - using " << realIdentity.str() << " instead of " << identity.data());
+
+      identity = realIdentity.str();
+    }
+  
+    
+    OS_LOG_INFO(FAC_SIP, "SipRouter::identifyCallerLocation - determining location for identity " << identity.data());
+    SipRouter::getEntityDBInstance()->getCallerLocation(callerLocations, fallbackLocation, identity.data(), host.data(), sendAddress.data());
+
+    
+    if (!callerLocations.empty())
+    {
+      std::ostringstream locHeader;
+      
+      int iterCount = 0;
+      for (EntityDB::CallerLocations::iterator iter = callerLocations.begin(); iter != callerLocations.end(); iter++)
+      {
+        if (!iter->empty())
+        {
+          locHeader << *iter;
+          if (iterCount < callerLocations.size() - 1)
+          {
+            locHeader << ", ";
+          }
+        }
+        iterCount++;
+      }
+      
+      if (!locHeader.str().empty())
+      {
+        OS_LOG_INFO(FAC_SIP, "SipRouter::identifyCallerLocation - setting location for identity " << identity.data() << " to " << locHeader.str());
+        
+        sipRequest.setHeaderValue(X_SIPX_CALLER_LOCATIONS, locHeader.str().c_str(), 0);
+        
+        if (!fallbackLocation.empty())
+        {
+          OS_LOG_INFO(FAC_SIP, "SipRouter::identifyCallerLocation - setting fallback location for identity " << identity.data() << " to " << fallbackLocation);
+          sipRequest.setHeaderValue(X_SIPX_CALLER_LOCATION_FALLBACK, fallbackLocation.c_str());
+        }
+      }
+      else
+      {
+        sipRequest.setHeaderValue(X_SIPX_CALLER_LOCATIONS_DONE, "true", 0);
+      }
+    }
+  }
+}
+
 SipRouter::ProxyAction SipRouter::proxyMessage(SipMessage& sipRequest, SipMessage& sipResponse)
 {
    ProxyAction returnedAction = SendRequest;
@@ -959,6 +1066,11 @@ SipRouter::ProxyAction SipRouter::proxyMessage(SipMessage& sipRequest, SipMessag
         RouteState routeState(sipRequest, removedRoutes, mRouteHostPort);
         removedRoutes.destroyAll(); // done with routes - discard them.
 
+        //
+        // identify the caller location
+        //
+        identifyCallerLocation(sipRequest);
+        
         if( !sipRequest.getHeaderValue( 0, SIP_SIPX_SPIRAL_HEADER ))
         {
            // Apply NAT mapping info to all non-spiraling requests to make
@@ -1244,6 +1356,9 @@ SipRouter::ProxyAction SipRouter::proxyMessage(SipMessage& sipRequest, SipMessag
               // If the request contained our proprietary spiral header then remove it
               // since spiraling is complete.
               sipRequest.removeHeader( SIP_SIPX_SPIRAL_HEADER, 0 );
+              sipRequest.removeHeader( X_SIPX_CALLER_LOCATIONS, 0 );
+              sipRequest.removeHeader( X_SIPX_CALLER_LOCATION_FALLBACK, 0 );
+              sipRequest.removeHeader( X_SIPX_CALLER_LOCATIONS_DONE, 0 );
            }
         }
 
@@ -2288,6 +2403,19 @@ bool SipRouter::preprocessMessage(SipMessage& parsedMsg,
       {
         OS_LOG_WARNING(FAC_SIP, "Dropping message with invalid to-uri " << turi.c_str() << "\n" << msgText.data());
         return false;
+      }
+      
+      //
+      // Check if the To-URI has a SIP_SIPX_AUTHIDENTITY header param, reinsert as independent header.  See http://jira.sipxcom.org/browse/UC-2891
+      //
+      if (to.find(SIP_SIPX_AUTHIDENTITY) != std::string::npos)
+      {
+        std::string authIdentity = hTo.getHeaderParam(SIP_SIPX_AUTHIDENTITY);
+        if (!authIdentity.empty() && !msg.hdrPresent(SIP_SIPX_AUTHIDENTITY))
+        {
+          OS_LOG_WARNING(FAC_SIP, "To header has a " << SIP_SIPX_AUTHIDENTITY << " header parameter.  Reinserting it as an independent header.");
+          parsedMsg.setHeaderValue(SIP_SIPX_AUTHIDENTITY, authIdentity.c_str(), 0);
+        }
       }
     }
   }

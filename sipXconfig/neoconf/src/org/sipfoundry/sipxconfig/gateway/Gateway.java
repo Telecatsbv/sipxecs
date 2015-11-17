@@ -12,12 +12,14 @@ package org.sipfoundry.sipxconfig.gateway;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.enums.Enum;
+import org.sipfoundry.commons.mongo.MongoConstants;
 import org.sipfoundry.sipxconfig.branch.Branch;
 import org.sipfoundry.sipxconfig.cfgmgt.DeployConfigOnEdit;
 import org.sipfoundry.sipxconfig.common.EnumUserType;
@@ -72,7 +74,6 @@ public class Gateway extends Device implements Replicable, DeployConfigOnEdit, S
     private Branch m_branch;
 
     private boolean m_useSipXBridge = true; // default enabled
-
 
     public Gateway() {
     }
@@ -368,7 +369,14 @@ public class Gateway extends Device implements Replicable, DeployConfigOnEdit, S
 
     @Override
     public Map<String, Object> getMongoProperties(String domain) {
-        return Collections.emptyMap();
+        Map<String, Object> props = new HashMap<String, Object>();
+        if (m_branch != null) {
+            List<String> locations = new ArrayList<String>();
+            locations.add(m_branch.getName());
+            props.put(MongoConstants.LOCATIONS, locations);
+        }
+        props.put(MongoConstants.SHARED, m_shared);
+        return props;
     }
 
     @Override

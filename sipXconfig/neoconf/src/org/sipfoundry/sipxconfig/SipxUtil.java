@@ -37,4 +37,16 @@ public final class SipxUtil {
         tempDir.mkdirs();
         return tempDir;
     }
+
+    public static boolean isDirectoryEmpty(String dirPath) {
+        if (dirPath == null) {
+            return true;
+        }
+        File folder = new File(dirPath);
+        String[] fileList = folder.list();
+        if (fileList != null && fileList.length > 0) {
+            return false;
+        }
+        return true;
+    }
 }

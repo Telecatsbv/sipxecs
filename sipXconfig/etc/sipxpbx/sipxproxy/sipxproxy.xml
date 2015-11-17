@@ -110,6 +110,18 @@
       <type><boolean /></type>
       <value>0</value>
     </setting>
+    <setting name="SIPX_PROXY_DEFAULT_RTT" advanced="yes">
+      <type>
+        <integer min="100" max="500"/>
+      </type>
+      <value>100</value>
+    </setting>
+    <setting name="SIPX_PROXY_RETRANSMIT_TIMES" advanced="yes">
+      <type>
+        <integer min="2" max="7"/>
+      </type>
+      <value>4</value>
+    </setting>
     <setting name="SIPX_PROXY_HOP_BY_HOP_CANCEL">
       <type><boolean /></type>
       <value>0</value>
@@ -162,9 +174,17 @@
       </type>
       <value>20000</value>     
     </setting>
+    <setting name="SIPX_PROXY_LOG_AUTH_CODES" advanced="yes">
+      <type><boolean /></type>
+      <value>0</value>
+    </setting>
     <setting name="SIPX_SUPPRESS_ALERT_INDICATOR_IN_TRANSFERS" advanced="yes">
       <type refid="true-false"/>
       <value>false</value>
+    </setting>
+    <setting name="SIPX_CONSULTATIVE_TRANSFER_GATEWAY_INITIAL_INVITE" advanced="yes">
+      <type refid="true-false"/>
+      <value>true</value>
     </setting>
     <!--  unsure what these next 2 settings do -->
     <setting name="SIPX_PROXY_LOG_CONSOLE" hidden="yes">

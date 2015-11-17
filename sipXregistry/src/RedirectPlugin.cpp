@@ -17,6 +17,7 @@
 #include "os/OsFS.h"
 #include "sipdb/ResultSet.h"
 #include "registry/SipRedirectServer.h"
+#include <boost/algorithm/string.hpp>
 
 // DEFINES
 #define UNINITIALIZED_WARNING_CODE  (-1)
@@ -245,10 +246,167 @@ bool ErrorDescriptor::shouldRequestBeAppendedToResponse( void ) const
    return mAppendRequestToResponse;
 }
 
-ContactList::ContactList( const UtlString& requestString ) :
+ContactList::ContactList( 
+  const UtlString& requestString, 
+  EntityDB* pEntityDb,
+  const std::string& callerLocation,
+  const std::string& fallbackLocation) :
    mRequestString( requestString ),
-   mbListWasModified( false )
+   mbListWasModified( false ),
+   _pEntityDb(pEntityDb),
+   _callerLocation(callerLocation),
+   _fallbackLocation(fallbackLocation),
+   _isTrustedLocation(false),
+   _hasProcessedLocation(false)
 {
+  if (!_callerLocation.empty())
+  {
+    boost::to_lower(_callerLocation);
+    _callerLocation.erase(std::remove_if(_callerLocation.begin(), _callerLocation.end(), isspace), _callerLocation.end());
+    boost::split(_callerLocationTokens, _callerLocation, boost::is_any_of(","), boost::token_compress_on);
+  }
+}
+
+bool ContactList::isAllowedLocation(const UtlString& contact, const RedirectPlugin& plugin)
+{
+  if (_isTrustedLocation || _callerLocationTokens.empty())
+  {
+    OS_LOG_INFO(FAC_SIP, "ContactList::isAllowedLocation() No location restriction defined for contact " << contact.data() << " added by plugin " << plugin.name().data());
+    return true;
+  }
+  
+  //
+  // Check if we have already verified the location for this contact list
+  //  Simply allow or disallow further additions based on previous results
+  //
+  if (_hasProcessedLocation)
+  {
+    if (!_isTrustedLocation)
+    {
+      OS_LOG_WARNING(FAC_SIP, "ContactList::isAllowedLocation() REJECTED insertion of contact " << contact.data() << " added by plugin " << plugin.name().data() << " because of location restrictions");
+    }
+    return _isTrustedLocation;
+  }
+  _hasProcessedLocation = true;
+    
+  Url requestUri(mRequestString, TRUE); // request-uri is an addr-spec
+  Url contactUri(contact, FALSE); // contact-uri is an name-addr
+  
+  UtlString host;
+  UtlString user;
+  UtlString contactUser;
+  UtlString contactHost;
+  std::ostringstream identity;
+  std::string domain = SipRedirectServer::getInstance()->sipUserAgent()->getDomain();
+   
+  requestUri.getHostAddress(host);
+  requestUri.getUserId(user);
+  contactUri.getUserId(contactUser);
+  contactUri.getHostAddress(contactHost);
+  
+  //
+  //  Make sure we use the actual domain for domain aliases or we wont match identities correctly
+  //
+  if ( host.compareTo(domain.c_str()) != 0 && SipRedirectServer::getInstance()->sipUserAgent()->isMyHostAlias(requestUri))
+  {
+    host = domain.c_str();
+  }
+  
+  //
+  // Note:  Fallback and Mapping rules may return contacts that will not be routed
+  // back to the registrar.  We therefore won't have any chance to evaluate the
+  // location of those contacts.  So far, we have identified gateways and * codes
+  // behave this way.  We therefore add some custom hack to evaluate based on the contact
+  // returned.
+  // Uncomment the block below to bring back new locations handling for gateways
+#if 0
+  if (mRequestString.first("sipxecs-lineid") != UtlString::UTLSTRING_NOT_FOUND)
+  {
+    //
+    // Gateway identity does not have a user
+    //
+    UtlString lineId;
+    requestUri.getUrlParameter("sipxecs-lineid", lineId, 0);
+    identity << host.data() << ";" << "sipxecs-lineid=" << lineId.data();
+  }
+  else if (contact.first("sipxecs-lineid") != UtlString::UTLSTRING_NOT_FOUND)
+  {
+    //
+    // This is a gateway call returned by the fallback redirector.  Gateway identity does not have a user
+    //
+    UtlString lineId;
+    contactUri.getUrlParameter("sipxecs-lineid", lineId, 0);
+    identity << contactHost.data() << ";" << "sipxecs-lineid=" << lineId.data();
+  }
+
+#endif
+  if (user.first('*') == 0)
+  {
+    //
+    // This is a star code.  It won't match any identity so let us use the user of the contact returned by mapping rules
+    //
+    identity << contactUser.data() << "@" << host.data();
+  }
+  else
+  {
+    identity << user.data() << "@" << host.data();
+  }
+  
+  EntityRecord entity;
+  
+  
+  //
+  // We check both actual identity and aliases to match the location.
+  //
+  if (!_pEntityDb->findByIdentity(identity.str(), entity))
+  {
+    OS_LOG_INFO(FAC_SIP, "ContactList::isAllowedLocation() - did not match any location restriction for user identity " << identity.str());
+    if (!_pEntityDb->findByAliasIdentity(identity.str(), entity))
+    {
+      OS_LOG_INFO(FAC_SIP, "ContactList::isAllowedLocation() - did not match any location restriction for alias identity " << identity.str());
+      _isTrustedLocation = true;
+      return true;
+    }
+  }
+    
+  
+  if (entity.allowedLocations().empty())
+  {
+    //
+    // no location specified
+    //
+    OS_LOG_INFO(FAC_SIP, "ContactList::isAllowedLocation() No location restriction defined for contact " << contact.data() << " added by plugin " << plugin.name().data());
+    _isTrustedLocation = true;
+    return true;
+  }
+  
+  bool foundMatch = false;
+  for (std::set<std::string>::iterator iter = entity.allowedLocations().begin(); iter != entity.allowedLocations().end(); iter++)
+  {
+    std::string loc = *iter;
+    boost::trim(loc);
+    boost::to_lower(loc);
+    
+    if (_callerLocationTokens.find(loc) != _callerLocationTokens.end())
+    {
+      OS_LOG_INFO(FAC_SIP, "ContactList::isAllowedLocation() found matching location " << loc << " for contact " << contact.data() << " added by plugin " << plugin.name().data());
+      foundMatch = true;
+      break;
+    }
+    else
+    {
+      OS_LOG_DEBUG(FAC_SIP, "ContactList::isAllowedLocation() - location " << loc << " for contact " << contact.data() << " does not match any item in " << _callerLocation);
+    }
+  }
+  
+  _isTrustedLocation = foundMatch;
+  
+  if (!_isTrustedLocation)
+  {
+    OS_LOG_WARNING(FAC_SIP, "ContactList::isAllowedLocation() REJECTED insertion of contact " << contact.data() << " added by plugin " << plugin.name().data() << " because of location restrictions");
+  }
+    
+  return foundMatch;
 }
 
 bool ContactList::add( const Url& contactUrl, const RedirectPlugin& plugin )
@@ -258,6 +416,13 @@ bool ContactList::add( const Url& contactUrl, const RedirectPlugin& plugin )
 
 bool ContactList::add( const UtlString& contact, const RedirectPlugin& plugin )
 {
+   if (!isAllowedLocation(contact, plugin))
+   {
+    OS_LOG_WARNING(FAC_SIP, "ContactList::add() revoked insertion of contact " << contact << " from " << plugin.name().data() 
+      << " Invalid Caller Location: " << _callerLocation << " for destination " << contact.data());
+     return false;
+   }
+   
    mbListWasModified = true;
    mContactList.push_back( contact );
    Os::Logger::instance().log(FAC_SIP, PRI_NOTICE, "ContactList::add(): %s added contact for '%s':\n"

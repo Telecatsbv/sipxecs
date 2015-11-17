@@ -36,6 +36,7 @@ sipx_core = \
   sipXsaa \
   sipXyard \
   sipXrelease \
+  sipXjitsi \
   sipXecs
 
 #additional configure options for sipXresiprocate package
@@ -55,7 +56,8 @@ sipx_extra = \
   sipXhomer \
   sipXcallQueue \
   sipXAocBilling \
-  sipXtools
+  sipXtools \
+  sipXcallback
 
 # sipxecs projects that are NOT essential for a running communication system
 # and are related to configuration system. Many are phone plugins
@@ -108,6 +110,7 @@ lib_all = \
   rubygem-file-tail \
   erlang \
   freeswitch \
+  freeswitch-sounds-en-us-callie \
   hiredis \
   net-snmp \
   homer \

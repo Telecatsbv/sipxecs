@@ -1,0 +1,317 @@
+net.java.sip.communicator.impl.gui.main.MainFrame.height=$phone.getSettingValue('GUI/MainFrame/height')
+net.java.sip.communicator.impl.gui.main.MainFrame.width=$phone.getSettingValue('GUI/MainFrame/width')
+net.java.sip.communicator.impl.gui.main.MainFrame.x=$phone.getSettingValue('GUI/MainFrame/x')
+net.java.sip.communicator.impl.gui.main.MainFrame.y=$phone.getSettingValue('GUI/MainFrame/y')
+net.java.sip.communicator.impl.gui.main.configforms.SHOW_ACCOUNT_CONFIG=$phone.getSettingValue('GUI/File/SHOW_ACCOUNT_CONFIG')
+net.java.sip.communicator.impl.gui.main.contactlist.CONTACT_ADD_DISABLED=$phone.getSettingValue('GUI/File/CONTACT_ADD_DISABLED')
+net.java.sip.communicator.impl.gui.main.contactlist.CREATE_GROUP_DISABLED=$phone.getSettingValue('GUI/File/CREATE_GROUP_DISABLED')
+net.java.sip.communicator.impl.gui.main.chatroomslist.GO_TO_CHATROOM_DISABLED=$phone.getSettingValue('GUI/File/GO_TO_CHATROOM_DISABLED')
+net.java.sip.communicator.impl.gui.main.menus.AUTO_ANSWER_MENU_DISABLED=$phone.getSettingValue('GUI/Tools/AUTO_ANSWER_MENU_DISABLED')
+net.java.sip.communicator.impl.gui.main.menus.SHOW_OPTIONS_WINDOW=$phone.getSettingValue('GUI/Tools/SHOW_OPTIONS_WINDOW')
+net.java.sip.communicator.plugin.generalconfig.DISABLED=$phone.getSettingValue('GUI/Options/General')
+net.java.sip.communicator.impl.neomedia.VIDEO_CONFIG_DISABLED=$phone.getSettingValue('GUI/Options/Video')
+net.java.sip.communicator.plugin.securityconfig.DISABLED=$phone.getSettingValue('GUI/Options/Security')
+net.java.sip.communicator.plugin.notificationconfiguration.DISABLED=$phone.getSettingValue('GUI/Options/Events')
+net.java.sip.communicator.plugin.chatconfig.DISABLED=$phone.getSettingValue('GUI/Options/Chat')
+net.java.sip.communicator.plugin.advancedconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced')
+net.java.sip.communicator.impl.neomedia.h264config.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/H264')
+net.java.sip.communicator.plugin.globalproxyconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/Global')
+net.java.sip.communicator.plugin.generalconfig.sipconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/SIP')
+net.java.sip.communicator.plugin.contactsourceconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/Contact_sources')
+net.java.sip.communicator.plugin.keybindingsconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/Keybindings')
+net.java.sip.communicator.plugin.pluginconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/Plug_ins')
+net.java.sip.communicator.plugin.skinconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/Skins')
+net.java.sip.communicator.impl.neomedia.callrecordingconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/Call_Recording')
+net.java.sip.communicator.plugin.loggingconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/Logging')
+net.java.sip.communicator.plugin.provisionconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/Provisioning')
+net.java.sip.communicator.plugin.dnsconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/DNS')
+net.java.sip.communicator.plugin.certconfig.DISABLED=$phone.getSettingValue('GUI/Options/Advanced_group/TLS')
+net.java.sip.communicator.plugin.statusupdate.enable=$phone.getSettingValue('General/statusupdate_enable')
+net.java.sip.communicator.plugin.statusupdate.timer=$phone.getSettingValue('General/statusupdate_timer')
+service.gui.IS_MULTI_CHAT_WINDOW_ENABLED=$phone.getSettingValue('General/IS_MULTI_CHAT_WINDOW_ENABLED')
+net.java.sip.communicator.service.msghistory.IS_MESSAGE_HISTORY_ENABLED=$phone.getSettingValue('General/IS_MESSAGE_HISTORY_ENABLED')
+net.java.sip.communicator.service.msghistory.IS_RECENT_MESSAGES_DISABLED=$phone.getSettingValue('General/IS_RECENT_MESSAGES_DISABLED')
+service.gui.IS_MESSAGE_HISTORY_SHOWN=$phone.getSettingValue('General/IS_MESSAGE_HISTORY_SHOWN')
+impl.gui.ACCEPT_PHONE_NUMBER_WITH_ALPHA_CHARS=$phone.getSettingValue('General/ACCEPT_PHONE_NUMBER_WITH_ALPHA_CHARS')
+impl.gui.NORMALIZE_PHONE_NUMBER=$phone.getSettingValue('General/NORMALIZE_PHONE_NUMBER')
+#foreach($codec in $phone.getSettings().getSetting('encodings/audio').getType().getEnums().entrySet())
+net.java.sip.communicator.impl.neomedia.codec.EncodingConfiguration.$codec.key=0
+#end
+#foreach($codec in $phone.getSettings().getSetting('encodings/video').getType().getEnums().entrySet())
+net.java.sip.communicator.impl.neomedia.codec.EncodingConfiguration.$codec.key=0
+#end
+#set($i=100)
+#set($audioEncoding = $phone.getSettingValue('encodings/audio'))
+#foreach($value in $audioEncoding.split("[|]"))
+net.java.sip.communicator.impl.neomedia.codec.EncodingConfiguration.$value=$i
+#set($i=$i - 1)
+#end
+#set($videoEncoding = $phone.getSettingValue('encodings/video'))
+#foreach($value in $videoEncoding.split("[|]"))
+net.java.sip.communicator.impl.neomedia.codec.EncodingConfiguration.$value=$i
+#set($i=$i - 1)
+#end
+net.java.sip.communicator.impl.neomedia.video.bitrate=$phone.getSettingValue('encodings/video_settings/bitrate')
+net.java.sip.communicator.impl.neomedia.video.framerate=$phone.getSettingValue('encodings/video_settings/framerate')
+net.java.sip.communicator.impl.neomedia.video.maxbandwidth=$phone.getSettingValue('encodings/video_settings/maxbandwidth')
+net.java.sip.communicator.impl.neomedia.video.height=$phone.getSettingValue('encodings/video_settings/height')
+net.java.sip.communicator.impl.neomedia.video.width=$phone.getSettingValue('encodings/video_settings/width')
+#set($popupHandler=$phone.getSettingValue('General/POPUP_HANDLER'))
+#if($popupHandler!='Auto')
+systray.POPUP_HANDLER=$popupHandler
+#end
+plugin.chatalerter.ENABLED=$phone.getSettingValue('General/chatalerter')
+service.gui.SEND_TYPING_NOTIFICATIONS_ENABLED=$phone.getSettingValue('General/SEND_TYPING_NOTIFICATIONS_ENABLED')
+net.java.sip.communicator.service.resources.DefaultLocale=$phone.getSettingValue('General/locale')
+service.gui.AUTO_POPUP_NEW_MESSAGE=$phone.getSettingValue('General/AUTO_POPUP_NEW_MESSAGE')
+service.gui.LEAVE_CHATROOM_ON_WINDOW_CLOSE=$phone.getSettingValue('General/LEAVE_CHATROOM_ON_WINDOW_CLOSE')
+service.gui.MESSAGE_HISTORY_SIZE=$phone.getSettingValue('General/MESSAGE_HISTORY_SIZE')
+service.gui.SEND_MESSAGE_COMMAND=$phone.getSettingValue('General/SEND_MESSAGE_COMMAND')
+net.java.sip.communicator.impl.neomedia.codec.video.h264.defaultProfile=$phone.getSettingValue('advanced/h264/defaultProfile')
+net.java.sip.communicator.impl.neomedia.codec.video.h264.preferredKeyFrameRequester=$phone.getSettingValue('advanced/h264/preferredMethod')
+org.jitsi.impl.neomedia.codec.video.h264.preset=$phone.getSettingValue('advanced/h264/preset')
+org.jitsi.impl.neomedia.codec.video.h264.defaultIntraRefresh=$phone.getSettingValue('advanced/h264/defaultIntraRefresh')
+org.jitsi.impl.neomedia.codec.video.h264.keyint=$phone.getSettingValue('advanced/h264/keyint')
+#foreach ($line in $lines.entrySet())
+net.java.sip.communicator.impl.protocol.sip.acc$line.key=acc$line.key
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.ACCOUNT_UID=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/acc/ACCOUNT_UID')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.PASSWORD=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/acc/PASSWORD')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.USER_ID=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/acc/USER_ID')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.PROTOCOL_NAME=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/acc/PROTOCOL_NAME')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.IS_ACCOUNT_DISABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/acc/IS_ACCOUNT_DISABLED')
+#set ($displayName = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/acc/DISPLAY_NAME'))
+#if($displayName)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.DISPLAY_NAME=$displayName
+#end
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.SERVER_ADDRESS=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/SERVER_ADDRESS')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.SERVER_PORT=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/SERVER_PORT')
+#set ($authorizationName = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/AUTHORIZATION_NAME'))
+#if($authorizationName)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.AUTHORIZATION_NAME=$authorizationName
+#end
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.PROXY_AUTO_CONFIG=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/proxy/PROXY_AUTO_CONFIG')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.FORCE_PROXY_BYPASS=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/proxy/FORCE_PROXY_BYPASS')
+#set ($proxyAddress = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/proxy/PROXY_ADDRESS'))
+#if($proxyAddress)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.PROXY_ADDRESS=$proxyAddress
+#end
+#set ($proxyPort = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/proxy/PROXY_PORT'))
+#if($proxyPort)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.PROXY_PORT=$proxyPort
+#end
+#set ($proxyPrefTransport = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/proxy/PREFFERED_TRANSPORT'))
+#if($proxyPrefTransport)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.PREFFERED_TRANSPORT=$proxyPrefTransport
+#end
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.KEEP_ALIVE_METHOD=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/keep_alive/KEEP_ALIVE_METHOD')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.KEEP_ALIVE_INTERVAL=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/keep_alive/KEEP_ALIVE_INTERVAL')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.VOICEMAIL_ENABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/voicemail/VOICEMAIL_ENABLED')
+#set ($voicemailUri = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/voicemail/VOICEMAIL_URI'))
+#if($voicemailUri)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.VOICEMAIL_URI=$voicemailUri
+#end
+#set ($voicemailUri = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/voicemail/VOICEMAIL_URI'))
+#if($voicemailUri)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.VOICEMAIL_URI=$voicemailUri
+#end
+#set ($voicemailCheckUri = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/voicemail/VOICEMAIL_CHECK_URI'))
+#if($voicemailCheckUri)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.VOICEMAIL_CHECK_URI=$voicemailCheckUri
+#end
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.DTMF_METHOD=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/dtmf/DTMF_METHOD')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.DTMF_MINIMAL_TONE_DURATION=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/connection/dtmf/DTMF_MINIMAL_TONE_DURATION')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.DEFAULT_ENCRYPTION=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/security/DEFAULT_ENCRYPTION')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.DEFAULT_SIPZRTP_ATTRIBUTE=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/security/DEFAULT_SIPZRTP_ATTRIBUTE')
+#set($encrProtocol = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/security/ENCRYPTION_PROTOCOL'))
+#if($encrProtocol)
+#set($i=0)
+#foreach($value in $encrProtocol.split("[|]"))
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.ENCRYPTION_PROTOCOL_STATUS.$value=true
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.ENCRYPTION_PROTOCOL.$value=$i
+#set($i=$i+1)
+#end
+#end
+#set($cipherSuites = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/security/SDES_CIPHER_SUITES'))
+#if($cipherSuites)
+#set($concatenatedValue='')
+#foreach($value in $cipherSuites.split("[|]"))
+#if($concatenatedValue != '')
+#set($concatenatedValue=$concatenatedValue +','+$value)
+#else
+#set($concatenatedValue=$value)
+#end
+#end
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.SDES_CIPHER_SUITES=$concatenatedValue
+#end
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.SAVP_OPTION=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/security/SAVP_OPTION')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.IS_PRESENCE_ENABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/presence/presence_opt/IS_PRESENCE_ENABLED')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.FORCE_P2P_MODE=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/presence/presence_opt/FORCE_P2P_MODE')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.POLLING_PERIOD=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/presence/presence_opt/POLLING_PERIOD')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.SUBSCRIPTION_EXPIRATION=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/presence/presence_opt/SUBSCRIPTION_EXPIRATION')
+#set($presenceType=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/presence/contact_list_opt/TYPE'))
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.$presenceType=true
+#set($optClistPwd=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/presence/contact_list_opt/OPT_CLIST_PASSWORD'))
+#if($optClistPwd)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.OPT_CLIST_PASSWORD=$optClistPwd
+#end
+#set($optClistSvUri=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/presence/contact_list_opt/OPT_CLIST_SERVER_URI'))
+#if($optClistSvUri)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.OPT_CLIST_SERVER_URI=$optClistSvUri
+#end
+#set($optClistUser=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/presence/contact_list_opt/OPT_CLIST_USER'))
+#if($optClistUser)
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.OPT_CLIST_USER=$optClistUser
+#end
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.OPT_CLIST_USE_SIP_CREDETIALS=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/presence/contact_list_opt/OPT_CLIST_USE_SIP_CREDETIALS')
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.OVERRIDE_ENCODINGS=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/encodings/OVERRIDE_ENCODINGS')
+#foreach($codec in $line.getValue().getSettings().getSetting('net.java.sip.communicator.impl.protocol.sip/encodings/audio').getType().getEnums().entrySet())
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.Encodings.$codec.key=0
+#end
+#foreach($codec in $line.getValue().getSettings().getSetting('net.java.sip.communicator.impl.protocol.sip/encodings/video').getType().getEnums().entrySet())
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.Encodings.$codec.key=0
+#end
+#set($i=100)
+#set($audioEncoding = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/encodings/audio'))
+#foreach($value in $audioEncoding.split("[|]"))
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.Encodings.$value=$i
+#set($i=$i - 1)
+#end
+#set($videoEncoding = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.sip/encodings/video'))
+#foreach($value in $videoEncoding.split("[|]"))
+net.java.sip.communicator.impl.protocol.sip.acc${line.getKey()}.Encodings.$value=$i
+#set($i=$i - 1)
+#end
+#if($line.getValue().getUser().isImEnabled())
+#set($xmppKey = $line.key + 1)
+net.java.sip.communicator.impl.protocol.jabber.acc$xmppKey=acc$xmppKey
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.ACCOUNT_UID=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/acc/ACCOUNT_UID')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.PASSWORD=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/acc/PASSWORD')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.USER_ID=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/acc/USER_ID')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.PROTOCOL_NAME=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/acc/PROTOCOL_NAME')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.IS_ACCOUNT_DISABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/acc/IS_ACCOUNT_DISABLED')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.GMAIL_NOTIFICATIONS_ENABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/GMAIL_NOTIFICATIONS_ENABLED')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.GOOGLE_CONTACTS_ENABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/GOOGLE_CONTACTS_ENABLED')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.ALLOW_NON_SECURE=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/ALLOW_NON_SECURE')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.CARBON_DISABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/CARBON_DISABLED')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.IS_SERVER_OVERRIDDEN=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/server_options/IS_SERVER_OVERRIDDEN')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.SERVER_ADDRESS=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/server_options/SERVER_ADDRESS')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.SERVER_PORT=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/server_options/SERVER_PORT')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.AUTO_GENERATE_RESOURCE=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/resource/AUTO_GENERATE_RESOURCE')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.RESOURCE=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/resource/RESOURCE')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.RESOURCE_PRIORITY=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/resource/RESOURCE_PRIORITY')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.DTMF_METHOD=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/dtmf/DTMF_METHOD')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.DTMF_MINIMAL_TONE_DURATION=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/connection/dtmf/DTMF_MINIMAL_TONE_DURATION')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.DEFAULT_ENCRYPTION=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/security/DEFAULT_ENCRYPTION')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.DEFAULT_SIPZRTP_ATTRIBUTE=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/security/DEFAULT_SIPZRTP_ATTRIBUTE')
+#set($encrProtocol = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/security/ENCRYPTION_PROTOCOL'))
+#if($encrProtocol)
+#set($i=0)
+#foreach($value in $encrProtocol.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.ENCRYPTION_PROTOCOL_STATUS.$value=true
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.ENCRYPTION_PROTOCOL.$value=$i
+#set($i=$i+1)
+#end
+#end
+#set($cipherSuites = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/security/SDES_CIPHER_SUITES'))
+#if($cipherSuites)
+#set($concatenatedValue='')
+#foreach($value in $cipherSuites.split("[|]"))
+#if($concatenatedValue != '')
+#set($concatenatedValue=$concatenatedValue +','+$value)
+#else
+#set($concatenatedValue=$value)
+#end
+#end
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.SDES_CIPHER_SUITES=$concatenatedValue
+#end
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.ICE_ENABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/ICE_ENABLED')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.UPNP_ENABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/UPNP_ENABLED')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.AUTO_DISCOVER_STUN=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/AUTO_DISCOVER_STUN')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.USE_DEFAULT_STUN_SERVER=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/USE_DEFAULT_STUN_SERVER')
+#set($stunAddresses = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/STUN_ADDRESS'))
+#if($stunAddresses)
+#set($i=0)
+#foreach($value in $stunAddresses.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.STUN${i}ADDRESS=$value
+#set($i=$i+1)
+#end
+#end
+#set($stunPort = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/STUN_PORT'))
+#if($stunPort)
+#set($i=0)
+#foreach($value in $stunPort.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.STUN${i}PORT=$value
+#set($i=$i+1)
+#end
+#end
+#set($stunSupported = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/STUN_IS_TURN_SUPPORTED'))
+#if($stunSupported)
+#set($i=0)
+#foreach($value in $stunSupported.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.STUN${i}IS_TURN_SUPPORTED=$value
+#set($i=$i+1)
+#end
+#end
+#set($stunUsername = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/STUN_USERNAME'))
+#if($stunUsername)
+#set($i=0)
+#foreach($value in $stunUsername.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.STUN${i}USERNAME=$value
+#set($i=$i+1)
+#end
+#end
+#set($stunPassw = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/STUN_PASSWORD'))
+#if($stunPassw)
+#set($i=0)
+#foreach($value in $stunPassw.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.STUN${i}.PASSWORD=$value
+#set($i=$i+1)
+#end
+#end
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.JINGLE_NODES_ENABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/JINGLE_NODES_ENABLED')
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.AUTO_DISCOVER_JINGLE_NODES=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/AUTO_DISCOVER_JINGLE_NODES')
+#set($jingleAddress = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/JINGLE_NODES_ADDRESS'))
+#if($jingleAddress)
+#set($i=0)
+#foreach($value in $jingleAddress.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.JINGLENODES${i}ADDRESS=$value
+#set($i=$i+1)
+#end
+#end
+#set($jingleRelay = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/ice/JINGLE_NODES_IS_RELAY_SUPPORTED'))
+#if($jingleRelay)
+#set($i=0)
+#foreach($value in $jingleRelay.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.JINGLENODES${i}IS_RELAY_SUPPORTED=$value
+#set($i=$i+1)
+#end
+#end
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.CALLING_DISABLED=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/telephony/CALLING_DISABLED')
+#set($telDomain = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/telephony/OVERRIDE_PHONE_SUFFIX'))
+#if($telDomain)
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.OVERRIDE_PHONE_SUFFIX=$telDomain
+#end
+#set($gtalkDomain = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/telephony/TELEPHONY_BYPASS_GTALK_CAPS'))
+#if($gtalkDomain)
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.TELEPHONY_BYPASS_GTALK_CAPS=$gtalkDomain
+#end
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.OVERRIDE_ENCODINGS=$line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/encodings/OVERRIDE_ENCODINGS')
+#foreach($codec in $line.getValue().getSettings().getSetting('net.java.sip.communicator.impl.protocol.jabber/encodings/audio').getType().getEnums().entrySet())
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.Encodings.$codec.key=0
+#end
+#foreach($codec in $line.getValue().getSettings().getSetting('net.java.sip.communicator.impl.protocol.jabber/encodings/video').getType().getEnums().entrySet())
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.Encodings.$codec.key=0
+#end
+#set($i=100)
+#set($audioEncoding = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/encodings/audio'))
+#foreach($value in $audioEncoding.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.Encodings.$value=$i
+#set($i=$i - 1)
+#end
+#set($videoEncoding = $line.getValue().getSettingValue('net.java.sip.communicator.impl.protocol.jabber/encodings/video'))
+#foreach($value in $videoEncoding.split("[|]"))
+net.java.sip.communicator.impl.protocol.jabber.acc${xmppKey}.Encodings.$value=$i
+#set($i=$i - 1)
+#end
+#end
+#end

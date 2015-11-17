@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.tapestry.IComponent;
@@ -33,7 +32,6 @@ import org.sipfoundry.sipxconfig.phone.Line;
 import org.sipfoundry.sipxconfig.phone.Phone;
 import org.sipfoundry.sipxconfig.phone.PhoneModel;
 import org.sipfoundry.sipxconfig.setting.BeanWithSettings;
-import org.sipfoundry.sipxconfig.setting.ConditionalSettingImpl;
 import org.sipfoundry.sipxconfig.setting.Group;
 import org.sipfoundry.sipxconfig.setting.Setting;
 import org.sipfoundry.sipxconfig.setting.SettingDao;
@@ -47,13 +45,14 @@ public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeg
 
     public static final String PAGE = "phone/EditPhoneDefaults";
 
+    public static final int GROUP_VERSION = 2;
+
     public static final int FW_TAB = -1;
 
     public static final int PHONE_SETTINGS = 0;
 
     private static final int LINE_SETTITNGS = 1;
 
-    public static final int GROUP_VERSION = 2;
     private static final Log LOG = LogFactory.getLog(EditPhoneDefaults.class);
 
     @InjectObject(value = "spring:hotelingLocator")
@@ -155,8 +154,13 @@ public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeg
 
     public void apply() {
         getSettingDao().saveGroup(getGroup());
-        getPhoneContext().applyGroupFirmwareVersion(getGroup(),
-            DeviceVersion.getDeviceVersion(getPhone().getBeanId() + getDeviceVersion().getVersionId()), getPhone().getModelId());
+        //apply device version (firmware change) only for phones that can have this property
+        //configurable (polycom)
+        if (getDeviceVersion() != null) {
+            getPhoneContext().applyGroupFirmwareVersion(getGroup(),
+                DeviceVersion.getDeviceVersion(getPhone().getBeanId()
+                        + getDeviceVersion().getVersionId()), getPhone().getModelId());
+        }
     }
 
     public IPage cancel(IRequestCycle cycle) {
@@ -183,9 +187,7 @@ public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeg
         phone = getPhoneContext().newPhone(getPhoneModel());
         Line line = phone.createLine();
         phone.addLine(line);
-
         setPhone(phone);
-
         String groupVersion = getPhoneContext().getGroupFirmwareVersion(getPhone(), group.getId());
         if (groupVersion != null) {
             phone.setSettingValue(Phone.GROUP_VERSION_FIRMWARE_VERSION, groupVersion);
@@ -262,7 +264,7 @@ public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeg
     }
 
     public class GroupVersionsSelectionModel implements IPropertySelectionModel {
-        List<DeviceVersion> m_versions = new ArrayList<DeviceVersion>();
+        private List<DeviceVersion> m_versions = new ArrayList<DeviceVersion>();
 
         public GroupVersionsSelectionModel(List<DeviceVersion> versions) {
             m_versions = versions;

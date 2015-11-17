@@ -11,17 +11,29 @@ package org.sipfoundry.sipxconfig.dialplan;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sipfoundry.commons.mongo.MongoConstants;
+import org.sipfoundry.sipxconfig.branch.Branch;
 import org.sipfoundry.sipxconfig.cfgmgt.DeployConfigOnEdit;
 import org.sipfoundry.sipxconfig.common.DialPad;
 import org.sipfoundry.sipxconfig.common.NamedObject;
+import org.sipfoundry.sipxconfig.common.Replicable;
+import org.sipfoundry.sipxconfig.common.SipUri;
+import org.sipfoundry.sipxconfig.commserver.imdb.AliasMapping;
+import org.sipfoundry.sipxconfig.commserver.imdb.DataSet;
 import org.sipfoundry.sipxconfig.feature.Feature;
 import org.sipfoundry.sipxconfig.localization.LocalizationContext;
 import org.sipfoundry.sipxconfig.setting.AbstractSettingVisitor;
@@ -32,7 +44,8 @@ import org.sipfoundry.sipxconfig.setting.type.SettingType;
 import org.sipfoundry.sipxconfig.systemaudit.SystemAuditable;
 import org.springframework.beans.factory.annotation.Required;
 
-public class AutoAttendant extends BeanWithGroups implements NamedObject, DeployConfigOnEdit, SystemAuditable {
+public class AutoAttendant extends BeanWithGroups implements NamedObject, DeployConfigOnEdit, SystemAuditable,
+    Replicable {
     public static final Log LOG = LogFactory.getLog(AutoAttendant.class);
     public static final String BEAN_NAME = "autoAttendant";
     public static final String OPERATOR_ID = "operator";
@@ -60,6 +73,7 @@ public class AutoAttendant extends BeanWithGroups implements NamedObject, Deploy
     private String m_lang = LocalizationContext.DEFAULT;
     private String m_allowDial = StringUtils.EMPTY;
     private String m_denyDial = StringUtils.EMPTY;
+    private Set<Branch> m_locations = new HashSet<Branch>();
 
     @Override
     protected Setting loadSettings() {
@@ -213,6 +227,23 @@ public class AutoAttendant extends BeanWithGroups implements NamedObject, Deploy
         return String.format("%s/stdprompts_%s", m_sysDirectory, m_lang);
     }
 
+    public Set<Branch> getLocations() {
+        return m_locations;
+    }
+
+    public void setLocations(Set<Branch> locations) {
+        m_locations = locations;
+    }
+
+    public List<Branch> getLocationsList() {
+        return new ArrayList<Branch>(m_locations);
+    }
+
+    public void setLocationsList(List<Branch> locations) {
+        m_locations.clear();
+        m_locations.addAll(locations);
+    }
+
     /**
      * updates current prompt file with a new one from the given location
      *
@@ -294,6 +325,47 @@ public class AutoAttendant extends BeanWithGroups implements NamedObject, Deploy
     @Override
     public String getConfigChangeType() {
         return AutoAttendant.class.getSimpleName();
+    }
+
+    @Override
+    public Set<DataSet> getDataSets() {
+        return Collections.singleton(DataSet.CALLER_ALIAS);
+    }
+
+    @Override
+    public String getIdentity(String domain) {
+        return SipUri.stripSipPrefix(SipUri.format(null, getName(), domain));
+    }
+
+    @Override
+    public Collection<AliasMapping> getAliasMappings(String domainName) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public boolean isValidUser() {
+        return false;
+    }
+
+    @Override
+    public Map<String, Object> getMongoProperties(String domain) {
+        Map<String, Object> props = new HashMap<String, Object>();
+        List<String> locations = new ArrayList<String>();
+        for (Branch branch : m_locations) {
+            locations.add(branch.getName());
+        }
+        props.put(MongoConstants.LOCATIONS, locations);
+        return props;
+    }
+
+    @Override
+    public String getEntityName() {
+        return getClass().getSimpleName();
+    }
+
+    @Override
+    public boolean isReplicationEnabled() {
+        return true;
     }
 
 }

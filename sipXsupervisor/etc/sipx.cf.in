@@ -272,6 +272,13 @@ body copy_from copy_from_cfdata(filename) {
   compare => "digest";
 }
 
+body copy_from copy_from_sync_cfdata(filename) {
+  source => "$(sipx.SIPX_CFDATA)/$(filename)";
+  compare => "digest";
+  purge => "true";
+  preserve => "true";
+}
+
 body copy_from copy_from_cfdatadir {
   source => "$(sipx.SIPX_CFDATA)";
   compare => "digest";
@@ -560,4 +567,10 @@ bundle common refresh_sip_service(regex, file, filebefore, service_name) {
       any::
 	  	"refresh_$(service_name)" and => {strcmp("$(props)","$(propsbefore)")};
 	  	"restart_$(service_name)" not => "refresh_$(service_name)";
+}
+
+body copy_from local_cp_by_digest(filename) {
+  source => "$(filename)";
+  compare => "digest";
+  purge => "true";
 }

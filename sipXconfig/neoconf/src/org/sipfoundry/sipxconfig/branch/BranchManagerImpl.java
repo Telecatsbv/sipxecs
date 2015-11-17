@@ -17,10 +17,12 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
+import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.sipfoundry.sipxconfig.common.DaoUtils;
+import org.sipfoundry.sipxconfig.common.Replicable;
 import org.sipfoundry.sipxconfig.common.SipxHibernateDaoSupport;
 import org.sipfoundry.sipxconfig.common.UserException;
 import org.sipfoundry.sipxconfig.setup.SetupListener;
@@ -33,6 +35,7 @@ public class BranchManagerImpl extends SipxHibernateDaoSupport<Branch> implement
     private static final Log LOG = LogFactory.getLog(BranchManagerImpl.class);
     private static final String NAME_PROP_NAME = "name";
     private static final String UPDATE_BRANCH_TIMEZONE = "update_branch_tz";
+
     private JdbcTemplate m_jdbcTemplate;
     private NtpManager m_ntpManager;
 
@@ -87,22 +90,31 @@ public class BranchManagerImpl extends SipxHibernateDaoSupport<Branch> implement
      */
     @Override
     public void deleteBranches(Collection<Integer> branchIds) {
-        List<String> sqlUpdates = new ArrayList<String>();
-        Collection<Branch> branches = new ArrayList<Branch>(branchIds.size());
-        for (Integer id : branchIds) {
-            Branch branch = getBranch(id);
-            branches.add(branch);
-            sqlUpdates.add("update users set branch_id=null where branch_id=" + id);
-            sqlUpdates.add("update group_storage set branch_id=null where branch_id=" + id);
-            sqlUpdates.add("delete from branch where branch_id=" + id);
-            getHibernateTemplate().evict(branch);
-        }
-        if (!sqlUpdates.isEmpty()) {
-            m_jdbcTemplate.batchUpdate(sqlUpdates.toArray(new String[sqlUpdates.size()]));
-            for (Branch branch : branches) {
-                getDaoEventPublisher().publishDelete(branch);
+        try {
+            List<String> sqlUpdates = new ArrayList<String>();
+            Collection<Branch> branches = new ArrayList<Branch>(branchIds.size());
+            for (Integer id : branchIds) {
+                Branch branch = getBranch(id);
+                branches.add(branch);
+                sqlUpdates.add("update users set branch_id=null where branch_id=" + id);
+                sqlUpdates.add("update group_storage set branch_id=null where branch_id=" + id);
+                sqlUpdates.add("delete from branch_route_domain where branch_id=" + id);
+                sqlUpdates.add("delete from branch_route_subnet where branch_id=" + id);
+                sqlUpdates.add("delete from branch_branch where branch_id=" + id);
+                sqlUpdates.add("delete from branch_branch where associated_branch_id=" + id);
+                sqlUpdates.add("delete from branch where branch_id=" + id);
+                getHibernateTemplate().evict(branch);
             }
+            if (!sqlUpdates.isEmpty()) {
+                m_jdbcTemplate.batchUpdate(sqlUpdates.toArray(new String[sqlUpdates.size()]));
+                for (Branch branch : branches) {
+                    getDaoEventPublisher().publishDelete(branch);
+                }
+            }
+        } catch (Exception ex) {
+            throw new UserException("&branches.delete.err");
         }
+
     }
 
     @Override
@@ -132,6 +144,21 @@ public class BranchManagerImpl extends SipxHibernateDaoSupport<Branch> implement
     public List<Branch> loadBranchesByPage(final int firstRow, final int pageSize, final String[] orderBy,
             final boolean orderAscending) {
         return loadBeansByPage(Branch.class, null, null, firstRow, pageSize, orderBy, orderAscending);
+    }
+
+    @Override
+    public List<?> getFeatureNames(Integer branchId, String sqlQuery, Class<?> c) {
+        Query q = getHibernateTemplate().getSessionFactory().getCurrentSession().createSQLQuery(sqlQuery).addEntity(c);
+        q.setInteger("branchId", branchId);
+        List<?> names = q.list();
+        return names;
+    }
+
+    @Override
+    public List< ? > getFeatureNames(String sqlQuery, Class< ? > c) {
+        Query q = getHibernateTemplate().getSessionFactory().getCurrentSession().createSQLQuery(sqlQuery).addEntity(c);
+        List<?> names = q.list();
+        return names;
     }
 
     @Override
@@ -166,4 +193,10 @@ public class BranchManagerImpl extends SipxHibernateDaoSupport<Branch> implement
         m_ntpManager = ntpManager;
     }
 
+    @Override
+    public List<Replicable> getReplicables() {
+        List<Replicable> replicables = new ArrayList<Replicable>();
+        replicables.addAll(getBranches());
+        return replicables;
+    }
 }

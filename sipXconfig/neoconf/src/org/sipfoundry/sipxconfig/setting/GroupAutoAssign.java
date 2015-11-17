@@ -15,6 +15,7 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sipfoundry.sipxconfig.branch.Branch;
 import org.sipfoundry.sipxconfig.callgroup.AbstractRing;
 import org.sipfoundry.sipxconfig.forwarding.CallSequence;
 import org.sipfoundry.sipxconfig.forwarding.ForwardingContext;
@@ -32,6 +33,7 @@ public class GroupAutoAssign {
 
     private static final Log LOG = LogFactory.getLog(GroupAutoAssign.class);
     private static final String CONFERENCE_PREFIX = "conference/prefix";
+    private static final String CONFERENCE_INHERIT_LOCATION = "conference/inherit-location";
     private static final String EXTCONTACT_PREFIX = "extcontact/prefix";
 
     private ConferenceBridgeContext m_bridgeContext;
@@ -168,6 +170,14 @@ public class GroupAutoAssign {
             userConference.setName(user.getUserName() + "-conference");
             userConference.setOwner(user);
             userConference.setEnabled(true);
+            SettingValue inheritLocation = conferenceGroup.
+                    getSettingValue(new SettingImpl(CONFERENCE_INHERIT_LOCATION));
+            if (inheritLocation != null && Boolean.valueOf(inheritLocation.getValue())) {
+                Branch userLocation = user.getBranch();
+                if (userLocation != null) {
+                    userConference.getLocations().add(userLocation);
+                }
+            }
             String displayName = user.getDisplayName();
             if (StringUtils.isEmpty(displayName)) {
                 displayName = user.getUserName();

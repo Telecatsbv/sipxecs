@@ -1,0 +1,258 @@
+<?xml version='1.0' encoding='UTF-8'?>
+
+<!DOCTYPE model PUBLIC "-//SIPFoundry//sipXconfig//Model specification 2.0//EN" "http://www.sipfoundry.org/sipXconfig/dtd/setting_2_0.dtd"[
+<!ENTITY types SYSTEM "types.xml">
+]>
+
+<model>
+  &types;  
+  <group name="GUI">
+    <group name="MainFrame">
+      <setting name="height">
+        <value>600</value>
+      </setting>
+      <setting name="width">
+        <value>250</value>
+      </setting>
+      <setting name="x">
+        <value>1164</value>
+      </setting>
+      <setting name="y">
+        <value>339</value>
+      </setting>      
+    </group>
+    <group name="File">
+      <setting name="SHOW_ACCOUNT_CONFIG">
+        <type refid="true-false"/>
+        <value>true</value>
+      </setting>
+      <setting name="CONTACT_ADD_DISABLED">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>
+      <setting name="CREATE_GROUP_DISABLED">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>
+      <setting name="GO_TO_CHATROOM_DISABLED">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>    
+    </group>
+    <group name="Tools">
+      <setting name="AUTO_ANSWER_MENU_DISABLED">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>
+      <setting name="SHOW_OPTIONS_WINDOW">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>          
+    </group>
+    <group name="Options">
+      <setting name="General">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>
+      <setting name="Video">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>
+      <setting name="Security">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>
+      <setting name="Events">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>
+      <setting name="Chat">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>
+      <setting name="Advanced">
+        <type refid="true-false"/>
+        <value>false</value>
+      </setting>
+      <group name="Advanced_group">
+        <setting name="H264">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="Global">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="SIP">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="Contact_sources">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="Keybindings">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="Plug_ins">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="Skins">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="Call_Recording">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="Logging">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="Provisioning">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>
+        <setting name="DNS">
+          <type refid="true-false"/>
+          <value>true</value>
+        </setting>
+        <setting name="TLS">
+          <type refid="true-false"/>
+          <value>false</value>
+        </setting>        
+      </group>
+    </group>        
+  </group>
+  <group name="General">
+    <setting name="IS_MULTI_CHAT_WINDOW_ENABLED">
+      <type refid="true-false"/>
+      <value>true</value>
+    </setting>  
+    <setting name="IS_MESSAGE_HISTORY_ENABLED">
+      <type refid="true-false"/>
+      <value>true</value>
+    </setting>
+    <setting name="IS_MESSAGE_HISTORY_SHOWN">
+      <type refid="true-false"/>
+      <value>false</value>
+    </setting>
+    <setting name="MESSAGE_HISTORY_SIZE">
+      <type>
+        <integer min="0" max="140" />
+      </type>          
+      <value>10</value>
+    </setting>
+    <setting name="SEND_MESSAGE_COMMAND">
+      <type refid="message_command"/>
+      <value>Enter</value>    
+    </setting>
+    <setting name="SEND_TYPING_NOTIFICATIONS_ENABLED">
+      <type refid="true-false"/>
+      <value>true</value>
+    </setting>
+    <setting name="AUTO_POPUP_NEW_MESSAGE">
+      <type refid="yes-no"/>
+      <value>yes</value>
+    </setting>
+    <setting name="chatalerter">
+      <type refid="true-false"/>
+      <value>false</value>
+    </setting>
+    <setting name="LEAVE_CHATROOM_ON_WINDOW_CLOSE">
+      <type refid="true-false"/>
+      <value>true</value>
+    </setting>
+    <setting name="IS_RECENT_MESSAGES_DISABLED">
+      <type refid="true-false-reverse"/>
+      <value>false</value>
+    </setting>    
+    <setting name="statusupdate_enable">
+      <type refid="true-false"/>
+      <value>false</value>    
+    </setting>
+    <setting name="statusupdate_timer">
+      <type>
+        <integer min="1" max="180" />
+      </type>
+      <value>15</value>
+    </setting>            
+    <setting name="POPUP_HANDLER">
+     <type refid="systray_popup"/>
+     <value></value>
+    </setting>
+    <setting name="locale">
+      <type refid="locale" />
+      <value>en</value>      
+    </setting>
+    <setting name="NORMALIZE_PHONE_NUMBER">
+      <type refid="true-false"/>
+      <value>true</value>    
+    </setting>    
+    <setting name="ACCEPT_PHONE_NUMBER_WITH_ALPHA_CHARS">
+      <type refid="true-false"/>
+      <value>true</value>    
+    </setting>    
+  </group>
+  <group name="encodings">
+    <setting name="audio">
+      <type refid="audio_encodings"/>
+      <value>G722/8000|GSM/8000|PCMA/8000|PCMU/8000|SILK/16000|SILK/24000|iLBC/8000|opus/48000|speex/16000|speex/32000|speex/8000|telephone-event/8000</value>
+    </setting>
+    <setting name="video">
+      <type refid="video_encodings"/>
+      <value>H264/90000</value>
+    </setting>
+    <group name="video_settings">
+      <setting name="bitrate">
+        <value>128</value>
+      </setting>
+      <setting name="framerate">
+        <value>20</value>
+      </setting>
+      <setting name="maxbandwidth">
+        <value>256</value>
+      </setting>
+      <setting name="height">
+        <type refid="video_height"/>
+        <value>Auto</value>
+      </setting>
+      <setting name="width">
+        <type refid="video_width"/>
+        <value>Auto</value>
+      </setting>      
+    </group>
+  </group>
+  <group name="advanced">
+    <group name="h264">
+      <setting name="defaultProfile">
+        <type refid="h264_profile"/>
+        <value>main</value>
+      </setting>
+      <setting name="preferredMethod">
+        <type refid="h264_method"/>
+        <value>signaling</value>
+      </setting>
+      <setting name="preset">
+        <type refid="h264_preset"/>
+        <value>ultrafast</value>
+      </setting>
+      <setting name="defaultIntraRefresh">
+        <type refid="true-false"/>
+        <value>true</value>
+      </setting>
+      <setting name="keyint">
+        <value>150</value>
+      </setting>      
+    </group>
+  </group>
+  <group name="e911" hidden="yes">
+    <setting name="location">
+      <type>
+        <integer/>
+      </type>
+    </setting>    
+  </group>  
+</model>

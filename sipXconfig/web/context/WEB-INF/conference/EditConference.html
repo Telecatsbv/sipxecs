@@ -29,6 +29,17 @@
                    useExtension="ognl:true"
                    useEnabled="ognl:true"
                    useDid="ognl:true"/>
+         <table>
+         <tbody>
+         	<tr  jwcid="@common/FieldPanel" for="conference:locations" field="component:locations"
+             label="message:label.locations"
+             description="message:description.locations">
+            <span jwcid="locations@contrib:Palette" id="locations" 
+		        selected="ognl:conference.locationsList" model="ognl:locationsModel"
+		        rows="10"/>
+         	</tr>
+         </tbody>
+         </table>
          <fieldset jwcid="@conference/ConferenceOwnerPanel" conference="ognl:conference" />
          <span jwcid="@If" condition="ognl:conference.isNew() && bridgeId == null">
          <table>
@@ -67,13 +78,6 @@
   </div>
   <div jwcid="participantsTab@Block">
      <div jwcid="@conference/ActiveConferenceControl" conference="ognl:conference" validator="bean:validator" />
-  </div>
-
-  <div jwcid="chatTab@Block">
-     <div jwcid="@conference/ChatPanel"
-       conference="ognl:conference"
-       callback="ognl:callback"
-       validator="bean:validator" />
   </div>
 
 </div>

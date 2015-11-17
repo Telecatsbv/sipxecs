@@ -4,7 +4,7 @@
 
 ## Common make variables you may want to override in another makefile
 ISO_SRC ?= $(SRC)/mak/centos-iso
-ISO_LABEL ?= sipxecs
+ISO_LABEL ?= sipxcom
 ISO_REV ?= $(PACKAGE_REVISION)
 DIST_DIR = @DIST_DIR@
 SPLASH_FILE ?= $(ISO_SRC)/splash.jpg
@@ -12,9 +12,9 @@ SPLASH_MENU ?= $(ISO_SRC)/isolinux.cfg
 OEM_FILE ?= $(ISO_SRC)/oem.m4
 VOLUME_LABEL ?= "CentOS sipX $(PACKAGE_VERSION)"
 APPLICATION_LABEL ?= "CentOS sipX $(PACKAGE_VERSION)"
-PUBLISHER_ID ?= sipx-dev@list.sipfoundry.org
-PREPARERER_ID ?= sipx-dev@list.sipfoundry.org
-CENTOS_VER = 6.6
+PUBLISHER_ID ?= sipxcom-dev@googlegroups.com
+PREPARERER_ID ?= sipxcom-dev@googlegroups.com
+CENTOS_VER = 6.7
 ISO_RPM_DOWNLOAD_URL ?= @CENTOS_BASE_URL@/$(CENTOS_VER)
 ISO_M4_OPTS = $(CUSTOM_ISO_M4_OPTS) -D PACKAGE_VERSION=$(PACKAGE_VERSION)
 ISO_PACKAGES_OS=$(ARCH)-os-Packages
@@ -125,7 +125,7 @@ iso-download-os-% : mak/*-centos-iso.mk
 
 iso-download-epel-% : mak/*-centos-iso.mk
 	rsync -av --delete \
-	  $(addprefix @CENTOS_RSYNC_URL@/fedora-epel/6/$(ARCH)/,$(ISO_ADD_EPEL)) \
+	  $(addprefix rsync://download.sipxcom.org/pub/epel/6/$(ARCH)/,$(ISO_ADD_EPEL)) \
 	  $(ISO_PACKAGES_EPEL)/
 
 iso-packages-% : iso-download-os-% iso-download-epel-%
@@ -165,12 +165,18 @@ ISO_RM_LIST = \
   .*-static-.* \
   bakefile-.* \
   emacs-erlang-.* \
+  erlang-bitcask-* \
+  erlang-erlsyslog-* \
+  erlang-esasl-* \
+  erlang-inviso-* \
   freeswitch-freetdm-.* \
   freeswitch-java-.* \
   freeswitch-perl-.* \
   freeswitch-python-.* \
   freeswitch-skypopen-.* \
   freeswitch-spidermonkey-.* \
+  net-snmp-perl-* \
+  net-snmp-gui-* \
   nodejs-burrito-.* \
   nodejs-bunker-.* \
   nodejs-jscoverage-.* \
@@ -178,7 +184,6 @@ ISO_RM_LIST = \
   nodejs-tap-.* \
   nodejs-snockets-.* \
   nodejs-runforcover-.* \
-  oss_core-.* \
   sipxcustomcallerid.* \
   sipxsbc.* \
   sipxtest.* \
@@ -211,11 +216,8 @@ ISO_ADD_EPEL = \
   libiodbc-3* \
   libev-4.* \
   libmcrypt-* \
-  libmongodb-2.4* \
   libuv-devel-* \
   monit-5.1* \
-  mongodb-2.4* \
-  mongodb-server-2.4* \
   nodejs-devel-0.* \
   npm-1.3.* \
   openpgm-5* \
@@ -384,6 +386,7 @@ ISO_ADD_OS = \
   groff-1.* \
   grub-* \
   grubby-* \
+  gsm-1.0.* \
   gstreamer-0* \
   gstreamer-plugins-base-* \
   gstreamer-tools-* \
@@ -471,6 +474,7 @@ ISO_ADD_OS = \
   libacl-* \
   libasyncns-* \
   libattr-* \
+  libao-0.8.* \
   libblkid-* \
   libcap-2.* \
   libcap-ng-0.* \
@@ -493,6 +497,7 @@ ISO_ADD_OS = \
   libidn-* \
   libIDL-* \
   libjpeg-* \
+  libglade2-2.* \
   libnih-* \
   libnl-* \
   libnotify-* \
@@ -509,6 +514,7 @@ ISO_ADD_OS = \
   libsepol-devel-* \
   libsndfile-* \
   libss-* \
+  libsamplerate-0.1.* \
   libstdc++-4.4.7-* \
   libstdc++-devel-* \
   libtasn1-2.* \
@@ -566,6 +572,7 @@ ISO_ADD_OS = \
   nss-softokn-freebl-* \
   nss-sysinit-* \
   nss-util-* \
+  nss-tools-* \
   ntp-4.* \
   ntpdate-* \
   notification-daemon-* \
@@ -687,6 +694,7 @@ ISO_ADD_OS = \
   startup-notification-0.* \
   sudo-* \
   sound-theme-freedesktop-* \
+  sox-14.2.* \
   speex-1.* \
   system-config-firewall-base-* \
   system-config-network-tui-* \
@@ -718,6 +726,7 @@ ISO_ADD_OS = \
   util-linux-ng-* \
   vim-minimal-* \
   vsftpd-* \
+  wavpack-4.60-* \
   wget-* \
   which-* \
   wireless-tools-* \
@@ -732,6 +741,10 @@ ISO_ADD_OS = \
   xorg-x11-drv-ati-firmware-* \
   xorg-x11-fonts-Type1-* \
   xorg-x11-font-utils-* \
+  xmlrpc-c-1.* \
+  xmlrpc-c-client-1.* \
+  xmlrpc-c-c++-1.* \
+  xmlrpc-c-client++-1.* \
   xz-4.* \
   xz-libs-* \
   xz-lzma-compat-4.* \

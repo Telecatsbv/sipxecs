@@ -17,6 +17,8 @@
 
 package org.sipfoundry.sipxconfig.phone.yealink;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.sipfoundry.sipxconfig.device.DeviceVersion;
 import org.sipfoundry.sipxconfig.phone.PhoneModel;
 import org.sipfoundry.sipxconfig.speeddial.SpeedDialManager;
@@ -29,8 +31,8 @@ public final class YealinkModel extends PhoneModel {
 	private String m_XmlProfileTemplate;
 	private String m_parentDir;
 
-
-	/** Firmware 6x or beyond */
+    private static final Log LOG = LogFactory.getLog(YealinkModel.class);
+    /** Firmware 6x or beyond */
     public static final DeviceVersion VER_6X = new DeviceVersion(YealinkPhone.BEAN_ID, "6X");
     public static final DeviceVersion VER_70 = new DeviceVersion(YealinkPhone.BEAN_ID, "70");
     public static final DeviceVersion VER_72 = new DeviceVersion(YealinkPhone.BEAN_ID, "72");
@@ -53,10 +55,8 @@ public final class YealinkModel extends PhoneModel {
     private int m_dSSKeyCount;
 
     public YealinkModel() {
-    }
-
-    public YealinkModel(String beanId) {
-        super(beanId);
+        super(YealinkPhone.BEAN_ID);
+        setEmergencyConfigurable(false);
     }
 
     public static DeviceVersion getPhoneDeviceVersion(String version) {
@@ -69,11 +69,18 @@ public final class YealinkModel extends PhoneModel {
     }
 
     public void setDefaultVersion(DeviceVersion value) {
+        LOG.debug("YealinkModel:setDefaultVersion");
         m_deviceVersion = value;
     }
 
     public DeviceVersion getDefaultVersion() {
-        return m_deviceVersion;
+        LOG.debug("YealinkModel:getDefaultVersion");
+        if(m_deviceVersion != null)
+        {
+            return m_deviceVersion;
+        } else {
+            return VER_7X;
+        }
     }
 
     public void setName(String value) {
