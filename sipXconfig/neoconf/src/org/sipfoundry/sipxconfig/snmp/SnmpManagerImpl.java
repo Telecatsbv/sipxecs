@@ -104,7 +104,8 @@ public class SnmpManagerImpl implements BeanFactoryAware, SnmpManager, FeaturePr
     public List<ServiceStatus> getServicesStatuses(Location location) {
         ProcessSnmpReader reader = new ProcessSnmpReader();
         try {
-            List<ServiceStatus> statuses = reader.read(location.getAddress());
+            String communityString = getSettings().getCommunityString();
+            List<ServiceStatus> statuses = reader.read(location.getAddress(), communityString);
             return statuses;
         } catch (IOException e) {
             throw new UserException("Could not get SNMP data", e);
@@ -204,6 +205,14 @@ public class SnmpManagerImpl implements BeanFactoryAware, SnmpManager, FeaturePr
         restart.setDefines(restarts);
         m_configManager.run(restart);
         m_systemAuditManager.auditServiceRestart(location.getFqdn(), serviceNames);
+    }
+
+    @Override
+    public void restartProcessesInAllLocations(Collection<ProcessDefinition> processes) {
+        Location[] locations = m_locationsManager.getLocations();
+        for (Location location : locations) {
+            restartProcesses(location, processes);
+        }
     }
 
     public void setConfigManager(ConfigManager configManager) {

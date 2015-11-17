@@ -35,6 +35,7 @@ public class User {
     private Vector<String> m_aliases;
     private HashMap<String, DistributionList> m_distributionLists;
     private Locale m_locale; // The locale for the UI to present to this user
+    private boolean m_forwardDeleteVoicemail;
     private String m_emailAddress;
     private String m_altEmailAddress;
     private boolean m_attachAudioToEmail;
@@ -86,6 +87,7 @@ public class User {
     private boolean m_hotelingEnabled;
     private boolean m_forcePinChange;
     private String m_vmLanguage;
+    private Vector<String> m_callbackUsers;
 
     public enum EmailFormats {
         FORMAT_NONE("NONE"), FORMAT_FULL("FULL"), FORMAT_MEDIUM("MEDIUM"), FORMAT_BRIEF("BRIEF"), FORMAT_IMAP("IMAP");
@@ -257,6 +259,14 @@ public class User {
 
     public void setLocale(Locale locale) {
         m_locale = locale;
+    }
+
+    public boolean isForwardDeleteVoicemail() {
+        return m_forwardDeleteVoicemail;
+    }
+
+    public void setForwardDeleteVoicemail(String value) {
+        m_forwardDeleteVoicemail = value.equals("1") || value.equals("true");
     }
 
     public String getEmailAddress() {
@@ -742,5 +752,21 @@ public class User {
 
     public void setVmLanguage(String vmLanguage) {
         m_vmLanguage = vmLanguage;
+    }
+
+    public Vector<String> getCallbackUsers() {
+        return m_callbackUsers;
+    }
+
+    public void addCallbackUser(String callbackUser) {
+        this.m_callbackUsers.add(callbackUser);
+    }
+
+    public void setCallbackUsers(Vector<String> callbackUsers) {
+        this.m_callbackUsers = callbackUsers;
+    }
+
+    public boolean isMarkedForCallback() {
+        return !m_callbackUsers.isEmpty();
     }
 }

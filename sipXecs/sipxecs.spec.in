@@ -96,6 +96,7 @@ Requires: sipxacccode >= %version
 #Requires: sipxaudiocodes >= %version
 Requires: sipxbridge >= %version
 Requires: sipxcallcontroller >= %version
+Requires: sipxcallback >= %version
 Requires: sipxcdr >= %version
 Requires: sipxcdrlog >= %version
 Requires: sipxcisco >= %version
@@ -137,6 +138,7 @@ Requires: sipxsupervisor >= %version
 Requires: sipxsqa-server >= %version
 #Requires: sipxunidata >= %version
 Requires: sipxcallqueue
+Requires: sipxjitsi >= %version
 Requires: sipxhotprovisioning >= %version
 Requires: sipxhotdesking >= %version
 Requires: sipxaastra >= %version

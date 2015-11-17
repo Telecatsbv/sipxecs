@@ -9,8 +9,10 @@
  */
 package org.sipfoundry.sipxconfig.callgroup;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -19,7 +21,9 @@ import java.util.Set;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.StringUtils;
+import org.sipfoundry.commons.mongo.MongoConstants;
 import org.sipfoundry.commons.security.Md5Encoder;
+import org.sipfoundry.sipxconfig.branch.Branch;
 import org.sipfoundry.sipxconfig.common.Replicable;
 import org.sipfoundry.sipxconfig.common.SipUri;
 import org.sipfoundry.sipxconfig.common.User;
@@ -43,6 +47,7 @@ public class CallGroup extends AbstractCallSequence implements Replicable, Syste
     private String m_sipPassword;
     private boolean m_useFwdTimers;
     private Integer m_fallbackExpire = AbstractRing.DEFAULT_EXPIRATION;
+    private Set<Branch> m_locations = new HashSet<Branch>();
 
     public CallGroup() {
         generateSipPassword();
@@ -60,6 +65,7 @@ public class CallGroup extends AbstractCallSequence implements Replicable, Syste
             ringClone.setCallGroup(clone);
             clone.insertRing(ringClone);
         }
+        clone.setLocations(new HashSet<Branch>(m_locations));
         return clone;
     }
 
@@ -145,6 +151,23 @@ public class CallGroup extends AbstractCallSequence implements Replicable, Syste
 
     public void setFallbackExpire(Integer expire) {
         m_fallbackExpire = expire;
+    }
+
+    public Set<Branch> getLocations() {
+        return m_locations;
+    }
+
+    public void setLocations(Set<Branch> locations) {
+        m_locations = locations;
+    }
+
+    public List<Branch> getLocationsList() {
+        return new ArrayList<Branch>(m_locations);
+    }
+
+    public void setLocationsList(List<Branch> locations) {
+        m_locations.clear();
+        m_locations.addAll(locations);
     }
 
     /**
@@ -264,7 +287,13 @@ public class CallGroup extends AbstractCallSequence implements Replicable, Syste
 
     @Override
     public Map<String, Object> getMongoProperties(String domain) {
-        return Collections.emptyMap();
+        Map<String, Object> props = new HashMap<String, Object>();
+        List<String> locations = new ArrayList<String>();
+        for (Branch branch : m_locations) {
+            locations.add(branch.getName());
+        }
+        props.put(MongoConstants.LOCATIONS, locations);
+        return props;
     }
 
     @Override

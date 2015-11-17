@@ -146,10 +146,9 @@ public class YealinkPhone extends Phone implements HotProvisionable{
         YealinkModel model = (YealinkModel) getModel();
 
   	if (myVersion == YealinkModel.VER_6X) {
-        	model.setProfileTemplate("yealinkPhone/config_v6x.vm");
+		model.setProfileTemplate("yealinkPhone/config_v6x.vm");
         	model.setSettingsFile("phone-6X.xml");
         	model.setLineSettingsFile("line-6X.xml");
-
         } else if (myVersion == YealinkModel.VER_70) {
             model.setProfileTemplate("yealinkPhone/config_v70.vm");
             model.setSettingsFile("phone-70.xml");

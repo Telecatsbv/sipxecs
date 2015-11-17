@@ -26,6 +26,7 @@ const char* TransferControl::RecognizerConfigKey2 = "ADDITIONAL_EXCHANGE_SERVER_
 
 const char* SIP_METHOD_URI_PARAMETER = "method";
 const char* SIP_SIPX_REFERROR_HEADER = "X-sipX-referror";
+const char* SIPX_RETARGET_URI_PARAM  = "x-sipx-retarget";
 
 static const std::string SUPPRESSED_RING_INDICATOR("SIP/2.0 100 Suppressed Ring Indicator");
 
@@ -92,6 +93,61 @@ TransferControl::readConfig( OsConfigDb& configDb /**< a subhash of the individu
                     ,server2.data()
                     );
    }
+}
+
+
+void TransferControl::handleInviteWithRetarget(const Url& requestUri, SipMessage& request)
+{
+  UtlString retargetContact;
+  requestUri.getUrlParameter(SIPX_RETARGET_URI_PARAM, retargetContact, 0);
+  if (!retargetContact.isNull())
+  {
+    UtlString uri;
+    UtlString protocol;
+    UtlString method;
+
+    OS_LOG_INFO(FAC_SIP, "TransferControl[" << mInstanceName.data() << "]::handleInviteWithRetarget - Receiving "
+                      << SIPX_RETARGET_URI_PARAM << " contact " << retargetContact.data());
+
+    std::vector<std::string> hostAndPort;
+    std::string retargetContactStr = retargetContact.data();
+    boost::split(hostAndPort, retargetContactStr, boost::is_any_of(":"));
+
+    Url newUri(requestUri);
+    newUri.setHostAddress(hostAndPort[0].c_str());
+    if (2 == hostAndPort.size() && !hostAndPort[1].empty())
+    {
+      newUri.setHostPort(::atoi(hostAndPort[1].c_str()));
+    }
+
+    newUri.removeUrlParameter(SIPX_RETARGET_URI_PARAM);
+    newUri.getUri(uri);
+
+    request.getRequestProtocol(&protocol);
+    request.getRequestMethod(&method);
+
+    request.setFirstHeaderLine(method, uri, protocol);
+
+    //
+    // Check if the new uri is a registered binding. If it is, adapt the route to its path
+    //
+    RegDB::Bindings bindings;
+    if (mpSipRouter->getRegDBInstance()->getUnexpiredRegisteredBinding(newUri, bindings) && (1 == bindings.size()))
+    {
+      if (!bindings.front().getPath().empty())
+      {
+        OS_LOG_INFO(FAC_SIP, "TransferControl[" << mInstanceName.data() << "]::handleInviteWithRetarget - Adding new internal Route "
+                              << bindings.front().getPath());
+        request.setRouteField(bindings.front().getPath().c_str());
+      }
+    }
+    else
+    {
+      OS_LOG_INFO(FAC_SIP, "TransferControl[" << mInstanceName.data() << "]::handleInviteWithRetarget - Adding new external Route "
+                                    << uri.data());
+      request.setRouteField(uri.data());
+    }
+  }
 }
 
 AuthPlugin::AuthResult
@@ -308,10 +364,11 @@ TransferControl::authorizeAndModify(const UtlString& id,    /**< The authenticat
                SipXSignedHeader::remove(request, SIP_SIPX_LOCATION_INFO);
             }
          }
-         else
-         {
-            // INVITE without Replaces: is not a transfer - ignore it.
-         }
+
+         //
+         // Rewrite the request uri with the details provided in SIPX_RETARGET_URI_PARAM param
+         //
+         handleInviteWithRetarget(requestUri, request);
       }
       else if (mpSipRouter->suppressAlertIndicatorForTransfers() && method.compareTo(SIP_NOTIFY_METHOD) == 0)
       {
@@ -408,6 +465,11 @@ void TransferControl::modifyTrustedRequest(
       request.getRequestProtocol(&protocol);
       request.setFirstHeaderLine(method, uri, protocol);
     }
+
+    //
+    // Rewrite the request uri with the details provided in SIPX_RETARGET_URI_PARAM param
+    //
+    handleInviteWithRetarget(requestUri, request);
   }
 }
 

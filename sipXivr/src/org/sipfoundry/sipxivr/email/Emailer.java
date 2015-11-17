@@ -27,7 +27,9 @@ import org.apache.log4j.Logger;
 import org.sipfoundry.commons.userdb.User;
 import org.sipfoundry.commons.userdb.User.EmailFormats;
 import org.sipfoundry.voicemail.mailbox.Folder;
+import org.sipfoundry.voicemail.mailbox.MailboxManager;
 import org.sipfoundry.voicemail.mailbox.VmMessage;
+import org.springframework.beans.factory.annotation.Required;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.ClassPathResource;
@@ -41,6 +43,7 @@ public class Emailer implements ApplicationContextAware {
     private ApplicationContext m_context;
     private String m_audioFormat;
     private SipxIvrConfiguration m_ivrConfig;
+    private MailboxManager m_mailboxManager;
 
     public void init() {
         m_es = Executors.newCachedThreadPool();
@@ -198,6 +201,9 @@ public class Emailer implements ApplicationContextAware {
                     javax.mail.Message message = buildMessage(emf, attachAudio);
                     message.addRecipient(MimeMessage.RecipientType.TO, new InternetAddress(to));
                     Transport.send(message);
+                    if (attachAudio && m_user.isForwardDeleteVoicemail()) {
+                        m_mailboxManager.deleteMessage(m_user, m_vmessage);
+                    }
                 } catch (Exception e) {
                     LOG.error("Emailer::run problem sending email.", e);
                 }
@@ -218,6 +224,9 @@ public class Emailer implements ApplicationContextAware {
 
                     message.addRecipient(MimeMessage.RecipientType.TO, new InternetAddress(alt));
                     Transport.send(message);
+                    if (attachAudio && m_user.isForwardDeleteVoicemail()) {
+                        m_mailboxManager.deleteMessage(m_user, m_vmessage);
+                    }
                 } catch (Exception e) {
                     LOG.error("Emailer::run problem sending alternate email.", e);
                 }
@@ -252,5 +261,10 @@ public class Emailer implements ApplicationContextAware {
 
     public void setAudioFormat(String format) {
         m_audioFormat = format;
+    }
+
+    @Required
+    public void setMailboxManager(MailboxManager mgr) {
+        m_mailboxManager = mgr;
     }
 }

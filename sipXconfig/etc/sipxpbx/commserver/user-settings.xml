@@ -161,6 +161,19 @@
         <integer />
       </type>
     </setting>
+    <setting name="inherit-location">
+      <type>
+        <enum>
+          <option>
+            <value>true</value>
+          </option>
+          <option>
+            <value>false</value>
+          </option>
+        </enum>
+      </type>
+      <value>false</value>
+    </setting>
   </group>
   <group name="extcontact" hidden="yes">
     <setting name="enabled">
@@ -327,6 +340,12 @@
         <type>
           <string />
         </type>
+      </setting>
+      <setting name="forward-delete-voicemail">
+        <type>
+          <boolean />
+        </type>
+        <value>0</value>
       </setting>
       <setting name="primary-email-voicemail-notification">
         <type>

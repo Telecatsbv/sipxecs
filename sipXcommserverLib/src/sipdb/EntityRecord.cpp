@@ -29,7 +29,12 @@ const char* EntityRecord::pin_fld(){ static std::string fld = "pntk"; return fld
 const char* EntityRecord::authType_fld(){ static std::string fld = "authtp"; return fld.c_str(); }
 const char* EntityRecord::location_fld(){ static std::string fld = "loc"; return fld.c_str(); }
 const char* EntityRecord::permission_fld(){ static std::string fld = "prm"; return fld.c_str(); }
+const char* EntityRecord::allowed_locations_fld(){ static std::string fld = "locations"; return fld.c_str(); }
+const char* EntityRecord::associated_locations_fld(){ static std::string fld = "loc_assoc"; return fld.c_str(); }
+const char* EntityRecord::associated_location_fallback_fld(){ static std::string fld = "loc_assoc_fallback"; return fld.c_str(); }
+const char* EntityRecord::inbound_associated_locations_fld(){ static std::string fld = "loc_assoc_inbound"; return fld.c_str(); }
 const char* EntityRecord::entity_fld(){ static std::string fld = "ent"; return fld.c_str(); }
+const char* EntityRecord::authc_fld(){ static std::string fld = "authc"; return fld.c_str(); }
 
 const char* EntityRecord::callerId_fld(){ static std::string fld = "clrid"; return fld.c_str(); }
 const char* EntityRecord::callerIdEnforcePrivacy_fld(){ static std::string fld = "blkcid"; return fld.c_str(); }
@@ -49,6 +54,9 @@ const char* EntityRecord::staticUserLocContact_fld(){ static std::string fld = "
 const char* EntityRecord::staticUserLocFromUri_fld(){ static std::string fld = "from"; return fld.c_str(); }
 const char* EntityRecord::staticUserLocToUri_fld(){ static std::string fld = "to"; return fld.c_str(); }
 const char* EntityRecord::staticUserLocCallId_fld(){ static std::string fld = "cid"; return fld.c_str(); }
+const char* EntityRecord::loc_restr_dom_fld(){ static std::string fld = "loc_restr_dom"; return fld.c_str(); }
+const char* EntityRecord::loc_restr_sbnet_fld(){ static std::string fld = "loc_restr_sbnet"; return fld.c_str(); }
+const char* EntityRecord::entity_branch_str(){ static std::string fld = "branch"; return fld.c_str(); }
 
 const char* EntityRecord::vmOnDnd_fld(){ static std::string fld = "vmondnd"; return fld.c_str(); };
 
@@ -69,12 +77,19 @@ EntityRecord::EntityRecord(const EntityRecord& entity)
     _authType = entity._authType;
     _location = entity._location;
     _permissions = entity._permissions;
+    _allowedLocations = entity._allowedLocations;
+    _associatedLocations = entity._associatedLocations;
+    _associatedLocationFallback = entity._associatedLocationFallback;
+    _inboundAssociatedLocations = entity._inboundAssociatedLocations;
     _entity = entity._entity;
+    _authc = entity._authc;
     _callerId = entity._callerId;
     _aliases = entity._aliases;
     _callForwardTime = entity._callForwardTime;
     _staticUserLoc = entity._staticUserLoc;
     _vmOnDnd = entity._vmOnDnd;
+    _locRestrDom = entity._locRestrDom;
+    _locRestrSbnet = entity._locRestrSbnet;
 }
 
 EntityRecord::~EntityRecord()
@@ -99,12 +114,19 @@ void EntityRecord::swap(EntityRecord& entity)
     std::swap(_authType, entity._authType);
     std::swap(_location, entity._location);
     std::swap(_permissions, entity._permissions);
+    std::swap(_allowedLocations, entity._allowedLocations);
+    std::swap(_associatedLocations, entity._associatedLocations);
+    std::swap(_associatedLocationFallback, entity._associatedLocationFallback);
+    std::swap(_inboundAssociatedLocations, entity._inboundAssociatedLocations);
     std::swap(_entity, entity._entity);
+    std::swap(_authc, entity._authc);
     std::swap(_callerId, entity._callerId);
     std::swap(_aliases, entity._aliases);
     std::swap(_callForwardTime, entity._callForwardTime);
     std::swap(_staticUserLoc, entity._staticUserLoc);
     std::swap(_vmOnDnd, entity._vmOnDnd);
+    std::swap(_locRestrDom, entity._locRestrDom);
+    std::swap(_locRestrSbnet, entity._locRestrSbnet);
 }
 
 void EntityRecord::fillStaticUserLoc(StaticUserLoc& userLoc, const mongo::BSONObj& innerObj)
@@ -169,6 +191,36 @@ EntityRecord& EntityRecord::operator = (const mongo::BSONObj& bsonObj)
 	{
 		_vmOnDnd = bsonObj.getBoolField(EntityRecord::vmOnDnd_fld());
 	}
+   
+  if (bsonObj.hasField(EntityRecord::loc_restr_dom_fld()))
+	{
+		mongo::BSONElement obj = bsonObj[EntityRecord::loc_restr_dom_fld()];
+		if ( obj.isABSONObj() &&  obj.type() == mongo::Array)
+		{
+			std::vector<mongo::BSONElement> locations = obj.Array();
+			_locRestrDom.clear();
+			for (std::vector<mongo::BSONElement>::iterator iter = locations.begin();
+				iter != locations.end(); iter++)
+			{
+				_locRestrDom.push_back(iter->String());
+			}
+		}
+	}
+  
+  if (bsonObj.hasField(EntityRecord::loc_restr_sbnet_fld()))
+	{
+		mongo::BSONElement obj = bsonObj[EntityRecord::loc_restr_sbnet_fld()];
+		if ( obj.isABSONObj() &&  obj.type() == mongo::Array)
+		{
+			std::vector<mongo::BSONElement> locations = obj.Array();
+			_locRestrSbnet.clear();
+			for (std::vector<mongo::BSONElement>::iterator iter = locations.begin();
+				iter != locations.end(); iter++)
+			{
+				_locRestrSbnet.push_back(iter->String());
+			}
+		}
+	}
 
 	if (bsonObj.hasField(EntityRecord::callerId_fld()))
 	{
@@ -198,10 +250,65 @@ EntityRecord& EntityRecord::operator = (const mongo::BSONObj& bsonObj)
 			}
 		}
 	}
+  
+  if (bsonObj.hasField(EntityRecord::allowed_locations_fld()))
+	{
+		mongo::BSONElement obj = bsonObj[EntityRecord::allowed_locations_fld()];
+		if ( obj.isABSONObj() &&  obj.type() == mongo::Array)
+		{
+			std::vector<mongo::BSONElement> locations = obj.Array();
+			_allowedLocations.clear();
+			for (std::vector<mongo::BSONElement>::iterator iter = locations.begin();
+				iter != locations.end(); iter++)
+			{
+				_allowedLocations.insert(iter->String());
+			}
+		}
+	}
+  
+  if (bsonObj.hasField(EntityRecord::associated_locations_fld()))
+	{
+		mongo::BSONElement obj = bsonObj[EntityRecord::associated_locations_fld()];
+		if ( obj.isABSONObj() &&  obj.type() == mongo::Array)
+		{
+			std::vector<mongo::BSONElement> locations = obj.Array();
+			_associatedLocations.clear();
+			for (std::vector<mongo::BSONElement>::iterator iter = locations.begin();
+				iter != locations.end(); iter++)
+			{
+				_associatedLocations.insert(iter->String());
+			}
+		}
+	}
+  
+  if (bsonObj.hasField(EntityRecord::inbound_associated_locations_fld()))
+	{
+		mongo::BSONElement obj = bsonObj[EntityRecord::inbound_associated_locations_fld()];
+		if ( obj.isABSONObj() &&  obj.type() == mongo::Array)
+		{
+			std::vector<mongo::BSONElement> locations = obj.Array();
+			_inboundAssociatedLocations.clear();
+			for (std::vector<mongo::BSONElement>::iterator iter = locations.begin();
+				iter != locations.end(); iter++)
+			{
+				_inboundAssociatedLocations.insert(iter->String());
+			}
+		}
+	}
 
 	if (bsonObj.hasField(EntityRecord::entity_fld()))
 	{
 	  _entity = bsonObj.getStringField(EntityRecord::entity_fld());
+	}
+  
+  if (bsonObj.hasField(EntityRecord::authc_fld()))
+	{
+	  _authc = bsonObj.getStringField(EntityRecord::authc_fld());
+	}
+  
+  if (bsonObj.hasField(EntityRecord::associated_location_fallback_fld()))
+	{
+	  _associatedLocationFallback = bsonObj.getStringField(EntityRecord::associated_location_fallback_fld());
 	}
 
 	if (bsonObj.hasField(EntityRecord::aliases_fld()))

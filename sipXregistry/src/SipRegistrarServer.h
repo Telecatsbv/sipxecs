@@ -89,7 +89,6 @@ protected:
     UtlString mRegistrarName;
     UtlBoolean mSendExpiresInResponse;
     UtlBoolean mSendAllContactsInResponse;
-    RegExpireThread _expireThread;
 
     SipNonceDb mNonceDb;
     long mNonceExpiration;

@@ -37,6 +37,7 @@ public class BridgeCommand extends CallCommand {
         m_command += "event-lock: true";
     }
 
+
     public boolean start() {
         if(m_uuid == null) {
             return super.start();
