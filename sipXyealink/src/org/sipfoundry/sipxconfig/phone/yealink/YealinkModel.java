@@ -79,7 +79,7 @@ public final class YealinkModel extends PhoneModel {
         {
             return m_deviceVersion;
         } else {
-            return VER_7X;
+            return VER_70;
         }
     }
 
