@@ -85,7 +85,7 @@ import org.sipfoundry.sipxconfig.upload.yealink.YealinkUpload;
  * Yealink abstract phone.
  */
 public class YealinkPhone extends Phone implements HotProvisionable{
-    public static final String BEAN_ID = "yealinkPhone";
+    public static final String BEAN_ID = "yealink";
     private static final Log LOG = LogFactory.getLog(YealinkPhone.class);
     private static final String SIPT46_PATTERN = "yealinkPhoneSIPT4[6-8].*";
     private static final String SIPT412_PATTERN = "yealinkPhoneSIPT4[12].*";
