@@ -87,11 +87,11 @@ import org.sipfoundry.sipxconfig.upload.yealink.YealinkUpload;
 public class YealinkPhone extends Phone implements HotProvisionable{
     public static final String BEAN_ID = "yealink";
     private static final Log LOG = LogFactory.getLog(YealinkPhone.class);
-    private static final String SIPT46_PATTERN = "yealinkPhoneSIPT4[6-8].*";
-    private static final String SIPT412_PATTERN = "yealinkPhoneSIPT4[12].*";
-    private static final String SIPT2327_PATTERN = "yealinkPhoneSIPT[23-27].*";
-    private static final String SIPT4_PATTERN = "yealinkPhoneSIPT4.*";
-    private static final String SIPT13_PATTERN = "yealinkPhoneSIPT[1-3].*";
+    private static final String SIPT46_PATTERN = "yealink[6-8].*";
+    private static final String SIPT412_PATTERN = "yealink[12].*";
+    private static final String SIPT2327_PATTERN = "yealink[23-27].*";
+    private static final String SIPT4_PATTERN = "yealink.*";
+    private static final String SIPT13_PATTERN = "yealink[1-3].*";
     private static final String ENUM = "enum";
     private static final String TYPE = "type";
     private static final String ZERO = "0";
@@ -146,29 +146,29 @@ public class YealinkPhone extends Phone implements HotProvisionable{
         YealinkModel model = (YealinkModel) getModel();
 
   	if (myVersion == YealinkModel.VER_6X) {
-		model.setProfileTemplate("yealinkPhone/config_v6x.vm");
+		model.setProfileTemplate(BEAN_ID + "/config_v6x.vm");
         	model.setSettingsFile("phone-6X.xml");
         	model.setLineSettingsFile("line-6X.xml");
         } else if (myVersion == YealinkModel.VER_70) {
-            model.setProfileTemplate("yealinkPhone/config_v70.vm");
+            model.setProfileTemplate(BEAN_ID + "/config_v70.vm");
             model.setSettingsFile("phone-70.xml");
             model.setLineSettingsFile("line-70.xml");
-            model.setXmlProfileTemplate("yealinkPhone/config_v70.prov.xml.vm");
+            model.setXmlProfileTemplate(BEAN_ID + "/config_v70.prov.xml.vm");
 	} else if (myVersion == YealinkModel.VER_72) {
-            model.setProfileTemplate("yealinkPhone/config_v72.vm");
+            model.setProfileTemplate(BEAN_ID + "/config_v72.vm");
             model.setSettingsFile("phone-72.xml");
             model.setLineSettingsFile("line-72.xml");
-            model.setXmlProfileTemplate("yealinkPhone/config_v72.prov.xml.vm");
+            model.setXmlProfileTemplate(BEAN_ID + "/config_v72.prov.xml.vm");
 	} else if (myVersion == YealinkModel.VER_73) {
-            model.setProfileTemplate("yealinkPhone/config_v73.vm");
+            model.setProfileTemplate(BEAN_ID + "/config_v73.vm");
             model.setSettingsFile("phone-73.xml");
             model.setLineSettingsFile("line-73.xml");
-            model.setXmlProfileTemplate("yealinkPhone/config_v73.prov.xml.vm");
+            model.setXmlProfileTemplate(BEAN_ID + "/config_v73.prov.xml.vm");
         } else if (myVersion == YealinkModel.VER_80) {
-        	model.setProfileTemplate("yealinkPhone/config_v80.vm");
+        	model.setProfileTemplate(BEAN_ID + "/config_v80.vm");
         	model.setSettingsFile("phone-80.xml");
         	model.setLineSettingsFile("line-80.xml");
-            model.setXmlProfileTemplate("yealinkPhone/config_v80.prov.xml.vm");
+            model.setXmlProfileTemplate(BEAN_ID + "/config_v80.prov.xml.vm");
         }
     }
 
