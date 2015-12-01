@@ -23,7 +23,7 @@
 
 
 <bean id="yealinkModel" class="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel" parent="abstractPhoneModel" abstract="true">
-	<!-- <property name="beanId" value="yealink" /> -->
+	<!-- <property name="beanId" value="yealinkPhone" /> -->
 	<property name="vendor" value="Yealink"/>
 	<property name="restartSupported" value="true" />
 	<property name="versions">
@@ -38,14 +38,14 @@
 	<property name="defaultVersion">
 	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_70"/>
 	</property>
-	<property name="profileTemplate" value="yealink/config_v6x_titan.vm" />
-	<property name="xmlProfileTemplate" value="yealink/config_v7x.prov.xml.vm"/>
-	<property name="directoryProfileTemplate" value="yealink/directory.xml.vm" />
+	<property name="profileTemplate" value="yealinkPhone/config_v6x_titan.vm" />
+	<property name="xmlProfileTemplate" value="yealinkPhone/config_v7x.prov.xml.vm"/>
+	<property name="directoryProfileTemplate" value="yealinkPhone/directory.xml.vm" />
     	<property name="parentDir" value="${sysdir.phone}/profile/tftproot"/>
 </bean>
 
-<bean id="yealinkSIPT12P" parent="yealinkModel">
-	<!-- <property name="beanId" value="yealink" /> -->
+<bean id="yealinkPhoneSIPT12P" parent="yealinkModel">
+	<!-- <property name="beanId" value="yealinkPhone" /> -->
 	<property name="label" value="Yealink SIP-T12(P)" />
 	<property name="name" value="T12" />
 	<property name="maxLineCount" value="2" />
@@ -59,8 +59,8 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT18P" parent="yealinkModel">
-	<!-- <property name="beanId" value="yealink" /> -->
+<bean id="yealinkPhoneSIPT18P" parent="yealinkModel">
+	<!-- <property name="beanId" value="yealinkPhone" /> -->
 	<property name="label" value="Yealink SIP-T18(P)" />
 	<property name="name" value="T18" />
 	<property name="maxLineCount" value="2" />
@@ -70,7 +70,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT19P" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT19P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T19(P)" />
 	<property name="name" value="T19" />
 	<property name="maxLineCount" value="1" />
@@ -80,7 +80,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT20P" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT20P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T20(P)" />
 	<property name="name" value="T20" />
 	<property name="maxLineCount" value="2" />
@@ -97,7 +97,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT22P" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT22P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T22(P)" />
 	<property name="name" value="T22" />
 	<property name="maxLineCount" value="3" />
@@ -114,7 +114,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT23P" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT23P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T23(P)" />
 	<property name="name" value="T23" />
 	<property name="maxLineCount" value="3" />
@@ -131,7 +131,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT26P" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT26P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T26(P)" />
 	<property name="name" value="T26" />
 	<property name="maxLineCount" value="3" />
@@ -150,7 +150,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT27P" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT27P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T27(P/G)" />
 	<property name="name" value="T27" />
 	<property name="maxLineCount" value="21" />
@@ -169,7 +169,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT28P" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT28P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T28(P)" />
 	<property name="name" value="T28" />
 	<property name="maxLineCount" value="6" />
@@ -188,7 +188,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT29G" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT29G" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T29(G)" />
 	<property name="name" value="T29" />
 	<property name="maxLineCount" value="10" />
@@ -207,7 +207,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT32G" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT32G" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T32(G)" />
 	<property name="name" value="T32" />
 	<property name="maxLineCount" value="3" />
@@ -227,7 +227,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT38G" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT38G" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T38(G)" />
 	<property name="name" value="T38" />
 	<property name="maxLineCount" value="6" />
@@ -248,7 +248,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkVP530" parent="yealinkModel">
+<bean id="yealinkPhoneVP530" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-VP530" />
 	<property name="name" value="VP530" />
 	<property name="maxLineCount" value="4" />
@@ -267,7 +267,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT41P" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT41P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T41(P)" />
 	<property name="name" value="T41" />
 	<property name="maxLineCount" value="3" />
@@ -284,7 +284,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT42G" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT42G" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T42(G)" />
 	<property name="name" value="T42" />
 	<property name="maxLineCount" value="12" />
@@ -301,7 +301,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT46G" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT46G" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T46(G)" />
 	<property name="name" value="T46" />
 	<property name="maxLineCount" value="6" />
@@ -322,7 +322,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkSIPT48G" parent="yealinkModel">
+<bean id="yealinkPhoneSIPT48G" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T48(G)" />
 	<property name="name" value="T48" />
 	<property name="maxLineCount" value="6" />
@@ -343,7 +343,7 @@
 	</property>
 </bean>
 
-<bean id="yealinkW52" parent="yealinkModel">
+<bean id="yealinkPhoneW52" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-W52(P)" />
 	<property name="name" value="W52" />
 	<property name="maxLineCount" value="5" />
