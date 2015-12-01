@@ -38,9 +38,9 @@
 	<property name="defaultVersion">
 	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_70"/>
 	</property>
-	<property name="profileTemplate" value="yealinkPhone/config_v6x_titan.vm" />
-	<property name="xmlProfileTemplate" value="yealinkPhone/config_v7x.prov.xml.vm"/>
-	<property name="directoryProfileTemplate" value="yealinkPhone/directory.xml.vm" />
+	<property name="profileTemplate" value="yealink/config_v6x_titan.vm" />
+	<property name="xmlProfileTemplate" value="yealink/config_v7x.prov.xml.vm"/>
+	<property name="directoryProfileTemplate" value="yealink/directory.xml.vm" />
     	<property name="parentDir" value="${sysdir.phone}/profile/tftproot"/>
 </bean>
 
