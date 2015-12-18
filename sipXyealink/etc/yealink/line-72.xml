@@ -31,7 +31,7 @@
 	<!-- Specify the server port, the default value is 5060.-->
 	<setting name="outbound_port"><type><integer/></type><value>0</value></setting>
 	<!-- Configure the transport type; 0-UDP (default), 1-TCP, 2-TLS, 3-DNS SRV;-->
-	<setting name="transport"><type refid="SIPTransport_type"/><value>1</value></setting>
+	<setting name="transport"><type refid="SIPTransport_type"/><value>0</value></setting>
 	<!-- Configure the address of the backup outbound proxy server.-->
 	<setting name="backup_outbound_host"><type><string/></type></setting>
 	<!-- Specify the port, the default value is 5060.-->
@@ -71,7 +71,7 @@
 	<!-- Configure the register expiry time (in seconds), the default value is 3600.-->
 	<setting name="expires"><type><integer/></type><value>3600</value></setting>
 	<!-- Configure the SIP port for account 1, the default value is 5060. -->
-	<!-- <setting name="sip_listen_port"><type><integer/></type></setting> -->
+	<setting name="sip_listen_port"><type><integer/></type><value>5060</value></setting>
 	<!-- Enable or disable the NAT Rport; 0-Disabled (default), 1-Enabled;-->
 	<setting name="nat.rport"><type><boolean/></type><value>0</value></setting>
 	<!-- Configure the session timer (in seconds), the default values of T1, T2, T3 are 0.5, 4, 5.-->

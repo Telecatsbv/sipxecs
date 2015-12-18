@@ -189,7 +189,6 @@ account.${lastLineID}.${setting.ProfileName} =
 #end
 #end
 #end
-account.${lastLineID}.sip_listen_port = 0
 #end
 
 #set ($lastLineID = $lastLineID + 1)
