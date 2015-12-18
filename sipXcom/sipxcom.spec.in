@@ -92,31 +92,31 @@ Requires: freeswitch-xml-cdr
 Requires: freeswitch-xml-curl
 Requires: sipxaastra >= %version
 Requires: sipxacccode >= %version
-Requires: sipxaudiocodes >= %version
+#Requires: sipxaudiocodes >= %version
 Requires: sipxbridge >= %version
 Requires: sipxcallcontroller >= %version
 Requires: sipxcallback >= %version
 Requires: sipxcdr >= %version
 Requires: sipxcdrlog >= %version
-Requires: sipxcisco >= %version
-Requires: sipxclearone >= %version
+#Requires: sipxcisco >= %version
+#Requires: sipxclearone >= %version
 Requires: sipxconfig >= %version
 Requires: sipxconfig-ftp >= %version
 Requires: sipxconfig-tftp >= %version
 Requires: sipxcounterpath >= %version
-Requires: sipxgrandstream >= %version
-Requires: sipxgtek >= %version
-Requires: sipxhitachi >= %version
+#Requires: sipxgrandstream >= %version
+#Requires: sipxgtek >= %version
+#Requires: sipxhitachi >= %version
 Requires: sipxhomer >= %version
 Requires: sipxhomer-config >= %version
 Requires: sipxhomer-proxyplugin >= %version
 Requires: sipximbot >= %version
-Requires: sipxipdialog >= %version
-Requires: sipxisphone >= %version
+#Requires: sipxipdialog >= %version
+#Requires: sipxisphone >= %version
 Requires: sipxivr >= %version
-Requires: sipxlg-nortel >= %version
-Requires: sipxmitel >= %version
-Requires: sipxnortel >= %version
+#Requires: sipxlg-nortel >= %version
+#Requires: sipxmitel >= %version
+#Requires: sipxnortel >= %version
 Requires: sipxopenfire >= %version
 Requires: sipxpage >= %version
 Requires: sipxpolycom >= %version
@@ -131,10 +131,10 @@ Requires: sipxrelay >= %version
 Requires: sipxrest >= %version
 Requires: sipxrls >= %version
 Requires: sipxsaa >= %version
-Requires: sipxsnom >= %version
+#Requires: sipxsnom >= %version
 Requires: sipxsupervisor >= %version
 Requires: sipxsqa-server >= %version
-Requires: sipxunidata >= %version
+#Requires: sipxunidata >= %version
 Requires: sipxcallqueue
 
 Obsoletes: %{name}-doc

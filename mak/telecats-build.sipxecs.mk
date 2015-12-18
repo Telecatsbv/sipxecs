@@ -1,11 +1,7 @@
 telecats_build = \
-  sipXacccode \
-  sipXimbot \
-  sipXrest \
-  sipXcallController \
-  sipXcdrLog \
-  sipXevent \
-  sipXrecording \
-  sipXcisco \
-  sipXcallQueue \
+  $(sipx_core) \
+  $(sipx_extra) \
+  sipXprovision \
+  sipXaastra \
+  sipXyealink \
   $(telecats-sipXaddons)

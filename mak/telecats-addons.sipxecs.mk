@@ -1,8 +1,6 @@
 telecats-sipXaddons= \
   sipXhotprovisioning \
   sipXhotdesking \
-  sipXaastra \
-  sipXyealink \
   sipXrandomGroupDial \
   sipXlang-nl_telecats \
   sipXchefsec \

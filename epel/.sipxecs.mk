@@ -16,7 +16,7 @@ epel.dist epel.srpm:;
 epel.rpm :
 	rsync -av \
 	  $(EXCLUDE_ARCH) \
-	  $(addprefix $(CENTOS_RSYNC_URL)/fedora-epel/6/$(DISTRO_ARCH)/,$(RUNTIME_EPEL) $(BUILD_EPEL)) \
+	  $(addprefix rsync://download.sipxcom.org/pub/epel/6/$(DISTRO_ARCH)/,$(RUNTIME_EPEL) $(BUILD_EPEL)) \
 	  $(MOCK_RESULTS_DIR)/
 	mock $(MOCK_OPTS) --scrub=cache
 	$(MAKE) repo-dedup
