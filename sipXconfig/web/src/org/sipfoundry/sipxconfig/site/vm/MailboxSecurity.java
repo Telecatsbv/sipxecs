@@ -40,13 +40,31 @@ public abstract class MailboxSecurity extends BaseComponent {
 
     public abstract void setForcePinChange(boolean forcePinChange);
 
+    public abstract boolean isAutoEnterPinExtension();
+
+    public abstract void setAutoEnterPinExtension(boolean autoEnterPinExtension);
+
+    public abstract boolean isAutoEnterPinExternal();
+
+    public abstract void setAutoEnterPinExternal(boolean autoEnterPinExternal);
+
+    public abstract int getDaysToKeepVM();
+
+    public abstract void setDaysToKeepVM(int daysToKeepVM);
+
     @Override
     protected void renderComponent(IMarkupWriter writer, IRequestCycle cycle) {
 
         setForcePinChange(getUser().isForcePinChange());
+        setAutoEnterPinExtension(getUser().isAutoEnterPinExtension());
+        setAutoEnterPinExternal(getUser().isAutoEnterPinExternal());
+        setDaysToKeepVM(getUser().getDaysToKeepVM());
         super.renderComponent(writer, cycle);
         if (TapestryUtils.isRewinding(cycle, this)) {
             getUser().setForcePinChange(isForcePinChange());
+            getUser().setAutoEnterPinExtension(isAutoEnterPinExtension());
+            getUser().setAutoEnterPinExternal(isAutoEnterPinExternal());
+            getUser().setDaysToKeepVM(getDaysToKeepVM());
         }
     }
 }

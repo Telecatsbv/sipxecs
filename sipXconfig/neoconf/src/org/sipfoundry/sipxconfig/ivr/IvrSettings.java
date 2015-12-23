@@ -35,6 +35,8 @@ public class IvrSettings extends PersistableSettings implements DeployConfigOnEd
     public static final String IVR_BACKUP_HOST = "ivr/ivr.backup_host";
     private static final String HTTP_PORT = "ivr/ivr.httpPort";
     private static final String AUDIO_FORMAT = "ivr/audio.format";
+    private static final String IVR_AUTO_ENTER_PIN_EXTERNAL_DIGITS = "ivr/security.autoEnterPinExternalDigits";
+    private static final String CLEANUP_VOICEMAIL_HOUR = "ivr/security.cleanupVoicemailHour";
     private FeatureManager m_featureManager;
 
     @Override
@@ -63,6 +65,14 @@ public class IvrSettings extends PersistableSettings implements DeployConfigOnEd
 
     public String getBackupHost() {
         return getSettingValue(IVR_BACKUP_HOST);
+    }
+
+    public String getAutoEnterPinExternalDigits() {
+        return getSettingValue(IVR_AUTO_ENTER_PIN_EXTERNAL_DIGITS);
+    }
+
+    public String getCleanupVoicemailHour() {
+        return getSettingValue(CLEANUP_VOICEMAIL_HOUR);
     }
 
     @Override

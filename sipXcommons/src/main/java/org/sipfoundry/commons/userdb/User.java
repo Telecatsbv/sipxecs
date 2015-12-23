@@ -86,6 +86,9 @@ public class User {
     private boolean m_admin;
     private boolean m_hotelingEnabled;
     private boolean m_forcePinChange;
+    private boolean m_autoEnterPinExtension;
+    private boolean m_autoEnterPinExternal;
+    private int m_daysToKeepVM;
     private String m_vmLanguage;
     private Vector<String> m_callbackUsers;
 
@@ -736,6 +739,30 @@ public class User {
 
     public void setForcePinChange(String value) {
        m_forcePinChange = value.equals("1") || value.equals("true");
+    }
+
+    public boolean isAutoEnterPinExtension() {
+        return m_autoEnterPinExtension;
+    }
+
+    public void setAutoEnterPinExtension(String value) {
+        m_autoEnterPinExtension = value.equals("1") || value.equals("true");
+    }
+
+    public boolean isAutoEnterPinExternal() {
+        return m_autoEnterPinExternal;
+    }
+
+    public void setAutoEnterPinExternal(String value) {
+        m_autoEnterPinExternal = value.equals("1") || value.equals("true");
+    }
+
+    public int getDaysToKeepVM() {
+        return m_daysToKeepVM;
+    }
+
+    public void setDaysToKeepVM(int value) {
+        m_daysToKeepVM = value;
     }
 
     public String getSipPassword() {

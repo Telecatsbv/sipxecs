@@ -30,7 +30,6 @@ import static org.sipfoundry.commons.mongo.MongoConstants.AVATAR;
 import static org.sipfoundry.commons.mongo.MongoConstants.BUTTONS;
 import static org.sipfoundry.commons.mongo.MongoConstants.CALL_FROM_ANY_IM;
 import static org.sipfoundry.commons.mongo.MongoConstants.CALL_IM;
-import static org.sipfoundry.commons.mongo.MongoConstants.CALLBACK_LIST;
 import static org.sipfoundry.commons.mongo.MongoConstants.CELL_PHONE_NUMBER;
 import static org.sipfoundry.commons.mongo.MongoConstants.COMPANY_NAME;
 import static org.sipfoundry.commons.mongo.MongoConstants.CONF_ENTRY_IM;
@@ -49,6 +48,9 @@ import static org.sipfoundry.commons.mongo.MongoConstants.ENTITY_NAME;
 import static org.sipfoundry.commons.mongo.MongoConstants.FAX_NUMBER;
 import static org.sipfoundry.commons.mongo.MongoConstants.FORWARD_DELETE_VOICEMAIL;
 import static org.sipfoundry.commons.mongo.MongoConstants.FORCE_PIN_CHANGE;
+import static org.sipfoundry.commons.mongo.MongoConstants.AUTO_ENTER_PIN_EXTENSION;
+import static org.sipfoundry.commons.mongo.MongoConstants.AUTO_ENTER_PIN_EXTERNAL;
+import static org.sipfoundry.commons.mongo.MongoConstants.DAYS_TO_KEEP_VM;
 import static org.sipfoundry.commons.mongo.MongoConstants.GROUPS;
 import static org.sipfoundry.commons.mongo.MongoConstants.HASHED_PASSTOKEN;
 import static org.sipfoundry.commons.mongo.MongoConstants.HOME_CITY;
@@ -304,6 +306,40 @@ public class ValidUsers {
             }
         }
         return extractValidUser(aliasResult);
+    }
+
+    /**
+     * Retrieve a specific user based on their Cell Phone or Home Phone (as defined on user's contact information)
+     * which has the Auto Enter Pin from External Number permission set to true. <br>
+     * If the method finds more than 1 user who share the same external number it will return null;
+     */
+    public User getUserWithAutoEnterPinByExternalNumber(String externalNumber, int matchLastDigits) {
+        if (externalNumber == null) {
+            return null;
+        }
+        QueryBuilder query = QueryBuilder.start(VALID_USER).is(Boolean.TRUE);
+        externalNumber = getExternalNumberLastDigits(externalNumber, matchLastDigits);
+        Pattern cellPattern = Pattern.compile(".*" + externalNumber);
+        BasicDBObject cell = new BasicDBObject(CELL_PHONE_NUMBER, cellPattern);
+        BasicDBObject home = new BasicDBObject(HOME_PHONE_NUMBER, cellPattern);
+        query.or(cell, home);
+        query.and(AUTO_ENTER_PIN_EXTERNAL).is("1");
+        DBObject queryUserName = query.get();
+        DBCursor result = getEntityCollection().find(queryUserName);
+        if (result != null && result.size() == 1) {
+            return extractValidUser(result.one());
+        }
+        return null;
+    }
+
+    private String getExternalNumberLastDigits(String externalNumber, int matchLastDigits) {
+        String externalNumberToMatch;
+        if (matchLastDigits == 0 || externalNumber == null || externalNumber.length() < matchLastDigits) {
+            externalNumberToMatch = externalNumber;
+        } else {
+            externalNumberToMatch = externalNumber.substring(externalNumber.length() - matchLastDigits);
+        }
+        return externalNumberToMatch;
     }
 
     public User getUserByConferenceName(String conferenceName) {
@@ -727,8 +763,24 @@ public class ValidUsers {
         }
         user.setAltAttachAudioToEmail(Boolean.valueOf(getStringValue(obj, ALT_ATTACH_AUDIO)));
 
-        if (getStringValue(obj, FORCE_PIN_CHANGE) != null) {
-            user.setForcePinChange(getStringValue(obj, FORCE_PIN_CHANGE));
+        String forcePinChange = getStringValue(obj, FORCE_PIN_CHANGE);
+        if (forcePinChange != null) {
+            user.setForcePinChange(forcePinChange);
+        }
+
+        String autoEnterPinExtension = getStringValue(obj, AUTO_ENTER_PIN_EXTENSION);
+        if (autoEnterPinExtension != null) {
+            user.setAutoEnterPinExtension(autoEnterPinExtension);
+        }
+
+        String autoEnterPinExternal = getStringValue(obj, AUTO_ENTER_PIN_EXTERNAL);
+        if (autoEnterPinExternal != null) {
+            user.setAutoEnterPinExternal(autoEnterPinExternal);
+        }
+
+        Integer daysToKeepVM = getIntegerValue(obj, DAYS_TO_KEEP_VM);
+        if (daysToKeepVM != null) {
+            user.setDaysToKeepVM(daysToKeepVM);
         }
 
         BasicDBList aliasesObj = (BasicDBList) obj.get(ALIASES);
@@ -857,6 +909,15 @@ public class ValidUsers {
         if (obj.keySet().contains(key)) {
             if (obj.get(key) != null) {
                 return obj.get(key).toString();
+            }
+        }
+        return null;
+    }
+
+    public static Integer getIntegerValue(DBObject obj, String key) {
+        if (obj.keySet().contains(key)) {
+            if (obj.get(key) != null) {
+                return Integer.parseInt(obj.get(key).toString());
             }
         }
         return null;

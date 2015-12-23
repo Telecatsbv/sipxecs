@@ -105,6 +105,14 @@ public class IvrImpl implements FeatureProvider, AddressProvider, Ivr, ProcessPr
         return getSettings().getBackupHost();
     }
 
+    public String getAutoEnterPinExternalDigits() {
+        return getSettings().getAutoEnterPinExternalDigits();
+    }
+
+    public String getCleanupVoicemailHour() {
+        return getSettings().getCleanupVoicemailHour();
+    }
+
     public CallPilotSettings getCallPilotSettings() {
         return m_pilotSettingsDao.findOrCreateOne();
     }

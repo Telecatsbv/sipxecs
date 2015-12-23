@@ -491,8 +491,11 @@
   	<antcall target="add_location_location" />
     <antcall target="remove_chat_meeting_setting" />
   	<antcall target="system_audit_remove" />
+  	<antcall target="openacd_autologout_agent_group" />
+  	<antcall target="openacd_block_transfer_queue" />
   	<antcall target="add_location_location_inbound" />
   	<antcall target="add_fallback_branch" />
+    <antcall target="openacd-permission-update5" />
   </target>
 
   <target name="plugin-patches">
@@ -1514,12 +1517,24 @@
   <target name="system_audit_remove" unless="system_audit_remove">
     <db-patch patch="system_audit_remove"/>
   </target>
+  <target name="openacd_autologout_agent_group" unless="openacd_autologout_agent_group">
+    <db-patch patch="openacd_autologout_agent_group"/>
+  </target>
+  <target name="openacd_block_transfer_queue" unless="openacd_block_transfer_queue">
+    <db-patch patch="openacd_block_transfer_queue"/>
+  </target>
   <target name="add_location_location_inbound" unless="add_location_location_inbound">
 	<db-patch patch="add_location_location_inbound"/>
   </target>
   <target name="add_fallback_branch" unless="add_fallback_branch">
     <db-patch patch="add_fallback_branch"/>
-  </target>	
+  </target>
+  <target name="openacd-permission-update5" unless="openacd-permission-update5">
+    <db-patch patch="openacd-permission-update5"/>
+  </target>
+  <target name="add_tmpdir_to_backup" unless="add_tmpdir_to_backup">
+    <db-patch patch="add_tmpdir_to_backup"/>
+  </target>
 
 	<!--
     - SUPPORT UTILITIES
