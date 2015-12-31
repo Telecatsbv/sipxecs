@@ -10,7 +10,9 @@
 package org.sipfoundry.sipxconfig.setting;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -21,6 +23,7 @@ import java.util.regex.Pattern;
 public class SettingArray extends AbstractSetting {
     private static final Pattern INDEX_RE = Pattern.compile("(.+)\\[(\\d+)\\]");
 
+    private Map<Integer, String>  m_labels = new HashMap<Integer, String>();
     private SettingMap[] m_elements;
 
     public SettingArray() {
@@ -128,5 +131,17 @@ public class SettingArray extends AbstractSetting {
         for (EquivalentSettingMapWrapper wrapper : uniqueSettingMaps) {
             m_elements[index++] = wrapper.getMap();
         }
+    }
+    
+    public void setLabel(int index, String label) {
+    	this.m_labels.put(index,  label);
+    }
+    
+    public String getLabel(int index) {
+    	return m_labels.get(index);
+    }
+    
+    public boolean hasLabels() {
+    	return m_labels.size() != 0;
     }
 }

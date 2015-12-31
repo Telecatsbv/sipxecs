@@ -23,7 +23,6 @@ import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-
 import org.apache.log4j.Logger;
 import org.sipfoundry.commons.userdb.User;
 import org.sipfoundry.commons.userdb.User.EmailFormats;
@@ -35,6 +34,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.sipfoundry.sipxivr.SipxIvrConfiguration;
 
 public class Emailer implements ApplicationContextAware {
     private static final Logger LOG = Logger.getLogger("org.sipfoundry.sipxivr");
@@ -42,6 +42,7 @@ public class Emailer implements ApplicationContextAware {
     private Session m_session;
     private ApplicationContext m_context;
     private String m_audioFormat;
+    private SipxIvrConfiguration m_ivrConfig;
     private MailboxManager m_mailboxManager;
 
     public void init() {
@@ -49,8 +50,16 @@ public class Emailer implements ApplicationContextAware {
         // Setup mail server
         Properties props = System.getProperties();
         props.put("mail.smtp.host", "localhost");
-        props.put("mail.smtp.user", "postmaster"); // TODO get from ivrConfig
+        if( m_ivrConfig.isForceHost() ) {
+            props.put( "mail.smtp.user", m_ivrConfig.getForcedHost() );
+        } else {
+            props.put("mail.smtp.user", "postmaster"); // TODO get from ivrConfig
+        }
         m_session = Session.getDefaultInstance(props, null);
+    }
+
+    public void setIvrConfig(SipxIvrConfiguration config) {
+        m_ivrConfig = config;
     }
 
     /**

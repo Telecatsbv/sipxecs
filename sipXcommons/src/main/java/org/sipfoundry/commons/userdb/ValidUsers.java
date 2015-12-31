@@ -152,6 +152,7 @@ public class ValidUsers {
     private static final String ENTITY_NAME_USER = "user";
     private static final String ENTITY_NAME_GROUP = "group";
     private static final String ENTITY_NAME_IMBOTSETTINGS = "imbotsettings";
+    private static final String IMDB_PERM_OPERATOR_IN_IVR = "operator-in-ivr";
 
     private DB m_imdb;
 
@@ -731,6 +732,7 @@ public class ValidUsers {
             user.setHasVoicemail(permissions.contains(IMDB_PERM_VOICEMAIL));
             user.setCanRecordPrompts(permissions.contains(IMDB_PERM_RECPROMPTS));
             user.setCanTuiChangePin(permissions.contains(IMDB_PERM_TUICHANGEPIN));
+            user.setOperatorInIvr(permissions.contains(IMDB_PERM_OPERATOR_IN_IVR));
             user.setAdmin(permissions.contains(IMDB_PERM_ADMIN));
         }
 

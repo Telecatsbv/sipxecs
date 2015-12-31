@@ -19,7 +19,13 @@ package org.sipfoundry.sipxconfig.phone.yealink;
 
 import static java.lang.String.format;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import org.apache.commons.io.FileUtils;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,10 +34,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sipfoundry.provisioning.hot.HotProvisioningManager;
+import org.sipfoundry.provisioning.hot.HotProvisionable;
 import org.sipfoundry.sipxconfig.address.Address;
 import org.sipfoundry.sipxconfig.address.AddressManager;
 import org.sipfoundry.sipxconfig.bulk.ldap.LdapManager;
@@ -47,6 +59,7 @@ import org.sipfoundry.sipxconfig.phone.Line;
 import org.sipfoundry.sipxconfig.phone.LineInfo;
 import org.sipfoundry.sipxconfig.phone.Phone;
 import org.sipfoundry.sipxconfig.phone.PhoneModel;
+import org.sipfoundry.sipxconfig.phone.yealink.yealinkXmlConfiguration;
 import org.sipfoundry.sipxconfig.phonebook.Phonebook;
 import org.sipfoundry.sipxconfig.phonebook.PhonebookEntry;
 import org.sipfoundry.sipxconfig.phonebook.PhonebookManager;
@@ -71,13 +84,14 @@ import org.sipfoundry.sipxconfig.upload.yealink.YealinkUpload;
 /**
  * Yealink abstract phone.
  */
-public class YealinkPhone extends Phone {
+public class YealinkPhone extends Phone implements HotProvisionable{
     public static final String BEAN_ID = "yealink";
     private static final Log LOG = LogFactory.getLog(YealinkPhone.class);
-    private static final String SIPT46_PATTERN = "yealinkPhoneSIPT4[6-8].*";
-    private static final String SIPT412_PATTERN = "yealinkPhoneSIPT4[12].*";
-    private static final String SIPT4_PATTERN = "yealinkPhoneSIPT4.*";
-    private static final String SIPT13_PATTERN = "yealinkPhoneSIPT[1-3].*";
+    private static final String SIPT46_PATTERN = "yealink[6-8].*";
+    private static final String SIPT412_PATTERN = "yealink[12].*";
+    private static final String SIPT2327_PATTERN = "yealink[23-27].*";
+    private static final String SIPT4_PATTERN = "yealink.*";
+    private static final String SIPT13_PATTERN = "yealink[1-3].*";
     private static final String ENUM = "enum";
     private static final String TYPE = "type";
     private static final String ZERO = "0";
@@ -129,14 +143,32 @@ public class YealinkPhone extends Phone {
     public void setDeviceVersion(DeviceVersion version) {
         super.setDeviceVersion(version);
         DeviceVersion myVersion = getDeviceVersion();
-        if (myVersion == YealinkModel.VER_7X) {
-            getModel().setProfileTemplate("yealink/config_v7x.vm");
-            getModel().setSettingsFile("phone-7X.xml");
-            getModel().setLineSettingsFile("line-7X.xml");
-        } else {
-            // we need to explicitly define these here otherwise changing versions will not work
-            getModel().setSettingsFile("phone-6X.xml");
-            getModel().setLineSettingsFile("line-6X.xml");
+        YealinkModel model = (YealinkModel) getModel();
+
+  	if (myVersion == YealinkModel.VER_6X) {
+		model.setProfileTemplate(BEAN_ID + "/config_v6x.vm");
+        	model.setSettingsFile("phone-6X.xml");
+        	model.setLineSettingsFile("line-6X.xml");
+        } else if (myVersion == YealinkModel.VER_70) {
+            model.setProfileTemplate(BEAN_ID + "/config_v70.vm");
+            model.setSettingsFile("phone-70.xml");
+            model.setLineSettingsFile("line-70.xml");
+            model.setXmlProfileTemplate(BEAN_ID + "/config_v70.prov.xml.vm");
+	} else if (myVersion == YealinkModel.VER_72) {
+            model.setProfileTemplate(BEAN_ID + "/config_v72.vm");
+            model.setSettingsFile("phone-72.xml");
+            model.setLineSettingsFile("line-72.xml");
+            model.setXmlProfileTemplate(BEAN_ID + "/config_v72.prov.xml.vm");
+	} else if (myVersion == YealinkModel.VER_73) {
+            model.setProfileTemplate(BEAN_ID + "/config_v73.vm");
+            model.setSettingsFile("phone-73.xml");
+            model.setLineSettingsFile("line-73.xml");
+            model.setXmlProfileTemplate(BEAN_ID + "/config_v73.prov.xml.vm");
+        } else if (myVersion == YealinkModel.VER_80) {
+        	model.setProfileTemplate(BEAN_ID + "/config_v80.vm");
+        	model.setSettingsFile("phone-80.xml");
+        	model.setLineSettingsFile("line-80.xml");
+            model.setXmlProfileTemplate(BEAN_ID + "/config_v80.prov.xml.vm");
         }
     }
 
@@ -169,12 +201,19 @@ public class YealinkPhone extends Phone {
     }
 
     public String getTftpServer() {
+      try {
         Address serverAddress = m_addressManager.getSingleAddress(FtpManager.TFTP_ADDRESS);
+
         if (null != serverAddress) {
             return String.format("tftp://%s/", serverAddress.getAddress());
         } else {
             return "";
         }
+      }catch(NullPointerException e) {
+        LOG.error("YealinkPhone getTftpServer(): Caught NullPointerException: "+ e);
+        return "";
+      }
+
     }
 
     public int getMaxLineCount() {
@@ -218,7 +257,10 @@ public class YealinkPhone extends Phone {
 
     // DSS keys routines
     private boolean isDSSLineKey(Integer i) {
-        if (getModel().getModelId().matches(SIPT46_PATTERN)) {
+        LOG.error("isDSSLineKey: i: "+ i +", ModelId:"+ getModel().getModelId());
+        if (getModel().getModelId().matches(SIPT2327_PATTERN) && i > 1) {
+            return false;
+        }else if (getModel().getModelId().matches(SIPT46_PATTERN)) {
             return (i > 4) && (i < 4 + 1 + getModel().getMaxLineCount());
         } else if (getModel().getModelId().matches(SIPT412_PATTERN)) {
             return (i > 2) && (i < 2 + 1 + getModel().getMaxLineCount());
@@ -355,9 +397,18 @@ public class YealinkPhone extends Phone {
 
     @Override
     public void initialize() {
-        addDefaultBeanSettingHandler(new YealinkPhoneDefaults(getPhoneContext().getPhoneDefaults(), this));
-        addDefaultSettingHandler(new DynamicDefaults(getPhoneContext().getSpeedDial(this)));
+
+      YealinkModel model = (YealinkModel) getModel();
+      if( null != model ) {
+          String parentDir=model.getParentDir();
+          YealinkUpload yealinkupload = new YealinkUpload();
+	  yealinkupload.setParentDir(parentDir);
+          yealinkupload.yealinkDefaultFiles();
+      }
+      addDefaultBeanSettingHandler(new YealinkPhoneDefaults(getPhoneContext().getPhoneDefaults(), this));
+      addDefaultSettingHandler(new DynamicDefaults(getPhoneContext().getSpeedDial(this)));
     }
+
 
     @Override
     public void initializeLine(Line line) {
@@ -413,6 +464,11 @@ public class YealinkPhone extends Phone {
                 }
             }
         }
+
+		final XmlProvisionProfile xmlProvProfile = new XmlProvisionProfile(
+				getHotProvisionFilename());
+		profileTypes = (Profile[]) ArrayUtils.add(profileTypes, xmlProvProfile);
+
         return profileTypes;
     }
 
@@ -431,7 +487,7 @@ public class YealinkPhone extends Phone {
 
     @Override
     public void restart() {
-        sendCheckSyncToFirstLine();
+    	sendCheckSyncToMac();
     }
 
     public SpeedDial getSpeedDial() {
@@ -535,6 +591,7 @@ public class YealinkPhone extends Phone {
         protected ProfileContext createContext(Device device) {
             YealinkPhone phone = (YealinkPhone) device;
             YealinkModel model = (YealinkModel) phone.getModel();
+
             return new YealinkDeviceConfiguration(phone, model.getProfileTemplate());
         }
     }
@@ -572,6 +629,28 @@ public class YealinkPhone extends Phone {
             return m_model.matches(expression);
         }
     }
+
+	static class XmlProvisionProfile extends Profile {
+		private static final String APPLICATION_XML = "application/xml";
+
+		public XmlProvisionProfile(String name) {
+			super(name, APPLICATION_XML);
+		}
+
+		@Override
+		protected ProfileFilter createFilter(Device device) {
+			return null;
+		}
+
+		@Override
+		protected ProfileContext createContext(Device device) {
+			YealinkPhone phone = (YealinkPhone) device;
+			YealinkModel model = (YealinkModel) phone.getModel();
+
+			return new yealinkXmlConfiguration(phone, model.getXmlProfileTemplate());
+		}
+	}
+
 
     // Private settings related classes
 
@@ -759,11 +838,13 @@ public class YealinkPhone extends Phone {
         private Integer getLineKeyType(Integer i) {
             Integer result = 0;
             Integer bLFIndex = m_bLF.get(i);
-            if (isLineKey(i)) {
-                return 15;
-            } else if (null != bLFIndex) {
+            if (null != bLFIndex) {
                 Button sdButton = m_sdButtons.get(bLFIndex);
                 result = sdButton.isBlf() ? 16 : 13;
+            }else if (isLineKey(i) && i > 0) {
+                return 99;
+            }else{
+                return 15;
             }
             return result;
         }
@@ -869,4 +950,143 @@ public class YealinkPhone extends Phone {
             return null;
         }
     }
+
+	@Override
+	public void performHotProvisioning(HashMap<String, String> hotProvProps) {
+		String sipContactHost = hotProvProps.get("sipContactHost");
+
+		YealinkModel model = (YealinkModel) getModel();
+		String configFilePath = model.getParentDir() + "/"
+				+ getHotProvisionFilename();
+		LOG.debug("yealink: configFilePath:" + configFilePath);
+
+		// check prov file is up-2-date, or wait for it to be updated
+		long outdatedThreadhold = 5 * 60 * 1000; // 5min
+		long waitPeriod = 1000; // 1sec
+		int maxRetry = 15; // 15 x 1sec = maxWait 15sec
+
+		// perform up-2-date check
+		File provXmlFile = new File(configFilePath);
+		long age = (System.currentTimeMillis() - provXmlFile.lastModified());
+		int retryAttempt = 1;
+		while (age > outdatedThreadhold && retryAttempt < maxRetry) {
+			LOG.debug("yealink: hotProvXmlFile outdated (older then:"
+					+ outdatedThreadhold
+					+ ", wait:'"
+					+ waitPeriod
+					+ "'ms for new file to become available and retry. Attempt:"
+					+ retryAttempt);
+			retryAttempt++;
+			synchronized (this) {
+				try {
+					wait(waitPeriod);
+				} catch (InterruptedException ie) {
+					// ignore
+				}
+			}
+			age = (System.currentTimeMillis() - provXmlFile.lastModified());
+		}
+
+		if (age > outdatedThreadhold) {
+			LOG.warn("yealink: hotProvXmlFile outdated, older then:"
+					+ outdatedThreadhold + ", age is:" + age + ",file:"
+					+ configFilePath);
+		}
+
+		LOG.debug("yealink: hotProvXmlFile age:" + age);
+		pushXmlToPhone(sipContactHost, configFilePath);
+	}
+
+	private String getHotProvisionFilename() {
+		return getSerialNumber().toUpperCase() + ".prov.xml";
+	}
+
+	public void pushXmlToPhone(String sipContactHost, String configFilePath) {
+		LOG.info("yealink: pushXmlToPhone, sipContactHost:" + sipContactHost);
+		LOG.debug("yealink: configFilePath:" + configFilePath);
+
+		// read config from file
+		File configFile = new File(configFilePath);
+		LOG.debug("yealink: configFile: " + configFile.exists());
+		StringBuffer configData = new StringBuffer();
+		try {
+			BufferedReader br = new BufferedReader(new FileReader(
+					configFilePath));
+			String line = br.readLine();
+			while (line != null) {
+				configData.append(line);
+				line = br.readLine();
+			}
+		} catch (IOException e1) {
+			LOG.error("yealink: Error reading hotProvision config file:"
+					+ configFilePath + "," + e1.getMessage(), e1);
+			return;
+		}
+
+		// send config to phone
+		PostMethod postMethod = new PostMethod("http://" + sipContactHost
+				+ ":80");
+		postMethod.setRequestHeader("Host", sipContactHost);
+		postMethod.setRequestHeader("Connection", "Keep-Alive");
+		postMethod.setRequestHeader("Content-Type:", "text/xml");
+		try {
+			String hostAddress = InetAddress.getLocalHost().getHostAddress();
+			LOG.debug("yealink: hostAddresss:" + hostAddress);
+			postMethod.setRequestHeader("Referer", hostAddress);
+		} catch (UnknownHostException e1) {
+			LOG.error(
+					"yealink: Error detecting hostAddress:" + e1.getMessage(),
+					e1);
+			e1.printStackTrace();
+		}
+
+		LOG.debug("yealink: configData:");
+		LOG.debug("yealink: --------------------");
+		LOG.debug(configData.toString());
+		LOG.debug("yealink: --------------------");
+
+		StringRequestEntity body = new StringRequestEntity(
+				configData.toString());
+
+		postMethod.setRequestEntity(body);
+		HttpClient httpClient = new HttpClient();
+
+		// sometimes we get (ioexception):Connection reset when phone is busy
+		// so retry on error
+		int retry = 0;
+		int maxRetry = 10;
+		boolean success = false;
+
+		while (retry++ <= maxRetry && !success) {
+			try {
+				LOG.debug("yealink: Sending xml (attempt " + retry + ")...");
+				httpClient.executeMethod(postMethod);
+				success = true;
+				LOG.info("yealink: Sending xml (attemt " + retry + ")... success");
+			} catch (HttpException e) {
+				LOG.error(
+						"yealink: Error performing hotprovisioning (httpexception) ("
+								+ retry + "):" + e.getMessage(), e);
+			} catch (IOException e) {
+				LOG.error(
+						"yealink: Error performing hotprovisioning (ioexception) ("
+								+ retry + "):" + e.getMessage(), e);
+			}
+
+			if (!success) {
+				try {
+					if (retry < maxRetry) {
+						LOG.warn("Couldn't send xml to phone. Retrying, attempt:"
+								+ retry);
+					} else {
+						LOG.warn("Couldn't send xml to phone, attempt:" + retry);
+					}
+					// wait before retry
+					Thread.sleep(1000);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				}
+			}
+		}
+	}
 }

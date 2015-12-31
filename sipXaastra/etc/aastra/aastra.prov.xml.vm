@@ -1,0 +1,140 @@
+#macro(Add_button $b)
+#set ( $buttongroups = $b.split(",") )
+#set ($count = 0)
+#foreach ($bg in $buttongroups)
+#foreach ($group in $phone.Settings.Values)
+#if ($group.Name == $bg)
+#if ($bg.substring(0,6) == "expmod")
+#foreach ($sett in $group.Values)
+#if ($sett.Name == "type")
+#if ($sett.Value == "none")
+#set ($max = 0)
+#elseif ($sett.Value == "M670i")
+#set ($max = 36)
+#elseif ($sett.Value == "M675i")
+#set ($max = 60)
+#end
+#end
+#end
+#end
+#set ($keycount = 1)
+#foreach ($subgroup in $group.Values)
+#if ($bg.substring(0,6) != "expmod")
+#set ($empty = "false")
+#foreach ($setting in $subgroup.Values)
+#if ( $setting.profileName == "type" && $setting.Value == "none" )
+#set ($empty = "true")
+#end
+#end
+#foreach ($setting in $subgroup.Values)
+#set ($increase = 'no')
+<ConfigurationItem>
+#if ($empty == 'true')
+#if ($count < $speeddials.size())
+#set ($increase = 'yes')
+#if ( $setting.profileName == "type" )
+#if ($speeddials.get(${count}).Blf == true)
+<Parameter>${subgroup.name} ${setting.profileName}</Parameter>
+<Value>blfxfer</Value>
+#else
+<Parameter>${subgroup.name} ${setting.profileName}</Parameter>
+<Value>speeddial</Value>
+#end
+#elseif ( $setting.profileName == "label" )
+<Parameter>${subgroup.name} ${setting.profileName}</Parameter>
+<Value>$speeddials.get(${count}).Label</Value>
+#elseif ( $setting.profileName == "value" )
+<Parameter>${subgroup.name} ${setting.profileName}</Parameter>
+<Value>$speeddials.get(${count}).Number</Value>
+#end
+#else
+#if ( $setting.profileName == "type" )
+<Parameter>${subgroup.name} ${setting.profileName}</Parameter>
+<Value>empty</Value>
+#else
+<Parameter>${subgroup.name} ${setting.profileName}</Parameter>
+<Value>$!{setting.Value}</Value>
+#end
+#end
+#else
+<Parameter>${subgroup.name} ${setting.profileName}</Parameter>
+<Value>$!{setting.Value}</Value>
+#end
+</ConfigurationItem>
+#end
+#if ($increase == 'yes')
+#set ($count = $count + 1)
+#end
+#elseif ($bg.substring(0,6) == "expmod" && $keycount <= $max+1)
+#if ($max != 0)
+#set ($empty = "false")
+#foreach ($setting in $subgroup.Values)
+#if ( $setting.profileName == "type" && $setting.Value == "none" )
+#set ($empty = "true")
+#end
+#end
+#foreach ($setting in $subgroup.Values)
+#set ($increase = 'no')
+<ConfigurationItem>
+#if ($empty == 'true')
+#if ($count < $speeddials.size())
+#set ($increase = 'yes')
+#if ( $setting.profileName == "type" )
+#if ($speeddials.get(${count}).Blf == true)
+<Parameter>${bg} ${subgroup.name} ${setting.profileName}</Parameter>
+<Value>blfxfer</Value>
+#else
+<Parameter>${bg} ${subgroup.name} ${setting.profileName}</Parameter>
+<Value>speeddial</Value>
+#end
+#elseif ( $setting.profileName == "label" )
+<Parameter>${bg} ${subgroup.name} ${setting.profileName}</Parameter>
+<Value>$speeddials.get(${count}).Label</Value>
+#elseif ( $setting.profileName == "value" )
+<Parameter>${bg} ${subgroup.name} ${setting.profileName}</Parameter>
+<Value>$speeddials.get(${count}).Number</Value>
+#end
+#else
+#if ( $setting.profileName == "type" )
+<Parameter>${bg} ${subgroup.name} ${setting.profileName}</Parameter>
+<Value>empty</Value>
+#else
+<Parameter>${bg} ${subgroup.name} ${setting.profileName}</Parameter>
+<Value>$!{setting.Value}</Value>
+#end
+#end
+#else
+<Parameter>${bg} ${subgroup.name} ${setting.profileName}</Parameter>
+<Value>$!{setting.Value}</Value>
+#end
+</ConfigurationItem>
+#end
+#if ($increase == 'yes')
+#set ($count = $count + 1)
+#end
+#set ($keycount = $keycount + 1)
+#end
+#end
+#end
+#end
+#end
+#end
+#end
+<?xml version="1.0" encoding="UTF-8"?>
+<AastraIPPhoneConfiguration setType="override">
+#foreach ($line in $phone.lines)
+#set($line_id = $velocityCount)
+#foreach ($group in $line.Settings.Values)
+#if ($group.Name == "sip_id")
+#foreach ($setting in $group.Values)
+<ConfigurationItem>
+<Parameter>sip line${line_id} ${setting.ProfileName}</Parameter>
+<Value>$!{setting.Value}</Value>
+</ConfigurationItem>
+#end
+#end
+#end
+#end
+
+#Add_button('topkeys,topsoftkeys,softkeys,expmod1,expmod2,expmod3')
+</AastraIPPhoneConfiguration>

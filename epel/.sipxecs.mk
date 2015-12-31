@@ -16,7 +16,7 @@ epel.dist epel.srpm:;
 epel.rpm :
 	rsync -av \
 	  $(EXCLUDE_ARCH) \
-	  $(addprefix $(CENTOS_RSYNC_URL)/epel/6/$(DISTRO_ARCH)/,$(RUNTIME_EPEL) $(BUILD_EPEL)) \
+	  $(addprefix rsync://download.sipxcom.org/pub/epel/6/$(DISTRO_ARCH)/,$(RUNTIME_EPEL) $(BUILD_EPEL)) \
 	  $(MOCK_RESULTS_DIR)/
 	mock $(MOCK_OPTS) --scrub=cache
 	$(MAKE) repo-dedup
@@ -68,9 +68,6 @@ BUILD_EPEL = \
 RUNTIME_EPEL = \
 	elasticsearch-* \
 	erlang-lager-* \
-	erlang-gen_leader-* \
-	erlang-gproc-* \
-	erlang-erlando-* \
 	erlang-ibrowse-* \
 	erlang-rpm-macros-* \
 	fail2ban-* \
@@ -115,7 +112,7 @@ RUNTIME_EPEL = \
 	python-pymongo-gridfs-2.5* \
 	sipp-* \
 	socat-1.7.* \
-	ldns-1.6.16-2* \
+	ldns-* \
 	portaudio-19* \
 	jack-audio-connection-kit-*
 

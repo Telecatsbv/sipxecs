@@ -47,6 +47,14 @@
       </list>
     </property>
   </bean>
+  
+  <bean id="messageSourceOverride" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+    <property name="basenames">
+      <list>
+        <value>file:${conf.dir}/sipxivr</value>
+      </list>
+    </property>
+  </bean>
 
   <bean id="sipxIvr" class="org.sipfoundry.sipxivr.SipXivr" scope="prototype">
     <lookup-method bean="bridge" name="getBridgeApp"/>
@@ -83,6 +91,9 @@
     <property name="binDirectory" value="${ivr.binDirectory}" />
     <property name="logDirectory" value="${ivr.logDirectory}" />
     <property name="backupPath" value="${ivr.backupPath}" />
+    <property name="forceHost" value="${ivr.force_host}" />
+    <property name="forcedHost" value="${ivr.forced_host}" />
+    <property name="overrideTemplate" value="${ivr.override_template}" />
   </bean>
 
   <bean id="fsEventSocket" class="org.sipfoundry.commons.freeswitch.FreeSwitchEventSocket" scope="eslRequest">

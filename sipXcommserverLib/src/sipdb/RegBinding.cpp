@@ -32,6 +32,7 @@ const char* RegBinding::expirationTime_fld(){ static std::string fld = "expirati
 const char* RegBinding::instrument_fld(){ static std::string fld = "instrument"; return fld.c_str(); }
 const char* RegBinding::localAddress_fld(){ static std::string fld = "localAddress"; return fld.c_str(); }
 const char* RegBinding::timestamp_fld(){ static std::string fld = "timestamp"; return fld.c_str(); }
+const char* RegBinding::primary_fld(){ static std::string fld = "primary"; return fld.c_str(); }
 const char* RegBinding::expired_fld(){ static std::string fld = "expired"; return fld.c_str(); }
 
 RegBinding::RegBinding() :
@@ -65,6 +66,7 @@ RegBinding::RegBinding(const RegBinding& binding) :
     _instrument = binding._instrument;
     _localAddress = binding._localAddress;
     _timestamp = binding._timestamp;
+    _primary = binding._primary;
     _expired = binding._expired;
 }
 
@@ -89,6 +91,7 @@ void RegBinding::swap(RegBinding& binding)
     std::swap(_instrument, binding._instrument);
     std::swap(_localAddress, binding._localAddress);
     std::swap(_timestamp, binding._timestamp);
+    std::swap(_primary, binding._primary);
     std::swap(_expired, binding._expired);
 }
 

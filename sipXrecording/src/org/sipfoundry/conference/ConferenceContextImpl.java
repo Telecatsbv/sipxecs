@@ -32,7 +32,7 @@ import org.sipfoundry.commons.confdb.ConferenceService;
 import org.sipfoundry.sipxrecording.RecordingConfiguration;
 
 public class ConferenceContextImpl {
-    private static String sourceName = "/tmp/freeswitch/recordings";
+    private static String sourceName = System.getProperty("var.dir") + "/tmp/freeswitch/recordings";
     private static String lastGoodIvr = null;
     private static ConferenceContextImpl m_conferenceContextImpl;
     private ConferenceService m_conferenceService;

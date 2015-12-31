@@ -136,6 +136,13 @@
         </type>
         <value>0</value>
       </setting>
+      <setting name="sip_registration_period">
+        <profileName>sip registration period</profileName>
+        <type>
+          <integer min="1000" />
+        </type>
+        <value>3000</value>
+      </setting>
     </group>
     <group name="rtp">
       <setting name="sip_rtp_port">
@@ -164,7 +171,9 @@
         <type>
           <string />
         </type>
-        <value />
+        <!-- Ptime has to be 20! -->
+        <!-- The order is 1. g722, 2. Alaw -->
+        <value>payload=8;ptime=20;silsupp=on,payload=9;ptime=20;silsupp=on</value>
       </setting>
       <setting name="sip_dtmf_method">
         <profileName>sip dtmf method</profileName>
@@ -205,7 +214,7 @@
     <setting name="time_format">
       <profileName>time format</profileName>
       <type refid="time-format" />
-      <value>0</value>
+      <value>1</value>
     </setting>
     <setting name="date_format">
       <profileName>date format</profileName>
@@ -220,7 +229,7 @@
     <setting name="time_zone_name">
       <profileName>time zone name</profileName>
       <type refid="time-zone" />
-      <value>US-Eastern</value>
+      <value>BE-Brussels</value>
     </setting>
   </group>
   <group name="preferences">
@@ -309,6 +318,27 @@
         </type>
         <value>0</value>
       </setting>
+      <setting name="dnd_key_mode">
+        <profileName>dnd key mode</profileName>
+        <type>
+          <integer max="2" min="0" />
+        </type>
+        <value>0</value>
+      </setting>
+      <setting name="backlight_mode">
+        <profileName>backlight mode</profileName>
+        <type>
+          <boolean />
+        </type>
+        <value>1</value>
+      </setting>
+      <setting name="bl_on_time">
+        <profileName>bl on time</profileName>
+        <type>
+          <integer max="600" min="0" />
+        </type>
+        <value>5</value>
+      </setting>
     </group>
     <group name="outgoingIntercom" hidden="yes">
       <setting name="sip_intercom_type">
@@ -367,7 +397,7 @@
       <setting name="tone_set">
         <profileName>tone set</profileName>
         <type refid="country-tone" />
-        <value>US</value>
+        <value>Europe</value>
       </setting>
       <setting name="ring_tone">
         <profileName>ring tone</profileName>
@@ -449,7 +479,7 @@
             <pattern>\*?\d*</pattern>
           </string>
         </type>
-        <value />
+        <value>*78</value>
       </setting>
       <setting name="play_a_ring_splash">
         <profileName>play a ring splash</profileName>
@@ -517,21 +547,21 @@
       </setting>
     </group>
     <group name="dir">
-      <setting name="directory_disabled" hidden="yes">
+      <setting name="directory_disabled" advanced="yes">
         <profileName>directory disabled</profileName>
         <type>
           <boolean />
         </type>
-        <value>0</value>
+        <value>1</value>
       </setting>
-      <setting name="directory1" hidden="yes">
+      <setting name="directory1" advanced="yes">
         <profileName>directory 1</profileName>
         <type>
           <string />
         </type>
         <value />
       </setting>
-      <setting name="directory2">
+      <setting name="directory2" advanced="yes">
         <profileName>directory 2</profileName>
         <type>
           <string />
@@ -806,6 +836,15 @@
         <value>0</value>
       </setting>
     </group>
+    <group name="advanced">
+      <setting name="lldp">
+        <profileName>lldp</profileName>
+        <type>
+          <boolean />
+        </type>
+        <value>0</value>
+      </setting>
+    </group>
   </group>
   <group name="web_server">
     <setting name="web_interface_enabled" hidden="yes">
@@ -859,14 +898,14 @@
           </option>
         </enum>
       </type>
-      <value>SSL 3.0</value>
+      <value>TLS 1.0</value>
     </setting>
     <setting name="https_redirect_http_get" advanced="yes">
       <profileName>https redirect http get</profileName>
       <type>
         <boolean />
       </type>
-      <value>1</value>
+      <value>0</value>
     </setting>
     <setting name="https_block_http_post_xml" advanced="yes">
       <profileName>https block http post xml</profileName>
@@ -969,107 +1008,4636 @@
         <value>00:00</value>
       </setting>
     </group>
+    <group name="xml_push">
+      <setting name="xml_application_post_list">
+        <profileName>xml application post list</profileName>
+        <type>
+          <hostname />
+        </type>
+        <value>0.0.0.0</value>
+      </setting>
+    </group>
   </group>
   <group name="log">
-    <setting name="log_server_ip">
-      <profileName>log server ip</profileName>
-      <type>
-        <hostname />
-      </type>
-      <value>0.0.0.0</value>
-    </setting>
-    <setting name="log_server_port">
-      <profileName>log server port</profileName>
-      <type>
-        <integer />
-      </type>
-      <value>0</value>
-    </setting>
-    <setting name="log_module_sip" advanced="yes">
-      <profileName>log module sip</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_linemgr" advanced="yes">
-      <profileName>log module linemgr</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_ui" advanced="yes">
-      <profileName>log module user interface</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_dis" advanced="yes">
-      <profileName>log module dis</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_ept" advanced="yes">
-      <profileName>log module ept</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_ind" advanced="yes">
-      <profileName>log module ind</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_kbd" advanced="yes">
-      <profileName>log module kbd</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_net" advanced="yes">
-      <profileName>log module net</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_provis" advanced="yes">
-      <profileName>log module provis</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_rtpt" advanced="yes">
-      <profileName>log module rtpt</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_snd" advanced="yes">
-      <profileName>log module snd</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
-    <setting name="log_module_misc" advanced="yes">
-      <profileName>log module misc</profileName>
-      <type>
-        <boolean />
-      </type>
-      <value>1</value>
-    </setting>
+        <setting name="log_server_ip">
+        <profileName>log server ip</profileName>
+        <type>
+          <hostname />
+        </type>
+        <value>0.0.0.0</value>
+      </setting>
+        <setting name="log_server_port">
+          <profileName>log server port</profileName>
+          <type>
+            <integer />
+          </type>
+          <value>514</value>
+        </setting>
+        <setting name="log_module_sip" advanced="yes">
+			<profileName>log module sip</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_linemgr" advanced="yes">
+			<profileName>log module linemgr</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_ui" advanced="yes">
+			<profileName>log module user interface</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_dis" advanced="yes">
+			<profileName>log module dis</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_ept" advanced="yes">
+			<profileName>log module ept</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_ind" advanced="yes">
+			<profileName>log module ind</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_kbd" advanced="yes">
+			<profileName>log module kbd</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_net" advanced="yes">
+			<profileName>log module net</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_provis" advanced="yes">
+			<profileName>log module provis</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_rtpt" advanced="yes">
+			<profileName>log module rtpt</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_snd" advanced="yes">
+			<profileName>log module snd</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_misc" advanced="yes">
+			<profileName>log module misc</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_prof" advanced="yes">
+			<profileName>log module prof</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_xml" advanced="yes">
+			<profileName>log module xml</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_stun" advanced="yes">
+			<profileName>log module stun</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_dstore" advanced="yes">
+			<profileName>log module dstore</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
+		<setting name="log_module_lldp" advanced="yes">
+			<profileName>log module lldp</profileName>
+				<type refid="log-levels" />
+			<value>0</value>
+		</setting>
   </group>
+  <group name="topkeys" unless="aastra57i">
+    <group name="prgkey1">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="prgkey2">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="prgkey3">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="prgkey4">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="prgkey5">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="prgkey6">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+  </group>
+  <group name="topsoftkeys" if="aastra57i">i
+    <group name="topsoftkey1">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="topsoftkey2">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="topsoftkey3">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="topsoftkey4">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="topsoftkey5">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="topsoftkey6">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="topsoftkey7">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="topsoftkey8">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="topsoftkey9">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="topsoftkey10">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+  </group>
+  <group name="softkeys" unless="aastra53i">
+    <group name="softkey1">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey2">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey3">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey4">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey5">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey6">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey7">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey8">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey9">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey10">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey11">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey12">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey13">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey14">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey15">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey16">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey17">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey18">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey19">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+    <group name="softkey20">
+      <setting name="type">
+        <profileName>type</profileName>
+        <type refid="exp-key-type" />
+        <value>none</value>
+      </setting>
+      <setting name="label">
+        <profileName>label</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+      <setting name="value">
+        <profileName>value</profileName>
+        <type>
+          <string />
+        </type>
+        <value />
+      </setting>
+    </group>
+  </group>
+  <group name="expmod1">
+		<setting name="type">
+			<type refid="expansion-models" />
+			<value>none</value>
+		</setting>
+		<group name="key1">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key2">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key3">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key4">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key5">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key6">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key7">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key8">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key9">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key10">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key11">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key12">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key13">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key14">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key15">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key16">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key17">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key18">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key19">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key20">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key21">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key22">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key23">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key24">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key25">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key26">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key27">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key28">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key29">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key30">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key31">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key32">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key33">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key34">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key35">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key36">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key37">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key38">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key39">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key40">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key41">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key42">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key43">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key44">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key45">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key46">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key47">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key48">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key49">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key50">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key51">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key52">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key53">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key54">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key55">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key56">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key57">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key58">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key59">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key60">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+	</group>
+	<group name="expmod2">
+		<setting name="type">
+			<type refid="expansion-models" />
+			<value>none</value>
+		</setting>
+		<group name="key1">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key2">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key3">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key4">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key5">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key6">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key7">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key8">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key9">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key10">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key11">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key12">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key13">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key14">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key15">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key16">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key17">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key18">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key19">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key20">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key21">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key22">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key23">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key24">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key25">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key26">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key27">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key28">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key29">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key30">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key31">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key32">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key33">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key34">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key35">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key36">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key37">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key38">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key39">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key40">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key41">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key42">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key43">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key44">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key45">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key46">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key47">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key48">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key49">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key50">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key51">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key52">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key53">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key54">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key55">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key56">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key57">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key58">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key59">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key60">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+	</group>
+	<group name="expmod3">
+		<setting name="type">
+			<type refid="expansion-models" />
+			<value>none</value>
+		</setting>
+		<group name="key1">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key2">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key3">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key4">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key5">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key6">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key7">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key8">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key9">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key10">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key11">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key12">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key13">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key14">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key15">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key16">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key17">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key18">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key19">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key20">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key21">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key22">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key23">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key24">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key25">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key26">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key27">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key28">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key29">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key30">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key31">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key32">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key33">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key34">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key35">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key36">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key37">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key38">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key39">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key40">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key41">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key42">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key43">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key44">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key45">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key46">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key47">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key48">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key49">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key50">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key51">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key52">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key53">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key54">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key55">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key56">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key57">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key58">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key59">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+		<group name="key60">
+			<setting name="type">
+				<profileName>type</profileName>
+				<type refid="exp-key-type" />
+				<value>empty</value>
+			</setting>
+			<setting name="label">
+				<profileName>label</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+			<setting name="value">
+				<profileName>value</profileName>
+				<type>
+					<string />
+				</type>
+				<value />
+			</setting>
+		</group>
+	</group>
+<!--
   <group name="ExpansionModel" hidden="yes">
     <group name="ExpansionModelN">
       <setting name="expmodX_keyN_type">
@@ -1276,6 +5844,7 @@
       </setting>
     </group>
   </group>
+  -->
   <!--
     ============
     The following settings is probably not required in the Config serverUI
@@ -1462,13 +6031,6 @@
         <profileName>sip backup registar port</profileName>
         <type>
           <integer />
-        </type>
-        <value>0</value>
-      </setting>
-      <setting name="sip_registration_period">
-        <profileName>sip registration period</profileName>
-        <type>
-          <integer max="2147483647" min="0" />
         </type>
         <value>0</value>
       </setting>

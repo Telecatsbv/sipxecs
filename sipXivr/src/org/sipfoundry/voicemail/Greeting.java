@@ -104,7 +104,11 @@ public class Greeting {
         }
 
         if (playDefaultVmOption) {
-            pl.addFragment("VoiceMail_options");
+        	if(m_user.hasOperatorInIvr()) {
+        		pl.addFragment("VoiceMail_options");
+        	} else {
+        		pl.addFragment("VoiceMail_options_no_operator");
+        	}
         }
 
         return pl;

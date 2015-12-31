@@ -106,6 +106,19 @@ bundle edit_line sipXproxy_config_contents() {
       "SIPX_PROXY_CALL_STATE_DB_PASSWORD : $(sipx.NEW_POSTGRESQL_PASSWORD)";
     homer::
       "SIPX_TRAN_HOOK_LIBRARY.100_sipxhomer : $(sipx.SIPX_LIBDIR)/transactionplugins/libsipXhomerProxyPlugin.so";
+    randomGroupDial::
+      "SIP_REDIRECT_AUTHORITY_LEVEL.125-RDG : 50";
+      "SIP_REDIRECT_HOOK_LIBRARY.125-RDG : $(sipx.SIPX_LIBDIR)/libRedirectorRandomGroupDial.so";
+    chefsec::
+      "SIPX_PROXY_HOOK_LIBRARY.800_chefsec : $(sipx.SIPX_LIBDIR)/authplugins/libChefsecCallerId.so";
+    custom_caller_id::
+      "$(sipx.SIPX_CFDATA)/$(sipx.location_id)/custom_caller_id.properties.part"
+        insert_type => "file",
+        expand_scalars => "true";
+      "SIPX_PROXY_HOOK_LIBRARY.720_customcallerid : $(sipx.SIPX_LIBDIR)/authplugins/libsipxcustomcallerid.so";
+    hotdesking::
+        "SIPX_PROXY_HOOK_LIBRARY.203_hotdesking : $(sipx.SIPX_LIBDIR)/authplugins/libHotdesking.so";
+        "SIPX_PROXY.203_hotdesking.ENABLE_HD_AUTH : 1";
 
   delete_lines:
     any::

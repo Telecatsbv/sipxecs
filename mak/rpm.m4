@@ -21,7 +21,7 @@ AC_SUBST(UPSTREAM)
 AC_ARG_VAR(UPSTREAM_URL, [Where to find sipXecs distribution. Default: http://download.sipxcom.org/pub/sipXecs])
 if test -z "$UPSTREAM_URL"; then
   # This repo matches the release branch code slightly more closely then last release
-  UPSTREAM_URL=http://download.sipxcom.org/pub/${PACKAGE_VERSION}-stable
+  UPSTREAM_URL=http://download.sipxcom.org/pub/${PACKAGE_VERSION}-unstable
 else
   UPSTREAM_URL=`echo $UPSTREAM_URL | sed 's|/$||g'`
 fi

@@ -21,7 +21,7 @@ public class CertificateAuthorityGenerator extends AbstractCertificateGenerator 
         super(domain, fqdn);
 
         // historical defaults, otherwise insignificant AFAIK
-        setValidYears(10);
+        setValidYears(20);
     }
 
     public CertificateAuthorityGenerator(String domain) {

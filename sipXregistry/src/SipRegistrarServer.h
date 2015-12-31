@@ -86,6 +86,7 @@ protected:
     RegistrationExpiryIntervals mNatedExpiryIntervals;  // registration expiry intervals for NATed UAs
     bool mUseCredentialDB;
     UtlString mRealm;
+    UtlString mRegistrarName;
     UtlBoolean mSendExpiresInResponse;
     UtlBoolean mSendAllContactsInResponse;
 

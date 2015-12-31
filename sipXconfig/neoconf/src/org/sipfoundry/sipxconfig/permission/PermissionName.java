@@ -31,6 +31,14 @@ public enum PermissionName {
 
     /** call handling */
     NINEHUNDERED_DIALING(Type.CALL, "900Dialing", CallTag.REST),
+    
+    NINEHUNDEREDX_DIALING(Type.CALL, "90XDialing", CallTag.REST),
+    
+    HOTDESKING(Type.CALL, "hotdesking", CallTag.HTD),
+
+    HOTDESKING_WITHOUT_PINCODE(Type.APPLICATION, "hotdeskingWithoutPincode"),
+
+    HOTDESKING_AUTO_LOGOFF(Type.APPLICATION,"hotdeskingAutoLogoff"),
 
     AUTO_ATTENDANT_DIALING(Type.CALL, "AutoAttendant", CallTag.AA),
 
@@ -53,7 +61,9 @@ public enum PermissionName {
     /** Voicemail */
     EXCHANGE_VOICEMAIL(Type.VOICEMAIL_SERVER, "ExchangeUMVoicemailServer"),
 
-    FREESWITH_VOICEMAIL(Type.VOICEMAIL_SERVER, "FreeswitchVoicemailServer");
+    FREESWITH_VOICEMAIL(Type.VOICEMAIL_SERVER, "FreeswitchVoicemailServer"),
+    
+    OPERATOR_IN_IVR(Type.APPLICATION, "operator-in-ivr");
 
     private Type m_type;
 

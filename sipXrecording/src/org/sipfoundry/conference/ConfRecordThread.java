@@ -32,7 +32,7 @@ import org.sipfoundry.sipxrecording.RecordingConfiguration;
 public class ConfRecordThread extends ConfBasicThread {
     static final Logger LOG = Logger.getLogger("org.sipfoundry.sipxrecording");
 
-    static String sourceName = "/tmp/freeswitch/recordings";
+    static String sourceName = System.getProperty("var.dir") + "/tmp/freeswitch/recordings";
     static String destName = System.getProperty("var.dir") + "/mediaserver/data/recordings";
 
     //TODO add localization support - port this project to spring maybe

@@ -20,6 +20,7 @@ import org.apache.tapestry.annotations.InjectObject;
 import org.apache.tapestry.annotations.InjectPage;
 import org.apache.tapestry.annotations.Parameter;
 import org.sipfoundry.sipxconfig.common.CoreContext;
+import org.sipfoundry.sipxconfig.components.AdminNavigation;
 import org.sipfoundry.sipxconfig.common.User;
 import org.sipfoundry.sipxconfig.feature.FeatureManager;
 import org.sipfoundry.sipxconfig.hoteling.HotelingLocator;
@@ -32,6 +33,7 @@ import org.sipfoundry.sipxconfig.site.common.BeanNavigation;
 import org.sipfoundry.sipxconfig.site.moh.MusicOnHoldPage;
 import org.sipfoundry.sipxconfig.site.speeddial.SpeedDialPage;
 import org.sipfoundry.sipxconfig.site.user_portal.ExtendedUserInfo;
+import org.sipfoundry.sipxconfig.site.user_portal.UserBasePage;
 import org.sipfoundry.sipxconfig.site.user_portal.UserCallForwarding;
 import org.sipfoundry.sipxconfig.site.user_portal.UserSchedules;
 import org.sipfoundry.sipxconfig.site.vm.MailboxPreferencesPage;
@@ -97,6 +99,8 @@ public abstract class UserNavigation extends BeanNavigation {
 
     @InjectPage(value = EditHotellingPage.PAGE)
     public abstract EditHotellingPage getEditHotellingPage();
+    
+    
 
     public IPage editCallForwarding(Integer userId) {
         UserCallForwarding page = getUserCallForwardingPage();
@@ -195,6 +199,15 @@ public abstract class UserNavigation extends BeanNavigation {
         page.setReturnPage(EditHotellingPage.PAGE);
         return page;
     }
+    
+    public IPage editPluginPage(String pluginPage, Integer userId) {
+    	IPage hookPage = getPage().getRequestCycle().getPage(pluginPage);
+    	if(hookPage instanceof UserBasePage) {
+    		UserBasePage userHookPage = (UserBasePage)hookPage;
+    		userHookPage.setUserId(userId);
+    	}
+    	return hookPage;
+    }
 
     public boolean isHotellingEnabled() {
         return getHotellingLocator().isHotellingEnabled();
@@ -274,6 +287,14 @@ public abstract class UserNavigation extends BeanNavigation {
 
     public boolean isHotellingTabActive() {
         return EditHotellingPage.PAGE.equals(getPage().getPageName());
+    }
+    
+    public boolean isPluginTabActive(String pluginPage) {
+    	return pluginPage != null && pluginPage.equals( getPage().getPageName() );
+    }
+    
+    public boolean isPluginFeatureEnabled(String feature) {
+    	return AdminNavigation.getEnabledFeatures(getFeatureManager()).contains(feature);
     }
 
     public Collection<Setting> getNavigationGroups() {

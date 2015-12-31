@@ -200,6 +200,8 @@ SipRegistrarServer::initialize(
     // Authentication Realm Name
     pOsConfigDb->get("SIP_REGISTRAR_AUTHENTICATE_REALM", mRealm);
 
+    // Registrar Host Name
+    pOsConfigDb->get("SIP_REGISTRAR_NAME", mRegistrarName);
 
     // Authentication Scheme:  NONE | DIGEST
     UtlString authenticateScheme;
@@ -594,6 +596,7 @@ SipRegistrarServer::applyRegisterToDirectory( const Url& toUrl
                          pRegBinding->setCseq(registerCseqInt);
                          pRegBinding->setIdentity(registerToStr.str());
                          pRegBinding->setUri(toUrl.toString().str());
+                         pRegBinding->setPrimary(mRegistrarName.str());
                          registrations.push_back(pRegBinding);
                       }
                    }

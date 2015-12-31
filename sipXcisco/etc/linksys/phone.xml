@@ -398,8 +398,73 @@
       <profileName>SIP/SIP_Parameters</profileName>
       <value>No</value>
     </setting>
+    <setting name="Caller_ID_Header">
+      <label>Caller ID Header</label>
+      <profileName>SIP/SIP_Parameters</profileName>
+      <type>
+        <enum>
+          <option>
+            <value>PAID-RPID-FROM</value>
+          </option>
+          <option>
+            <value>PAID-FROM</value>
+          </option>
+          <option>
+            <value>RPID-PAID-FROM</value>
+          </option>
+          <option>
+            <value>RPID-FROM</value>
+          </option>
+          <option>
+            <value>FROM</value>
+          </option>
+        </enum>
+      </type>
+    </setting>
+    <setting name="Caller_ID_Header">
+      <label>Caller ID Header</label>
+      <profileName>SIP/SIP_Parameters</profileName>
+      <type>
+        <enum>
+          <option>
+            <value>PAID-RPID-FROM</value>
+          </option>
+          <option>
+            <value>PAID-FROM</value>
+          </option>
+          <option>
+            <value>RPID-PAID-FROM</value>
+          </option>
+          <option>
+            <value>RPID-FROM</value>
+          </option>
+          <option>
+            <value>FROM</value>
+          </option>
+        </enum>
+      </type>
+    </setting>
+    <setting name="SRTP_Method">
+      <label>SRTP Method</label>
+      <profileName>SIP/SIP_Parameters</profileName>
+      <type>
+        <enum>
+          <option>
+            <value>x-sipura</value>
+          </option>
+          <option>
+            <value>s-descriptor</value>
+          </option>         
+        </enum>
+      </type>
+    </setting>
+    <setting name="Hold_Target_Before_REFER">
+      <label>Hold Target Before REFER</label>
+      <profileName>SIP/SIP_Parameters</profileName>
+      <type refid="yes-no" />
+      <value>No</value>
+    </setting>
   </group>
-
   <group name="SIP_Timer_Values">
     <setting name="SIP_T1">
       <label>SIP T1</label>
@@ -842,6 +907,31 @@
       <profileName>Provisioning/Configuration_Profile</profileName>
       <value />
     </setting>
+    <setting name="DHCP_Option_To_Use" hidden="yes" advanced="yes">
+      <label>DHCP Option To Use</label>
+      <profileName>Provisioning/Configuration_Profile</profileName>
+      <value>66,160,159,150</value>
+    </setting>
+    <setting name="Transport_Protocol" advanced="yes">
+      <label>Transport Protocol</label>
+      <profileName>Provisioning/Configuration_Profile</profileName>
+      <type>
+        <enum>
+          <option>
+            <value>https</value>
+          </option>
+          <option>
+            <value>none</value>
+          </option>
+          <option>
+            <value>tftp</value>
+          </option>
+          <option>
+            <value>http</value>
+          </option>
+        </enum>
+      </type>
+    </setting>
     <setting name="Log_Resync_Request_Msg" advanced="yes">
       <label>Log Resync Request Msg</label>
       <profileName>Provisioning/Configuration_Profile</profileName>
@@ -1190,6 +1280,16 @@
       <profileName>Regional/Miscellaneous</profileName>
       <value>GMT</value>
     </setting>
+    <setting name="Daylight_Saving_Time_Rule">
+      <label>Daylight Saving Time Rule</label>
+      <profileName>Regional/Miscellaneous</profileName>
+      <value />
+    </setting>
+    <setting name="Daylight_Saving_Time_Enable">
+      <label>Daylight Saving Time Enable</label>
+      <profileName>Regional/Miscellaneous</profileName>
+      <value />
+    </setting>
     <setting name="Time_Offset__HH_mm_">
       <label>Time Offset HH mm</label>
       <profileName>Regional/Miscellaneous</profileName>
@@ -1210,6 +1310,11 @@
     </setting>
     <setting name="Text_Logo">
       <label>Text Logo</label>
+      <profileName>phone/General</profileName>
+      <value />
+    </setting>
+    <setting name="BMP_Picture_Download_URL">
+      <label>BMP Picture Download URL</label>
       <profileName>phone/General</profileName>
       <value />
     </setting>
@@ -1265,6 +1370,11 @@
       <profileName>phone/Line_Key_1</profileName>
       <value></value>
     </setting>
+    <setting name="Extended_Function_1_">
+      <label>Extended Function</label>
+      <profileName>phone/Line_Key_1</profileName>
+      <value></value>
+    </setting>
     <setting name="Extension_2_">
       <label>Extension 2</label>
       <profileName>phone/Line_Key_2</profileName>
@@ -1275,6 +1385,11 @@
     </setting>
     <setting name="Short_Name_2_">
       <label>Short Name 2</label>
+      <profileName>phone/Line_Key_2</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extended_Function_2_">
+      <label>Extended Function</label>
       <profileName>phone/Line_Key_2</profileName>
       <value></value>
     </setting>
@@ -1291,6 +1406,11 @@
       <profileName>phone/Line_Key_3</profileName>
       <value></value>
     </setting>
+    <setting name="Extended_Function_3_">
+      <label>Extended Function</label>
+      <profileName>phone/Line_Key_3</profileName>
+      <value></value>
+    </setting>
     <setting name="Extension_4_">
       <label>Extension 4</label>
       <profileName>phone/Line_Key_4</profileName>
@@ -1302,6 +1422,83 @@
     <setting name="Short_Name_4_">
       <label>Short Name 4</label>
       <profileName>phone/Line_Key_4</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extended_Function_4_">
+      <label>Extended Function</label>
+      <profileName>phone/Line_Key_4</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extension_5_">
+      <label>Extension 5</label>
+      <profileName>phone/Line_Key_5</profileName>
+      <type>
+        <integer min="1" max="8" />
+      </type>
+      <value>5</value>
+    </setting>
+    <setting name="Short_Name_5_">
+      <label>Short Name 5</label>
+      <profileName>phone/Line_Key_5</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extended_Function_5_">
+      <label>Extended Function</label>
+      <profileName>phone/Line_Key_5</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extension_6_">
+      <label>Extension 6</label>
+      <profileName>phone/Line_Key_6</profileName>
+      <type>
+        <integer min="1" max="8" />
+      </type>
+      <value>6</value>
+    </setting>
+    <setting name="Short_Name_6_">
+      <label>Short Name 6</label>
+      <profileName>phone/Line_Key_6</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extended_Function_6_">
+      <label>Extended Function</label>
+      <profileName>phone/Line_Key_6</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extension_7_">
+      <label>Extension 7</label>
+      <profileName>phone/Line_Key_7</profileName>
+      <type>
+        <integer min="1" max="8" />
+      </type>
+      <value>7</value>
+    </setting>
+    <setting name="Short_Name_7_">
+      <label>Short Name 7</label>
+      <profileName>phone/Line_Key_7</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extended_Function_7_">
+      <label>Extended Function</label>
+      <profileName>phone/Line_Key_7</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extension_8_">
+      <label>Extension 8</label>
+      <profileName>phone/Line_Key_8</profileName>
+      <type>
+        <integer min="1" max="8" />
+      </type>
+      <value>8</value>
+    </setting>
+    <setting name="Short_Name_8_">
+      <label>Short Name 8</label>
+      <profileName>phone/Line_Key_8</profileName>
+      <value></value>
+    </setting>
+    <setting name="Extended_Function_8_">
+      <label>Extended Function</label>
+      <profileName>phone/Line_Key_8</profileName>
       <value></value>
     </setting>
 
@@ -1397,6 +1594,20 @@
     </setting>
     <setting name="Call_Back_Active_LED" advanced="yes">
       <label>Call Back Active LED</label>
+      <profileName>Phone/Line_Key_LED_Pattern</profileName>
+      <value />
+    </setting>
+    <setting name="Trunk_In-use_LED" advanced="yes">
+      <label>Trunk In-use LED</label>
+      <profileName>Phone/Line_Key_LED_Pattern</profileName>
+      <value />
+    </setting>
+    <setting name="Trunk_No_Service_LED" advanced="yes">
+      <label>Trunk No Service LED</label>
+      <profileName>Phone/Line_Key_LED_Pattern</profileName>
+      <value />
+    </setting><setting name="Trunk_Reserved_LED" advanced="yes">
+      <label>Trunk Reserved LED</label>
       <profileName>Phone/Line_Key_LED_Pattern</profileName>
       <value />
     </setting>
@@ -1617,6 +1828,31 @@
       </type>
       <value>0</value>
     </setting>
+    <setting name="Group_Paging_Script">
+      <label>Group Paging Script</label>
+      <profileName>Phone/Multiple_Paging_Group_Parameters</profileName>
+      <value>pggrp=224.168.168.168:34560;name=All;num=800;listen=yes;</value>
+    </setting>
+    <setting name="XML_Directory_Service_Name">
+      <label>XML Directory Service Name</label>
+      <profileName>Phone/XML_Service</profileName>
+      <value/>
+    </setting>
+    <setting name="XML_Directory_Service_URL">
+      <label>XML Directory Service URL</label>
+      <profileName>Phone/XML_Service</profileName>
+      <value/>
+    </setting>
+    <setting name="XML_Application_Service_Name">
+      <label>XML Application Service Name</label>
+      <profileName>Phone/XML_Service</profileName>
+      <value/>
+    </setting>
+    <setting name="XML_Application_Service_URL">
+      <label>XML Application Service URL</label>
+      <profileName>Phone/XML_Service</profileName>
+      <value/>
+    </setting>
   </group>
 
   <group name="User">
@@ -1700,6 +1936,12 @@
     </setting>
     <setting name="DND_Setting">
       <label>DND Setting</label>
+      <profileName>User/Supplementary_Services</profileName>
+      <type refid="yes-no" />
+      <value>no</value>
+    </setting>
+    <setting name="Miss_Call_Shortcut">
+      <label>Miss Call Shortcut</label>
       <profileName>User/Supplementary_Services</profileName>
       <type refid="yes-no" />
       <value>no</value>

@@ -66,6 +66,13 @@
     <property name="permissionName" value="900Dialing" />
   </bean>
 
+  <bean id="defaultRestrictedRule90X" parent="defaultLongDistanceRule" abstract="true">
+    <property name="name" value="Restricted90X" />
+    <property name="description" value="Restricted 90X dialing" />
+    <property name="areaCodes" value="90X" />
+    <property name="permissionName" value="90XDialing" />
+  </bean>
+
   <bean id="defaultInternationalRule" parent="defaultLongDistanceRule" abstract="true">
     <property name="name" value="International" />
     <property name="description" value="International dialing" />

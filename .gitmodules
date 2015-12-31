@@ -57,7 +57,7 @@
 	url = git://github.com/sipXcom/sipXlang-zh.git
 [submodule "oss_core"]
 	path = oss_core
-	url = git://github.com/joegen/oss_core.git
+	url = https://github.com/joegen/oss_core.git
 [submodule "sipXsbc"]
 	path = sipXsbc
 	url = git://github.com/ezuce/sipXsbc.git
@@ -79,9 +79,42 @@
 [submodule "openacd"]
 	path = openacd
 	url = git://github.com/sipxopenacd/openacd.git
+[submodule "sipXhotdesking"]
+	path = sipXhotdesking
+	url = git@gitlab.telecats.nl:sipxecs/sipxhotdesking.git
+[submodule "sipXtcExample"]
+	path = sipXtcExample
+	url = git@gitlab.telecats.nl:sipxecs/sipxtcexample.git
+[submodule "sipXchefsec"]
+  	path = sipXchefsec
+  	url = git@gitlab.telecats.nl:sipxecs/sipxchefsec.git
+[submodule "sipXlang-nl_telecats"]
+	path = sipXlang-nl_telecats
+	url = git@gitlab.telecats.nl:sipxecs/sipxlang-nl_telecats.git
+[submodule "sipXrandomGroupDial"]
+	path = sipXrandomGroupDial
+	url = git@gitlab.telecats.nl:sipxecs/sipxrandomgroupdial.git
+[submodule "sipXtcCustomCallerId"]
+	path = sipXtcCustomCallerId
+	url = git@gitlab.telecats.nl:sipxecs/sipxtccustomcallerid.git
+[submodule "sipXtcDhcp"]
+	path = sipXtcDhcp
+	url = git@gitlab.telecats.nl:sipxecs/sipxtcdhcp.git
+[submodule "sipXclick2dial"]
+	path = sipXclick2dial
+	url = git@gitlab.telecats.nl:sipxecs/sipxclick2dial.git
 [submodule "sipXcallQueue"]
 	path = sipXcallQueue
 	url = git://github.com/sipXcom/sipXcallQueue.git
+[submodule "sipXonnetSelector"]
+	path = sipXonnetSelector
+	url = git@gitlab.telecats.nl:sipxecs/sipxonnetselector.git
+[submodule "sipXtcFirewall"]
+	path = sipXtcFirewall
+	url = git@gitlab.telecats.nl:sipxecs/sipxtcfirewall.git
+[submodule "sipXhotprovisioning"]
+	path = sipXhotprovisioning
+	url = git@gitlab.telecats.nl:sipxecs/sipxhotprovisioning.git
 [submodule "sipXresiprocate"]
 	path = sipXresiprocate
 	url = git://github.com/sipXcom/resiprocate.git

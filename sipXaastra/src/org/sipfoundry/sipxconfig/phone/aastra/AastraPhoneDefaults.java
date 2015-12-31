@@ -15,7 +15,7 @@ import org.sipfoundry.sipxconfig.setting.SettingEntry;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 
 public class AastraPhoneDefaults {
-    private static final String DEFAULTTIME = "US-Eastern";
+    private static final String DEFAULTTIME = "BE-Brussels";
     private DeviceDefaults m_defaults;
 
     AastraPhoneDefaults(DeviceDefaults defaults) {
@@ -51,6 +51,11 @@ public class AastraPhoneDefaults {
     @SettingEntry(path = "security/emergency_dialplan")
     public String getEmergencyNumber() {
         return m_defaults.getEmergencyNumber();
+    }
+    
+    @SettingEntry(path = "server/xml_push/xml_application_post_list")
+    public String getXmlApplicationIp() {
+        return m_defaults.getTftpServer().getAddress();
     }
 
     private static String getTimezoneFromRawOffsetSeconds(int offset) {

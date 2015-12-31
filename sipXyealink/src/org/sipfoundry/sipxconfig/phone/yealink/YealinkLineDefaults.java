@@ -160,7 +160,8 @@ public class YealinkLineDefaults {
         } else {
             rlsUri = "";
         }
-        return rlsUri;
+        //return rlsUri;
+        return "";
     }
 
 	@SettingEntry(paths = {

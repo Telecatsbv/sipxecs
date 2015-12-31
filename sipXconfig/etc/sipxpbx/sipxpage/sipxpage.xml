@@ -36,7 +36,7 @@
   </type>
   <group name="page-config">
     <setting name="prefix">
-      <value>*77</value>
+      <value>*97</value>
     </setting>
     <setting name="sip.trace">
       <type>

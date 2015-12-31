@@ -12,8 +12,15 @@
 
 <bean id="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_6X"
       class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
-<bean id="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_7X"
+<bean id="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_70"
       class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+<bean id="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_72"
+      class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+<bean id="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_73"
+      class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+<bean id="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_80"
+      class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+
 
 <bean id="yealinkModel" class="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel" parent="abstractPhoneModel" abstract="true">
 	<!-- <property name="beanId" value="yealinkPhone" /> -->
@@ -21,14 +28,20 @@
 	<property name="restartSupported" value="true" />
 	<property name="versions">
 	    <list>
-		<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_7X"/>
+			<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_6X"/>
+			<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_70"/>
+			<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_72"/>
+			<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_73"/>
+			<ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_80"/>
 	    </list>
 	</property>
 	<property name="defaultVersion">
-	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_7X"/>
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_70"/>
 	</property>
 	<property name="profileTemplate" value="yealink/config_v6x_titan.vm" />
+	<property name="xmlProfileTemplate" value="yealink/config_v7x.prov.xml.vm"/>
 	<property name="directoryProfileTemplate" value="yealink/directory.xml.vm" />
+    	<property name="parentDir" value="${sysdir.phone}/profile/tftproot"/>
 </bean>
 
 <bean id="yealinkPhoneSIPT12P" parent="yealinkModel">
@@ -57,6 +70,16 @@
 	</property>
 </bean>
 
+<bean id="yealinkPhoneSIPT19P" parent="yealinkModel">
+	<property name="label" value="Yealink SIP-T19(P)" />
+	<property name="name" value="T19" />
+	<property name="maxLineCount" value="1" />
+	<property name="supportedFeatures">
+		<set>
+		</set>
+	</property>
+</bean>
+
 <bean id="yealinkPhoneSIPT20P" parent="yealinkModel">
 	<property name="label" value="Yealink SIP-T20(P)" />
 	<property name="name" value="T20" />
@@ -68,6 +91,9 @@
 		<value>hasRingTones</value>
 		<value>hasLanguages</value>
 	    </set>
+	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_73"/>
 	</property>
 </bean>
 
@@ -82,6 +108,26 @@
 		<value>hasRingTones</value>
 		<value>hasLanguages</value>
 	    </set>
+	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_73"/>
+	</property>
+</bean>
+
+<bean id="yealinkPhoneSIPT23P" parent="yealinkModel">
+	<property name="label" value="Yealink SIP-T23(P)" />
+	<property name="name" value="T23" />
+	<property name="maxLineCount" value="3" />
+	<property name="supportedFeatures">
+	    <set>
+		<value>hasHDSound</value>
+		<value>hasPhoneBook</value>
+		<value>hasRingTones</value>
+		<value>hasLanguages</value>
+	    </set>
+	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_80"/>
 	</property>
 </bean>
 
@@ -99,6 +145,28 @@
 		<value>hasLanguages</value>
 	    </set>
 	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_73"/>
+	</property>
+</bean>
+
+<bean id="yealinkPhoneSIPT27P" parent="yealinkModel">
+	<property name="label" value="Yealink SIP-T27(P/G)" />
+	<property name="name" value="T27" />
+	<property name="maxLineCount" value="21" />
+	<property name="maxDSSKeyCount" value="21" />
+	<property name="supportedFeatures">
+	    <set>
+		<value>hasHDSound</value>
+		<value>hasPhoneBook</value>
+		<value>hasRingTones</value>
+		<value>hasExpansionPanels</value>
+		<value>hasLanguages</value>
+	    </set>
+	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_80"/>
+	</property>
 </bean>
 
 <bean id="yealinkPhoneSIPT28P" parent="yealinkModel">
@@ -115,10 +183,32 @@
 		<value>hasLanguages</value>
 	    </set>
 	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_73"/>
+	</property>
+</bean>
+
+<bean id="yealinkPhoneSIPT29G" parent="yealinkModel">
+	<property name="label" value="Yealink SIP-T29(G)" />
+	<property name="name" value="T29" />
+	<property name="maxLineCount" value="10" />
+	<property name="maxDSSKeyCount" value="10" />
+	<property name="supportedFeatures">
+	    <set>
+		<value>hasHDSound</value>
+		<value>hasPhoneBook</value>
+		<value>hasRingTones</value>
+		<value>hasExpansionPanels</value>
+		<value>hasLanguages</value>
+	    </set>
+	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_80"/>
+	</property>
 </bean>
 
 <bean id="yealinkPhoneSIPT32G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T32G" />
+	<property name="label" value="Yealink SIP-T32(G)" />
 	<property name="name" value="T32" />
 	<property name="maxLineCount" value="3" />
 	<property name="maxDSSKeyCount" value="10" />
@@ -132,10 +222,13 @@
 		<value>hasLanguages</value>
 	    </set>
 	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_70"/>
+	</property>
 </bean>
 
 <bean id="yealinkPhoneSIPT38G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T38G" />
+	<property name="label" value="Yealink SIP-T38(G)" />
 	<property name="name" value="T38" />
 	<property name="maxLineCount" value="6" />
 	<property name="maxDSSKeyCount" value="10" />
@@ -150,10 +243,13 @@
 		<value>hasLanguages</value>
 	    </set>
 	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_70"/>
+	</property>
 </bean>
 
 <bean id="yealinkPhoneVP530" parent="yealinkModel">
-	<property name="label" value="Yealink VP530" />
+	<property name="label" value="Yealink SIP-VP530" />
 	<property name="name" value="VP530" />
 	<property name="maxLineCount" value="4" />
 	<property name="maxDSSKeyCount" value="10" />
@@ -166,10 +262,13 @@
 		<value>hasLanguages</value>
 	    </set>
 	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_70"/>
+	</property>
 </bean>
 
 <bean id="yealinkPhoneSIPT41P" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T41P" />
+	<property name="label" value="Yealink SIP-T41(P)" />
 	<property name="name" value="T41" />
 	<property name="maxLineCount" value="3" />
 	<property name="maxDSSKeyCount" value="10" />
@@ -180,12 +279,15 @@
 		<value>hasRingTones</value>
 	    </set>
 	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_80"/>
+	</property>
 </bean>
 
 <bean id="yealinkPhoneSIPT42G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T42G" />
+	<property name="label" value="Yealink SIP-T42(G)" />
 	<property name="name" value="T42" />
-	<property name="maxLineCount" value="3" />
+	<property name="maxLineCount" value="12" />
 	<property name="maxDSSKeyCount" value="12" />
 	<property name="supportedFeatures">
 	    <set>
@@ -194,10 +296,13 @@
 		<value>hasRingTones</value>
 	    </set>
 	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_80"/>
+	</property>
 </bean>
 
 <bean id="yealinkPhoneSIPT46G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T46G" />
+	<property name="label" value="Yealink SIP-T46(G)" />
 	<property name="name" value="T46" />
 	<property name="maxLineCount" value="6" />
 	<property name="maxDSSKeyCount" value="21" />
@@ -212,10 +317,13 @@
 		<value>hasLanguages</value>
 	    </set>
 	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_80"/>
+	</property>
 </bean>
 
 <bean id="yealinkPhoneSIPT48G" parent="yealinkModel">
-	<property name="label" value="Yealink SIP-T48G" />
+	<property name="label" value="Yealink SIP-T48(G)" />
 	<property name="name" value="T48" />
 	<property name="maxLineCount" value="6" />
 	<property name="maxDSSKeyCount" value="21" />
@@ -230,10 +338,13 @@
 		<value>hasLanguages</value>
 	    </set>
 	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_80"/>
+	</property>
 </bean>
 
 <bean id="yealinkPhoneW52" parent="yealinkModel">
-	<property name="label" value="Yealink W52" />
+	<property name="label" value="Yealink SIP-W52(P)" />
 	<property name="name" value="W52" />
 	<property name="maxLineCount" value="5" />
 	<property name="supportedFeatures">
@@ -242,6 +353,9 @@
 		<value>hasPhoneBook</value>
 		<value>hasRingTones</value>
 	    </set>
+	</property>
+	<property name="defaultVersion">
+	    <ref local="org.sipfoundry.sipxconfig.phone.yealink.YealinkModel.VER_73"/>
 	</property>
 </bean>
 

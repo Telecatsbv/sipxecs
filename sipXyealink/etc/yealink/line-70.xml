@@ -4,14 +4,10 @@
     "http://www.sipfoundry.org/sipXconfig/dtd/setting_2_0.dtd"
     [
 	<!ENTITY types SYSTEM "types.xml">
-	<!ENTITY types_v71 SYSTEM "types_v71.xml">
-	<!ENTITY types_v70 SYSTEM "types_v70.xml">
     ]
 >
 <model>
 &types;
-&types_v70;
-&types_v71;
     <group name="basic">
 	<!-- Enable or disable the account 1; 0-Disabled (default), 1-Enabled;-->
 	<setting name="enable" hidden="yes"><type><boolean/></type><value>1</value></setting>
@@ -35,7 +31,7 @@
 	<!-- Specify the server port, the default value is 5060.-->
 	<setting name="outbound_port"><type><integer/></type><value>0</value></setting>
 	<!-- Configure the transport type; 0-UDP (default), 1-TCP, 2-TLS, 3-DNS SRV;-->
-	<setting name="transport"><type refid="SIPTransport_type"/><value>1</value></setting>
+	<setting name="transport"><type refid="SIPTransport_type"/><value>0</value></setting>
 	<!-- Configure the address of the backup outbound proxy server.-->
 	<setting name="backup_outbound_host"><type><string/></type></setting>
 	<!-- Specify the port, the default value is 5060.-->
@@ -65,23 +61,6 @@
 	<!-- Assign a ringtone for account 1. The system ring tones are: common.wav (default), Ring1.wav, Ring2.wav-->
 	<!-- You can configure the custom ring tone (Family.wav) for the account 1, the value format is: account.1.ringtone.ring_type = Family.wav-->
 	<setting name="ringtone.ring_type"><type refid="yealink_ring_type"/><value>common</value></setting>
-	<!-- Enables or disables the ACD feature for account X. -->
-	<setting name="acd.enable"><type><boolean/></type><value>0</value></setting>
-	<!-- Enables or disables the IP phone to display the available or unavailable soft key after the phone logs into the ACD system. -->
-	<setting name="acd.available"><type><boolean/></type><value>0</value></setting>
-	<!--  Set "available" on login -->
-	<setting name="acd.initial_state"><type><boolean/></type><value>0</value></setting>
-	<!--  Enable Auto Login if ACD was logged in before reboot -->
-	<setting name="acd.auto_login_enable"><type><boolean/></type><value>0</value></setting>
-	<!--  Configures the user ID used to log in the ACD system. -->
-	<setting name="acd.user_id"><type><string/></type></setting>
-	<!--  Configures the password used to log in the ACD system.-->
-	<setting name="acd.password"><type><string/></type><value></value></setting>
-	<!--  Enables or disables the ACD auto available timer feature. If set to 1 (Enabled), the IP phone automatically changes the phone status to available.-->
-	<setting name="acd.auto_available"><type><boolean/></type><value>0</value></setting>
-	<!--  Specifies the length of time (in seconds) before the IP phone state is automatically reset to "available".-->
-	<setting name="acd.auto_available_timer"><type><integer min="0" max="120"/></type><value>60</value></setting>
-	
     </group>
 
     <group name="advanced">
@@ -92,7 +71,7 @@
 	<!-- Configure the register expiry time (in seconds), the default value is 3600.-->
 	<setting name="expires"><type><integer/></type><value>3600</value></setting>
 	<!-- Configure the SIP port for account 1, the default value is 5060. -->
-	<!-- <setting name="sip_listen_port"><type><integer/></type></setting> -->
+	<setting name="sip_listen_port"><type><integer/></type><value>5060</value></setting>
 	<!-- Enable or disable the NAT Rport; 0-Disabled (default), 1-Enabled;-->
 	<setting name="nat.rport"><type><boolean/></type><value>0</value></setting>
 	<!-- Configure the session timer (in seconds), the default values of T1, T2, T3 are 0.5, 4, 5.-->
@@ -197,7 +176,7 @@
 	<!-- account.1.codec.y.payload_type = -->
 	<!-- account.1.codec.y.priority = -->
 	<!-- account.1.codec.y.rtpmap = -->
-	<setting name="codec"><type refid="codecs_type"/><value>9:G722|8:PCMA|0:PCMU|18:G729</value></setting>
+	<setting name="codec"><type refid="codecs_type"/><value>9:G722|8:PCMA|18:G729</value></setting>
     </group>
     <group name="video-codecs" if="yealinkPhoneVP530">
 	<!-- Video codecs for account 1 (X ranges from 1 to 3) -->

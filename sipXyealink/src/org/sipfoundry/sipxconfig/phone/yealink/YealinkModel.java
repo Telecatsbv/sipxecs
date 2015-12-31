@@ -21,19 +21,29 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sipfoundry.sipxconfig.device.DeviceVersion;
 import org.sipfoundry.sipxconfig.phone.PhoneModel;
+import org.sipfoundry.sipxconfig.speeddial.SpeedDialManager;
 
 /**
  * Static differences in yealink models
 */
 public final class YealinkModel extends PhoneModel {
+	private SpeedDialManager m_speedDialManager;
+	private String m_XmlProfileTemplate;
+	private String m_parentDir;
 
     private static final Log LOG = LogFactory.getLog(YealinkModel.class);
     /** Firmware 6x or beyond */
     public static final DeviceVersion VER_6X = new DeviceVersion(YealinkPhone.BEAN_ID, "6X");
-    public static final DeviceVersion VER_7X = new DeviceVersion(YealinkPhone.BEAN_ID, "7X");
+    public static final DeviceVersion VER_70 = new DeviceVersion(YealinkPhone.BEAN_ID, "70");
+    public static final DeviceVersion VER_72 = new DeviceVersion(YealinkPhone.BEAN_ID, "72");
+    public static final DeviceVersion VER_73 = new DeviceVersion(YealinkPhone.BEAN_ID, "73");
+    public static final DeviceVersion VER_80 = new DeviceVersion(YealinkPhone.BEAN_ID, "80");
     public static final DeviceVersion[] SUPPORTED_VERSIONS = new DeviceVersion[] {
         VER_6X,
-        VER_7X
+        VER_70,
+        VER_72,
+        VER_73,
+        VER_80
     };
 
     private DeviceVersion m_deviceVersion;
@@ -55,7 +65,7 @@ public final class YealinkModel extends PhoneModel {
                 return deviceVersion;
             }
         }
-        return VER_7X;
+        return VER_72;
     }
 
     public void setDefaultVersion(DeviceVersion value) {
@@ -69,7 +79,7 @@ public final class YealinkModel extends PhoneModel {
         {
             return m_deviceVersion;
         } else {
-            return VER_7X;
+            return VER_70;
         }
     }
 
@@ -122,4 +132,24 @@ public final class YealinkModel extends PhoneModel {
     public void setMaxDSSKeyCount(int value) {
         m_dSSKeyCount = value;
     }
+    
+	public SpeedDialManager getSpeedDialManager() {
+		return m_speedDialManager;
+	}
+	
+	public void setXmlProfileTemplate(String name) {
+		m_XmlProfileTemplate = name;
+	}
+
+	public String getXmlProfileTemplate() {
+		return m_XmlProfileTemplate;
+	}
+
+	public String getParentDir() {
+		return m_parentDir;
+	}
+
+	public void setParentDir(String parentDir) {
+		this.m_parentDir = parentDir;
+	}
 }

@@ -17,8 +17,10 @@ BuildRequires: java-1.7.0-openjdk-devel
 BuildRequires: automake
 BuildRequires: sipxcommons >= %version
 BuildRequires: sipxconfig >= %version
+BuildRequires: sipxhotprovisioning
 
 Requires: sipxconfig
+Requires: sipxhotprovisioning
 
 Source: %name-%version.tar.gz
 
@@ -43,8 +45,8 @@ make DESTDIR=$RPM_BUILD_ROOT install
 rm -rf $RPM_BUILD_ROOT
 
 %files
-%defattr(644,root,root,755)
-%{_sysconfdir}/sipxpbx/aastra/*
+%defattr(644,sipx,sipx,755)
+%attr(755,root,root) %{_sysconfdir}/sipxpbx/aastra/*
 %{_datadir}/java/sipXecs/sipXconfig/plugins/sipXaastra.jar
 
 

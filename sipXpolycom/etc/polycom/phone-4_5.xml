@@ -55,13 +55,13 @@
         </type>
         <value>1</value>
       </setting>
-      <setting name="headsetmodeenabled" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+      <setting name="headsetmodeenabled" if="5.1.1||5.1.2||5.1.3||5.2.0">
         <type>
           <boolean />
         </type>
         <value>1</value>
       </setting>
-      <setting name="handsetmodeenabled" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+      <setting name="handsetmodeenabled" if="5.1.1||5.1.2||5.1.3||5.2.0">
         <type>
           <boolean />
         </type>
@@ -104,7 +104,7 @@
         <value>40</value>
       </setting>
     </group>
-    <group name="IdleViewPreferenceRemoteCalls" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <group name="IdleViewPreferenceRemoteCalls" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
       <setting name="IdleViewPreferenceRemoteCalls">
         <type>
           <boolean />
@@ -113,7 +113,7 @@
       </setting>
     </group>
     <group name="numOfDisplayColumns" if="polycomVVX500||polycomVVX600">
-	    <setting name="numOfDisplayColumns" if="5.0.0||5.0.1||5.0.2||4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+	    <setting name="numOfDisplayColumns" if="5.0.0||5.0.1||5.0.2||4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
 	    <type>
 	      <enum>
 	        <option>
@@ -165,7 +165,7 @@
         <value>15</value>
       </setting>
     </group>
-    <group name="em"  if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <group name="em"  if="5.1.1||5.1.2||5.1.3||5.2.0">
       <setting name="smartpaging.enabled">
         <type>
           <boolean />
@@ -1731,7 +1731,7 @@
       </type>
       <value>86400</value>
     </setting>
-	<setting name="retryDnsPeriod" if="4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+	<setting name="retryDnsPeriod" if="4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
       <type>
         <integer min="60" />
       </type>
@@ -1853,13 +1853,13 @@
       </type>
       <value>2222</value>
     </setting>
-    <setting name="videoPortRange.enable" if="4.1.6||5.0.2||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <setting name="videoPortRange.enable" if="4.1.6||5.0.2||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
       <type>
         <boolean />
       </type>
       <value>0</value>
     </setting>
-    <setting name="videoPortRangeStart" if="4.1.6||5.0.2||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <setting name="videoPortRangeStart" if="4.1.6||5.0.2||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
       <type>
         <integer min="1024" max="65486" />
       </type>
@@ -1879,7 +1879,7 @@
       </type>
       <value>0</value>
     </setting>
-    <setting name="sip.persistentConnection.enable" if="4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <setting name="sip.persistentConnection.enable" if="4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
       <type>
         <boolean />
       </type>
@@ -2108,32 +2108,6 @@
       <value>1</value>
     </setting>
   </group>
-  <group name="auth">
-    <setting name="localAdminPassword.set">
-      <type>
-        <boolean />
-      </type>
-      <value>0</value>
-    </setting>
-    <setting name="localAdminPassword">
-      <type>
-        <string />
-      </type>
-      <value>4567</value>
-    </setting>
-    <setting name="localUserPassword.set">
-      <type>
-        <boolean />
-      </type>
-      <value>0</value>
-    </setting>
-    <setting name="localUserPassword">
-      <type>
-        <string />
-      </type>
-      <value>4567</value>
-    </setting>
-  </group>
   <group name="log">
     <group name="level.change" >
       <setting name="so">
@@ -2199,8 +2173,8 @@
       <setting name="poll" copy-of="so" unless="pre_3.2.0_model"/>
       <setting name="push" copy-of="so" unless="pre_3.2.0_model"/>
       <setting name="wmgr" copy-of="so" unless="pre_3.2.0_model"/>
-      <setting name="em" copy-of="so" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0"/>
-      <setting name="pwr" copy-of="so" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0"/>
+      <setting name="em" copy-of="so" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0"/>
+      <setting name="pwr" copy-of="so" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0"/>
     </group>
     <group name="device.syslog" advanced="yes">
       <setting name="serverName.set" hidden="yes">
@@ -2242,7 +2216,7 @@
             </option>
           </enum>
         </type>
-        <value>2</value>
+        <value>1</value>
       </setting>
       <setting name="facility.set" hidden="yes">
         <type>
@@ -2693,13 +2667,13 @@
       </type>
       <value>0</value>
     </setting>
-    <setting name="forward.enable" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <setting name="forward.enable" if="5.1.1||5.1.2||5.1.3||5.2.0">
       <type>
         <boolean />
       </type>
       <value>1</value>
     </setting>
-    <setting name="doNotDisturb.enable" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <setting name="doNotDisturb.enable" if="5.1.1||5.1.2||5.1.3||5.2.0">
       <type>
         <boolean />
       </type>
@@ -2756,7 +2730,7 @@
         <value>1</value>
       </setting>
     </group>
-    <group name="idleRefresh" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <group name="idleRefresh" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
     <setting name="onFailure">
         <type>
           <integer min="60" max="6553500"/>
@@ -2814,7 +2788,7 @@
       </setting>
       <setting name="transport">
         <type refid="transport-40" />
-        <value>TCPOnly</value>
+        <value>UDPOnly</value>
       </setting>
     </group>
   </group>
@@ -2823,7 +2797,7 @@
         <type>
           <boolean />
         </type>
-        <value>1</value>
+        <value>0</value>
     </setting>
     <group name="serverFeatureControl">
       <setting name="cf">
@@ -2832,31 +2806,19 @@
         </type>
         <value>0</value>
       </setting>
-      <setting name="localProcessing.cf">
-        <type>
-          <boolean />
-        </type>
-        <value>1</value>
-      </setting>
       <setting name="dnd">
         <type>
           <boolean />
         </type>
         <value>0</value>
       </setting>
-      <setting name="localProcessing.dnd">
-        <type>
-          <boolean />
-        </type>
-        <value>1</value>
-      </setting>
-      <setting name="callRecording" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+      <setting name="callRecording" if="5.1.1||5.1.2||5.1.3||5.2.0">
         <type>
           <boolean />
         </type>
         <value>0</value>
       </setting>
-      <setting name="securityClassification" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+      <setting name="securityClassification" if="5.1.1||5.1.2||5.1.3||5.2.0">
         <type>
           <boolean />
         </type>
@@ -2932,7 +2894,7 @@
       </setting>
     </group>
     <group name="alertInfo">
-        <setting name="ignoreString" if="4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+        <setting name="ignoreString" if="4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
           <type>
             <string/>
           </type>
@@ -3365,7 +3327,7 @@
         </type>
         <value>1</value>
       </setting>
-      <setting name="etherModePC" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+      <setting name="etherModePC" if="5.1.1||5.1.2||5.1.3||5.2.0">
         <type>
           <enum>
             <option><value>Disabled</value></option>
@@ -3832,93 +3794,55 @@
         </setting>
       </group>
   </group>
-    <group name="apps">
-      <group name="push">
-        <setting name="messageType">
-          <type refid="push_message_type"/>
-          <value>4</value>
-        </setting>
-        <setting name="username">
-          <type>
-            <string />
-          </type>
-          <value></value>
-        </setting>
-        <setting name="password">
-          <type>
-            <string />
-          </type>
-          <value></value>
-        </setting>
-      </group>
-      <group name="statePolling">
-        <setting name="responseMode">
-          <type refid="statePolling_responseMode"/>
-          <value>0</value>
-        </setting>
-        <setting name="username">
-          <type>
-            <string />
-          </type>
-          <value></value>
-        </setting>
-        <setting name="password">
-          <type>
-            <string />
-          </type>
-          <value></value>
-        </setting>
-      </group>
-      <group name="ucdesktop"  if="desktopIntegration">
-        <setting name="adminEnabled">
-          <type>
-            <boolean />
-          </type>
-          <value>1</value>
-        </setting>
-        <setting name="desktopUserName">
-          <type>
-            <string />
-          </type>
-          <value></value>
-        </setting>
-        <setting name="enabled">
-          <type>
-            <boolean />
-          </type>
-          <value>1</value>
-        </setting>
-        <setting name="orientation">
-          <type>
-            <enum>
-              <option>
-                <value>Unspecified</value>
-              </option>
-              <option>
-                <value>Left</value>
-              </option>
-              <option>
-                <value>Right</value>
-              </option>
-            </enum>
-          </type>
-          <value>Unspecified</value>
-        </setting>
-        <setting name="ServerAddress">
-          <type>
-            <string />
-          </type>
-          <value></value>
-        </setting>
-        <setting name="ServerPort">
-          <type>
-            <integer min="1" max="65535"/>
-          </type>
-          <value>24800</value>
-        </setting>
-      </group>
+    <group name="apps" if="desktopIntegration">
+      <setting name="ucdesktop.adminEnabled">
+        <type>
+          <boolean />
+        </type>
+        <value>1</value>
+      </setting>
+      <setting name="ucdesktop.desktopUserName">
+        <type>
+		  <string />
+		</type>
+        <value></value>
+      </setting>
+      <setting name="ucdesktop.enabled">
+        <type>
+          <boolean />
+        </type>
+        <value>1</value>
+      </setting>
+      <setting name="ucdesktop.orientation">
+        <type>
+          <enum>
+            <option>
+              <value>Unspecified</value>
+            </option>
+            <option>
+              <value>Left</value>
+            </option>
+            <option>
+              <value>Right</value>
+            </option>
+          </enum>
+        </type>
+        <value>Unspecified</value>
+      </setting>
+      <setting name="ucdesktop.ServerAddress">
+        <type>
+		  <string />
+		</type>
+        <value></value>
+      </setting>
+      <setting name="ucdesktop.ServerPort">
+        <type>
+          <integer min="1" max="65535"/>
+        </type>
+        <value>24800</value>
+      </setting>
     </group>
-    <group name="ptt" if="4.0.X||4.1.X||4.1.0||4.1.2||4.1.3||4.1.4||4.1.5||4.1.6||4.1.7||4.1.8||5.0.0||5.0.1||5.0.2||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <group name="ptt" if="4.0.X||4.1.X||4.1.0||4.1.2||4.1.3||4.1.4||4.1.5||4.1.6||4.1.7||4.1.8||5.0.0||5.0.1||5.0.2||5.1.1||5.1.2||5.1.3||5.2.0">
       <setting name="address">
         <type>
 		  <string />
@@ -5288,40 +5212,7 @@
         <value></value>
       </setting>
     </group>
-  <group name="background">
-	<group name="polycomVVX300bg" hidden="no">
-	  <setting name="enabled">
-		<type>
-		  <boolean />
-		</type>
-		<value>1</value>
-	  </setting>
-      <setting name="selection">
-        <type>
-          <string />
-        </type>
-        <value>2,1</value>        
-      </setting>
-      <setting name="bm.1.em.name">
-        <type>
-	      <string />
-	    </type>
-        <value>ezLogo208x104.jpg</value>        
-      </setting>
-       <setting name="bm.1.name">
-        <type>
-          <string />
-        </type>
-        <value>ezLogo208x104.jpg</value>        
-      </setting>
-    </group>
-	<group name="polycomVVX500bg" hidden="no">
-	  <setting name="enabled">
-		<type>
-		  <boolean />
-		</type>
-		<value>1</value>
-	  </setting>
+    <group name="polycomVVX500bg" hidden="yes">
       <setting name="selection">
         <type>
           <string />
@@ -5341,91 +5232,7 @@
         <value>ezLogo320x240.jpg</value>        
       </setting>
     </group>
-    <group name="polycomVVX600bg" hidden="no">
-	  <setting name="enabled">
-		<type>
-		  <boolean />
-		</type>
-		<value>1</value>
-	  </setting>
-      <setting name="selection">
-        <type>
-          <string />
-        </type>
-        <value>2,1</value>        
-      </setting>
-      <setting name="bm.1.em.name">
-        <type>
-	      <string />
-	    </type>
-        <value>ezLogo480x272.jpg</value>        
-      </setting>
-       <setting name="bm.1.name">
-        <type>
-          <string />
-        </type>
-        <value>ezLogo480x272.jpg</value>        
-      </setting>
-    </group>
-    <group name="polycomVVX1500bg" hidden="no">
-	  <setting name="enabled">
-		<type>
-		  <boolean />
-		</type>
-		<value>1</value>
-	  </setting>
-      <setting name="selection">
-        <type>
-          <string />
-        </type>
-        <value>2,1</value>
-      </setting>
-      <setting name="bm.1.name">
-        <type>
-          <string />
-        </type>
-        <value>ezLogo800x480.jpg</value>
-      </setting>
-      <setting name="bm.1.em.name">
-        <type>
-          <string />
-        </type>
-        <value>ezLogo800x480.jpg</value>
-      </setting>
-    </group>
-    <group name="polycom450bg" hidden="no">
-	  <setting name="enabled">
-		<type>
-		  <boolean />
-		</type>
-		<value>1</value>
-	  </setting>
-      <setting name="selection">
-        <type>
-          <string />
-        </type>
-        <value>3,1</value>
-      </setting>
-      <setting name="bm.1.name">
-        <type>
-          <string />
-        </type>
-        <value>ezLogo250x116.jpg</value>
-      </setting>
-      <setting name="bm.1.adj">
-        <type>
-          <string />
-        </type>
-        <value>-6</value>
-      </setting>
-    </group>
-    <group name="polycom550bg" hidden="no">
-	  <setting name="enabled">
-		<type>
-		  <boolean />
-		</type>
-		<value>1</value>
-	  </setting>
+    <group name="polycom550bg" hidden="yes">
       <setting name="selection">
         <type>
           <string />
@@ -5451,13 +5258,7 @@
         <value>-6</value>        
       </setting>
     </group>
-    <group name="polycom670bg" hidden="no">
-	  <setting name="enabled">
-		<type>
-		  <boolean />
-		</type>
-		<value>1</value>
-	  </setting>
+    <group name="polycom670bg" hidden="yes">
       <setting name="selection">
         <type>
           <string />
@@ -5477,7 +5278,40 @@
         <value>ezLogo320x160.jpg</value>
       </setting>
     </group>
-  </group>
+    <group name="polycom450bg" hidden="yes">
+      <setting name="selection">
+        <type>
+          <string />
+        </type>
+        <value>3,1</value>
+      </setting>
+      <setting name="bm.1.name">
+        <type>
+          <string />
+        </type>
+        <value>ezLogo250x116.jpg</value>
+      </setting>
+      <setting name="bm.1.adj">
+        <type>
+          <string />
+        </type>
+        <value>-6</value>
+      </setting>
+    </group>
+    <group name="polycomVVX1500bg" hidden="yes">
+      <setting name="selection">
+        <type>
+          <string />
+        </type>
+        <value>3,1</value>
+      </setting>
+      <setting name="bm.1.em.name">
+        <type>
+          <string />
+        </type>
+        <value>ezLogo800x480.jpg</value>
+      </setting>
+    </group>
   <group name="e911" hidden="yes">
     <setting name="location">
       <type>
@@ -5503,7 +5337,7 @@
 	      </setting>
 	   </group>
     </group>
-    <group name="prov"  if="4.0.X||4.1.X||4.1.0||4.1.2||4.1.3||4.1.4||4.1.5||4.1.6||4.1.7||4.1.8||5.0.0||5.0.1||5.0.2||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <group name="prov"  if="4.0.X||4.1.X||4.1.0||4.1.2||4.1.3||4.1.4||4.1.5||4.1.6||4.1.7||4.1.8||5.0.0||5.0.1||5.0.2||5.1.1||5.1.2||5.1.3||5.2.0">
       <setting name="login.enabled">
 		<type><boolean /></type>
 		<value>0</value>
@@ -5523,37 +5357,6 @@
       <setting name="login.automaticLogout">
 		<type><integer min="0" max="46000"/></type>
 		<value>0</value>
-      </setting>
-      <setting name="serverType.set">
-		<type><boolean /></type>
-		<value>0</value>
-      </setting>
-      <setting name="serverType">
-		<type>
-                  <enum>
-                    <option>
-                      <label>FTP</label>
-                      <value>FTP</value>
-                    </option>
-                    <option>
-                      <label>TFTP</label>
-                      <value>TFTP</value>
-                    </option>
-                    <option>
-                      <label>HTTP</label>
-                      <value>HTTP</value>
-                    </option>
-                    <option>
-                      <label>HTTPS</label>
-                      <value>HTTPS</value>
-                    </option>
-                    <option>
-                      <label>FTPS</label>
-                      <value>FTPS</value>
-                    </option>
-                  </enum>
-                </type>
-		<value>HTTP</value>
       </setting>
     </group>      
 	<group name="mwi" if="5.0.0||5.0.1||5.0.2||5.1.1||5.1.2||5.1.3">
@@ -5583,59 +5386,43 @@
 		<value>1</value>
       </setting>
 	</group>
-	<group name="audioVideoToggle" if="5.0.0||5.0.1||5.0.2||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+	<group name="audioVideoToggle" if="5.0.0||5.0.1||5.0.2||5.1.1||5.1.2||5.1.3||5.2.0">
       <setting name="callMode.persistent">
 		<type><boolean /></type>
 		<value>1</value>
       </setting>
 	</group>
-	<group name="Diags" if="4.1.6||5.0.2||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+	<group name="Diags" if="4.1.6||5.0.2||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
 	  <setting name="dumpcore.enabled">
 		<type><boolean /></type>
 		<value>0</value>
       </setting>
 	</group>
-    <group name="prov.autoConfigUpload" if="4.1.6||5.0.2||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <group name="prov.autoConfigUpload" if="4.1.6||5.0.2||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
 	  <setting name="enabled">
 		<type><boolean /></type>
 		<value>0</value>
       </setting>
 	</group>
-    <group name="lineKey" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+    <group name="lineKey" if="4.1.6||4.1.7||4.1.8||5.1.1||5.1.2||5.1.3||5.2.0">
 	  <setting name="reassignment.enabled">
 		<type><boolean /></type>
 		<value>0</value>
       </setting>
 	</group>
-	<group name="homeScreen" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+	<group name="homeScreen" if="5.1.1||5.1.2||5.1.3||5.2.0">
 	  <setting name="forward.enable">
 		<type><boolean /></type>
 		<value>1</value>
       </setting>
-      <setting name="doNotDisturb.enable" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
+      <setting name="doNotDisturb.enable" if="5.1.1||5.1.2||5.1.3||5.2.0">
 		<type><boolean /></type>
 		<value>1</value>
       </setting>
-    </group>
-    <group name="softKey" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
-      <group name="feature" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
-	  <setting name="doNotDisturb">
+	</group>
+	<group name="softKey" if="5.1.1||5.1.2||5.1.3||5.2.0">
+	  <setting name="feature.doNotDisturb">
 		<type><boolean /></type>
 		<value>1</value>
-	  </setting>
-	  <setting name="forward">
-		<type><boolean /></type>
-		<value>1</value>
-	  </setting>
-	  <setting name="newcall">
-		<type><boolean /></type>
-		<value>1</value>
-	  </setting>
-      </group>
-      <group name="efk" if="5.1.1||5.1.2||5.1.3||5.2.0||5.2.1||5.2.2||5.2.3||5.3.0||5.3.1||5.4.0">
-	  <setting name="softKey.alignleft">
-		<type><boolean /></type>
-		<value>0</value>
-	  </setting>
-      </group>
-    </group>
+      </setting>
+	</group>

@@ -51,6 +51,9 @@ public class SipxIvrConfiguration {
     private String m_binDirectory;
     private String m_logDirectory;
     private String m_backupPath;
+    private boolean m_forceHost; //Override the default hostname resolution for links when sending mail?
+    private String m_forcedHost; //The hostname that will override the default.
+    private boolean m_overrideTemplate;
 
     public String getLogLevel() {
         return SipFoundryLayout.getSipFoundryLogLevel(this.getClass()).toString();
@@ -239,5 +242,29 @@ public class SipxIvrConfiguration {
     public void setSipxSupervisorXmlRpcPort(int port) {
         m_sipxSupervisorXmlRpcPort = port;
     }
+
+    public void setForceHost(boolean forceHost) {
+        m_forceHost = forceHost;
+    }
+
+    public boolean isForceHost() {
+        return m_forceHost;
+    }
+
+    public void setForcedHost(String forcedHost) {
+        m_forcedHost = forcedHost;
+    }
+
+    public String getForcedHost() {
+        return m_forcedHost;
+    }
+
+	public boolean isOverrideTemplate() {
+		return m_overrideTemplate;
+	}
+
+	public void setOverrideTemplate(boolean overrideTemplate) {
+		this.m_overrideTemplate = overrideTemplate;
+	}
 
 }

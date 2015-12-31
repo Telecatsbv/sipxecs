@@ -49,5 +49,16 @@
 				</a>
 			</div>
 		</li>
+		<span jwcid="@If" condition='ognl:isFeatureEnabled("chefsec") && hasPermission("Chef - secretary")'>
+			<li>
+				<div class="roundedMainSectionBoxTopLeft"></div><div class="roundedMainSectionBoxTopRight"></div>
+				<div class="roundedMainSectionBoxInside">
+					<a jwcid="chefsecLink@DirectLink" id="menu.chefsec" class="heading"
+	              		listener="listener:editPluginPage" parameters='ognl:{"plugin/UserPortalChefsecPage", userSession.userId}'>
+	              		<span key="link.chefsec">Chef Secretary</span>
+	            	</a>
+				</div>
+			</li>
+		</span>
 	</ul>
 </div>

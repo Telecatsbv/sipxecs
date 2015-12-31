@@ -4,11 +4,13 @@
 
   <bean id="emailer" class="org.sipfoundry.sipxivr.email.Emailer" init-method="init">
     <property name="audioFormat" value="${audio.format}" />
+    <property name="ivrConfig" ref="ivrConfig" />
     <property name="mailboxManager" ref="mailboxManager" />
   </bean>
 
   <bean id="FULL" class="org.sipfoundry.sipxivr.email.EmailFormatter" scope="prototype">
     <property name="emailAddressUrl" value="${ivr.emailAddressUrl}" />
+    <property name="ivrConfig" ref="ivrConfig" />
   </bean>
 
   <bean id="BRIEF" class="org.sipfoundry.sipxivr.email.EmailFormatterBrief" scope="prototype">

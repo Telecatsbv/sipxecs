@@ -184,7 +184,14 @@ int proxy()
     osPrintf("SIPX_PROXY_DEFAULT_EXPIRES : %d\n", defaultExpires);
     Os::Logger::instance().log(FAC_SIP, PRI_INFO, "SIPX_PROXY_DEFAULT_SERIAL_EXPIRES : %d", defaultSerialExpires);
     osPrintf("SIPX_PROXY_DEFAULT_SERIAL_EXPIRES : %d\n", defaultSerialExpires);
-      
+    
+    int sipRTT;
+    osServiceOptions.getOption("SIPX_PROXY_SIP_RTT", sipRTT);
+    if(sipRTT <= 0)
+    {
+        sipRTT = SIP_DEFAULT_RTT;
+    }
+
     UtlString hostAliases;
     osServiceOptions.getOption("SIPX_PROXY_HOST_ALIASES", hostAliases);
     if(hostAliases.isNull())

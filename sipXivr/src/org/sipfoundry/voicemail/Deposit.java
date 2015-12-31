@@ -66,8 +66,11 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
 
                 // Allow caller to barge with 0, *, and any defined Personal Attendant digit
                 // Also, allow barge to recording with "#"
-
-                play(pl, "#0*i" + pa.getValidDigits());
+            	if(user.hasOperatorInIvr()) {
+            		play(pl, "#0*i" + pa.getValidDigits());
+            	} else {
+            		play(pl, "#*i" + pa.getValidDigits());
+            	}
                 String digits = collectDigits(1, 100, 0, 0, "#");
                 LOG.info("depositVoicemail Collected digits=" + digits);
 
@@ -84,7 +87,8 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
                 // See if the digit they pressed was defined in the Personal Attendant
                 String transferUrl = null;
                 if (digits.equals("0")) {
-                    transferUrl = getOperatorUrl(pa);
+                	if( user.hasOperatorInIvr() )
+                		transferUrl = getOperatorUrl(pa);
                 } else {
                     // See if the Personal Attendant defined that digit to mean anything
                     transferUrl = pa.getMenuValue(digits);
@@ -109,7 +113,7 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
                             recordMessage(tempMessage);
 
                             String digit = getDtmfDigit();
-                            if (digit != null && digit.equals("0")) {
+                            if (digit != null && digit.equals("0") && user.hasOperatorInIvr()) {
                                 if (tempMessage.getDuration() > 2) {
                                     m_mailboxManager.storeInInbox(user, tempMessage);
                                     play("msg_sent", "");
@@ -142,6 +146,8 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
                             menu.setPrePromptPl(messagePl);
                             playMessage = false; // Only play it once
                         }
+
+                   	((VmMenu) menu).setOperatorOn0(user.hasOperatorInIvr());
 
                         // To play this message, press 1. To send this message, press 2.
                         // To delete this message and try again, press 3. To cancel, press *."
@@ -292,6 +298,7 @@ public class Deposit extends AbstractVmAction implements ApplicationContextAware
             // "If you are finished, press *."
             PromptList pl = getPromptList("deposit_more_options");
             VmMenu menu1 = createVmMenu();
+            menu1.setOperatorOn0( getCurrentUser().hasOperatorInIvr());
             menu1.setSpeakCanceled(false);
             IvrChoice choice = menu1.collectDigit(pl, "1");
 

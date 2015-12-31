@@ -279,6 +279,13 @@ public abstract class SettingEditor extends BaseComponent {
         }
         return defaultValueLabel;
     }
+    
+    public boolean isRenderDefaultValueAsPre() {
+    	Setting setting = getSetting();
+    	SettingType type = setting.getType();
+    	return type instanceof StringSetting && 
+    			((StringSetting)type).isRenderDefaultValueAsPre();
+    }
 
     public String getDescription() {
         Setting setting = getSetting();

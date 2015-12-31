@@ -30,6 +30,8 @@
   hidden %flag; "no">
 
 <!ELEMENT value (#PCDATA)>
+<!ATTLIST value
+    render-default-as-pre %flag; "no">
 
 <!-- settings type system -->
 <!ELEMENT type (string|integer|enum|multi-enum|ipaddr|ipaddrwildcard|hostname|bitmap|boolean|real|file|sip-uri|phonepadpin|username_sequence)?>

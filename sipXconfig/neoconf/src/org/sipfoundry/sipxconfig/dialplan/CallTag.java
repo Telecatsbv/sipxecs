@@ -37,6 +37,7 @@ public enum CallTag {
     DPUP("Directed Pickup", "DPUP"), // Directed Pickup
     AUTH("Authorization Code", "AUTH"), // Authorization Code
     UNK("Unknown", "UNK"), // unknown
+    HTD("Hotdesking", "HTD"), // Hotdesking
     FAX("Fax", "FAX"), //Fax extension
     AAM("Aut Attendant Management", "AAM"); //auto-attendant management
 

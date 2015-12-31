@@ -9,6 +9,7 @@ ISO_REV ?= $(PACKAGE_REVISION)
 DIST_DIR = @DIST_DIR@
 SPLASH_FILE ?= $(ISO_SRC)/splash.jpg
 SPLASH_MENU ?= $(ISO_SRC)/isolinux.cfg
+OEM_FILE ?= $(ISO_SRC)/oem.m4
 VOLUME_LABEL ?= "CentOS sipX $(PACKAGE_VERSION)"
 APPLICATION_LABEL ?= "CentOS sipX $(PACKAGE_VERSION)"
 PUBLISHER_ID ?= sipxcom-dev@googlegroups.com
@@ -62,7 +63,7 @@ iso-clean-% :
 iso-disc-% :
 	test -d cd || mkdir cd
 	! test -d cd.tmp || rm -rf cd.tmp
-	sudo mount -o loop $(wildcard @ISO_DIR@/CentOS-$(CENTOS_VER)-$(ARCH)-minimal.iso) cd
+	sudo mount -o loop @ISO_DIR@/CentOS-$(CENTOS_VER)-$(ARCH)-minimal.iso cd
 	@echo "copying contents of disc..."
 	cp -ar cd cd.tmp
 	sudo umount cd
@@ -79,6 +80,7 @@ iso-update-repo-% : iso-disc-%
 
 # add modifications to disc to make it operate
 iso-update-files-% :
+	[ -f $(OEM_FILE) ] && cp $(OEM_FILE) . || echo "No OEM file"
 	m4 $(ISO_M4_OPTS) $(ISO_SRC)/ks.m4 > $(ISO_DISC)/ks.cfg
 	m4 $(ISO_M4_OPTS) -D manual-partition $(ISO_SRC)/ks.m4 > $(ISO_DISC)/ks-manual-partition.cfg
 	for f in $(ISOLINUX_FILES); do \
@@ -116,6 +118,10 @@ iso-download-os-% : mak/*-centos-iso.mk
 	rsync -av --delete \
 	  $(addprefix @CENTOS_RSYNC_URL@/centos/$(CENTOS_VER)/os/$(ARCH)/Packages/, $(ISO_ADD_OS)) \
 	  $(ISO_PACKAGES_OS)/
+	rsync -av --delete \
+         $(addprefix @CENTOS_RSYNC_URL@/centos/$(CENTOS_VER)/os/$(ARCH)/Packages/, $(ISO_ADD_TELECATS)) \
+         $(ISO_PACKAGES_OS)/
+
 
 iso-download-epel-% : mak/*-centos-iso.mk
 	rsync -av --delete \
@@ -181,8 +187,8 @@ ISO_RM_LIST = \
   sipxcustomcallerid.* \
   sipxsbc.* \
   sipxtest.* \
-  xemacs-.* \
-  sipxlang.*  # language packs too big to put on cd
+  xemacs-.*
+  #sipxlang.*  # language packs too big to put on cd
 
 # Note, this list controls 32 and 64 bit lists so if 32 bit does not need
 # to download but 64 bit does, it will be in this list and 32 bit download will simply
@@ -202,11 +208,11 @@ ISO_ADD_EPEL = \
   cloc-1.58-* \
   coffee-script-1.* \
   coffee-script-common-1.* \
-  fail2ban-0.8.10* \
-  js-* \
+  fail2ban-* \
   gperftools-libs-2.0-11* \
   gtest-1* \
   http-parser-devel-* \
+  js-* \
   libiodbc-3* \
   libev-4.* \
   libmcrypt-* \
@@ -237,7 +243,6 @@ ISO_ADD_EPEL = \
   shorewall-core-* \
   snappy-* \
   uglify-js-* \
-  uglify-js-common-* \
   v8-3.14.5.10* \
   v8-devel-3.14.5.10-* \
   wxBase-* \
@@ -756,3 +761,20 @@ ISO_ADD_OS = \
   zlib-1.* \
   zlib-devel-1.*
 
+# Telecats Packages and their dependencies
+ISO_ADD_TELECATS = \
+  desktop-file-utils-* \
+  gpm-libs-[0-9]* \
+  libsmi-[0-9]* \
+  man-[0-9]* \
+  mlocate-* \
+  startup-notification-[0-9]* \
+  usermode-gtk-* \
+  vim-common-* \
+  vim-enhanced-* \
+  wireshark-* \
+  wireshark-gnome-* \
+  xcb-util-[0-9]* \
+  xdg-utils-* \
+  xorg-x11-xauth-* \
+  yum-plugin-merge-conf-*

@@ -35,6 +35,8 @@ public class RestServer {
     static final String PACKAGE = "org.sipfoundry.sipxrest";
 
     private static String configFileName = "/etc/sipxpbx/sipxrest-config.xml";
+    
+    private static String domainConfigFileName = "/etc/sipxpbx/domain-config";
 
     private static Appender appender;
 
@@ -135,12 +137,18 @@ public class RestServer {
 
         String configDir = System.getProperties().getProperty("conf.dir",  "/etc/sipxpbx");
         configFileName = configDir + "/sipxrest-config.xml";
+        domainConfigFileName = configDir + "/domain-config";
 
         if (!new File(configFileName).exists()) {
             System.err.println("Cannot find the config file");
             System.exit(-1);
         }
         
+        if (!new File(domainConfigFileName).exists()) {
+            System.err.println("Cannot find the domain-config file");
+            System.exit(-1);
+        }
+
         PropertyConfigurator.configureAndWatch(configDir + "/sipxrest/log4j.properties", 
                 SipFoundryLayout.LOG4J_MONITOR_FILE_DELAY);
         
@@ -149,6 +157,8 @@ public class RestServer {
         setAppender(new SipFoundryAppender(new SipFoundryLayout(),
                 RestServer.getRestServerConfig().getLogDirectory()
                 +"/sipxrest.log"));
+        
+        new DomainConfiguration(domainConfigFileName);
 
         accountManager = new AccountManagerImpl();
         sipStackBean = new SipStackBean();

@@ -61,6 +61,12 @@
       </option>
     </enum>
   </type>
+  <type id="truefalse">
+    <boolean>
+      <true><value>true</value></true>
+      <false><value>false</value></false>
+    </boolean>
+  </type>
   <group name="ivr">
     <setting name="log.level">
       <type refid="loglevel" />
@@ -175,4 +181,210 @@
       <value>0</value>
     </setting>
   </group>
+  <group name="ivr_mail_overrides">
+    <setting name="ivr.force_host">
+      <type refid="truefalse" />
+      <value>false</value>
+    </setting>
+    <setting name="ivr.forced_host">
+      <type><string /></type>
+    </setting>
+  </group>
+<group name="ivr_mail_template" advanced="no">
+	<setting name="ivr.override_template" advanced="no">
+		<type refid="truefalse" />
+      		<value>false</value>
+	</setting>
+	<setting name="ivr.template_override.SenderName" advanced="yes">
+		<type>
+			<string maxLen="100" />
+		</type>
+		<value>Voicemail Notification Service</value>
+	</setting>
+	<setting name="ivr.template_override.SenderMailto" advanced="yes">
+		<type>
+			<string maxLen="50"/>
+		</type>
+		<value><![CDATA[postmaster@localhost]]></value>
+	</setting>
+	<setting name="ivr.template_override.HtmlTitle" advanced="yes">
+		<type>
+			<string maxLen="100"/>
+		</type>
+		<value>Voicemail Notification</value>
+	</setting>
+	<setting name="ivr.template_override.PortalURL" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value><![CDATA[{4}]]></value>
+	</setting>
+	<setting name="ivr.template_override.Sender" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value><![CDATA[{7} <{8}>]]></value>
+	</setting>
+	<setting name="ivr.template_override.SubjectFull" advanced="yes">
+		<type>
+			<string maxLen="100" />
+		</type>
+		<value><![CDATA[{0,time,m:ss} Voice Message from {2} ({3})]]></value>
+	</setting>
+	<setting name="ivr.template_override.SubjectMedium" advanced="yes">
+		<type>
+			<string maxLen="100" />
+		</type>
+		<value><![CDATA[Voice Message from {2} ({3})]]></value>
+	</setting>
+	<setting name="ivr.template_override.SubjectBrief" advanced="yes">
+		<type>
+			<string maxLen="50" />
+		</type>
+		<value><![CDATA[Voice Message: {3}]]></value>
+	</setting>
+	<setting name="ivr.template_override.HtmlBodyFull" advanced="yes">
+		<type>
+			<string multiLine="yes" maxLen="2000" />
+		</type>
+		<value render-default-as-pre="yes">
+<![CDATA[
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"\n \
+   \"http://www.w3.org/TR/html4/strict.dtd\">\n \
+<html>\n \
+   <head>\n \
+      <title>{9}</title>\n \
+   </head>\n \
+   <body>\n \
+      <p>{12}</p>\n \
+      <p></p>\n \
+      <p><a href="{10}{5}">\n \
+             <img style="border: none;" src="cid:imageListen" alt="Listen to message" title="Listen to message">\n \
+         </a>&nbsp;\n \
+         <a href="{10}{5}/delete">\n \
+             <img style="border:none;" src="cid:imageDelete" alt="Delete message" title="Delete message">\n \
+         </a>&nbsp;\n \
+         <a href="{10}">\n \
+             <img style="border:none;" src="cid:imageInbox" alt="Show voicemail Inbox" title="Show voicemail Inbox">\n \
+         </a></p> \
+   </body>\n \
+</html>\n
+]]>
+	</value>
+	</setting>
+		<setting name="ivr.template_override.TextBodyFull" advanced="yes">
+		<type>
+			<string multiLine="yes" maxLen="2000" />
+		</type>
+		<value render-default-as-pre="yes">
+<![CDATA[
+{9}\n \
+\n \
+{12}\n \
+\n \
+Listen to message, click here: {10}{5}\n \
+Delete message, click here:    {10}{5}/delete\n \
+Show inbox, click here:        {10}\n
+]]>
+	</value>
+	</setting>
+	<setting name="ivr.template_override.HtmlBodyMedium" advanced="yes">
+		<type>
+			<string multiLine="yes" maxLen="2000" />
+		</type>
+		<value render-default-as-pre="yes">
+<![CDATA[
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"\n \
+   \"http://www.w3.org/TR/html4/strict.dtd\">\n \
+<html>\n \
+   <head>\n \
+      <title>{9}</title>\n \
+   </head>\n \
+   <body>\n \
+      <p>{12}</p>\n
+   </body>\n \
+</html>\n
+]]>
+		</value>
+	</setting>
+	<setting name="ivr.template_override.TextBodyMedium" advanced="yes">
+		<type>
+			<string multiLine="yes" maxLen="2000" />
+		</type>
+		<value render-default-as-pre="yes">
+<![CDATA[
+{9}\n \
+\n \
+{12}\n
+]]>
+		</value>
+	</setting>
+	<setting name="ivr.template_override.HtmlBodyBrief" advanced="yes">
+		<type>
+			<string multiLine="yes" maxLen="2000" />
+		</type>
+		<value render-default-as-pre="yes">
+<![CDATA[
+]]>
+		</value>
+	</setting>
+	<setting name="ivr.template_override.TextBodyBrief" advanced="yes">
+		<type>
+			<string multiLine="yes" maxLen="2000" />
+		</type>
+		<value render-default-as-pre="yes">
+<![CDATA[
+Msg from {2} duration {0,time,m:ss} at {6,date,short}
+]]>
+		</value>
+	</setting>
+	<setting name="ivr.template_override.page_fax_from" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value>page fax from</value>
+	</setting>
+	<setting name="ivr.template_override.an_unknown_sender" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value>an unknown sender</value>
+	</setting>
+	<setting name="ivr.template_override.Your" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value>your</value>
+	</setting>
+	<setting name="ivr.template_override.You_received_a" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value>You received a</value>
+	</setting>
+	<setting name="ivr.template_override.You_received_an_incomplete" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value>You received an incomplete</value>
+	</setting>
+	<setting name="ivr.template_override.leaving_msg" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value>is leaving a voice message.</value>
+	</setting>
+	<setting name="ivr.template_override.just_left_msg" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value>just left a voice message.</value>
+	</setting>
+	<setting name="ivr.template_override.did_not_leave_msg" advanced="yes">
+		<type>
+			<string />
+		</type>
+		<value>disconnected without leaving a voice message.</value>
+	</setting>
+</group>
 </model>

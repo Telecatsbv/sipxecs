@@ -1,6 +1,7 @@
 <table>
   <thead>
     <tr>
+      <th jwcid="@If" condition="ognl:setting.labels">Info</th>
       <th jwcid="@For"
         source="ognl:setting.settingNames"
         value="ognl:currentColumn"
@@ -14,6 +15,9 @@
       source="ognl:indices"
       value="ognl:currentIndex"
       volatile="true">
+      <td jwcid="@If" condition="ognl:setting.labels">
+        <span jwcid="@Insert" value="ognl:setting.getLabel(currentIndex)" />
+      </td>
       <td jwcid="@For"
         source="ognl:setting.settingNames"
         value="ognl:currentColumn"

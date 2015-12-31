@@ -81,6 +81,7 @@ public class User {
     private String m_moh;
     private String m_highestWeightGroup;
     private String m_timeZone;
+    private boolean m_operatorInIvr;
     private boolean m_depositVoicemail;
     private boolean m_admin;
     private boolean m_hotelingEnabled;
@@ -698,6 +699,14 @@ public class User {
 
     public void setTimeZone(String timeZone) {
         m_timeZone = timeZone;
+    }
+    
+    public void setOperatorInIvr(boolean operatorInIvr) {
+    	m_operatorInIvr = operatorInIvr;
+    }
+    
+    public boolean hasOperatorInIvr() {
+    	return m_operatorInIvr;
     }
 
     public boolean isDepositVoicemail() {

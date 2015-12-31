@@ -37,6 +37,9 @@ import org.sipfoundry.sipxconfig.setting.Setting;
 import org.sipfoundry.sipxconfig.setting.SettingDao;
 import org.sipfoundry.sipxconfig.setting.SettingFilter;
 import org.sipfoundry.sipxconfig.setting.SettingUtil;
+import org.sipfoundry.sipxconfig.setting.type.EnumSetting;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeginRenderListener {
 
@@ -49,6 +52,8 @@ public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeg
     public static final int PHONE_SETTINGS = 0;
 
     private static final int LINE_SETTITNGS = 1;
+
+    private static final Log LOG = LogFactory.getLog(EditPhoneDefaults.class);
 
     @InjectObject(value = "spring:hotelingLocator")
     public abstract HotelingLocator getHotellingLocator();
@@ -139,7 +144,11 @@ public abstract class EditPhoneDefaults extends PhoneBasePage implements PageBeg
     }
 
     public IPage ok(IRequestCycle cycle) {
-        apply();
+	    try {
+                apply();
+	    } catch(NullPointerException e) {
+	           LOG.error("Caught NullPointerException: "+ e);
+	    }
         return getReturnPage(cycle);
     }
 

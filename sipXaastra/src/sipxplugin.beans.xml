@@ -9,6 +9,7 @@
     <property name="staticProfileFilenames">
       <list>
         <value>aastra.cfg</value>
+        <value>aastra-cleaning.xml</value>
       </list>
     </property>
   </bean>
@@ -39,7 +40,7 @@
       </set>
     </property>
   </bean>
-  <bean id="aastra560m" parent="aastraModel">
+  <!-- <bean id="aastra560m" parent="aastraModel">
     <property name="label" value="Aastra SIP IP 560m" />
     <property name="maxLineCount" value="9" />
     <property name="supportedFeatures">
@@ -47,8 +48,14 @@
         <value>intercom</value>
       </set>
     </property>
+  </bean> -->
+  
+  <bean id="aastraPhoneFirewallRule" class="org.sipfoundry.sipxconfig.phone.aastra.AastraPhoneFirewallRule">
+    <property name="featureManager" ref="featureManager" />
   </bean>
+  
   <bean id="aastra" class="org.sipfoundry.sipxconfig.phone.aastra.AastraPhone" scope="prototype"
     parent="abstractPhone">
+    <property name="parentDir" value="${sysdir.phone}/profile/tftproot"/>
   </bean>
 </beans>

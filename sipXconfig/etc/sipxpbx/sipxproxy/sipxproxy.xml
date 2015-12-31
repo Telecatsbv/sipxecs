@@ -86,7 +86,14 @@
       <type><string/></type>      
     </setting>
     <setting name="SIPX_PROXY_MAX_FORWARDS" advanced="yes">
-      <type><integer/></type>      
+      <type><integer/></type>
+      <value>45</value>
+    </setting>
+    <setting name="SIPX_PROXY_SIP_RTT" advanced="yes">
+      <type>
+        <integer />
+      </type>
+      <value>100</value>
     </setting>
     <setting name="SIPX_PROXY_STALE_TCP_TIMEOUT" advanced="yes">
       <type><integer/></type>      

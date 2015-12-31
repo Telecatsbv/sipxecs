@@ -54,6 +54,7 @@ public class XmlModelBuilder implements ModelBuilder {
     private static final String EL_VALUE = "/value";
     private static final String EL_LABEL = "/label";
     private static final String REQUIRED = "required";
+    private static final String RENDER_DEFAULT_AS_PRE = "renderDefaultValueAsPre";
     private static final String EL_OPTION = "/option";
     private static final String ADD_ENUM_METHOD = "addEnum";
 
@@ -187,10 +188,36 @@ public class XmlModelBuilder implements ModelBuilder {
         public void addRuleInstances(Digester digester) {
             super.addRuleInstances(digester);
             digester.addRule(getPattern(), new CopyOfRule());
-            digester.addRule(getPattern() + EL_VALUE, new BeanPropertyNullOnEmptyStringRule("value"));
+            //digester.addRule(getPattern() + EL_VALUE, new BeanPropertyNullOnEmptyStringRule("value"));
+            digester.addRule(getPattern() + EL_VALUE, new ValueRule("value"));
             addSettingTypes(digester, getPattern() + "/type/", m_typeIdRule);
             digester.addSetNext(getPattern(), ADD_SETTING_METHOD, ConditionalSettingImpl.class.getName());
         }
+    }
+    
+    static class ValueRule extends BeanPropertyNullOnEmptyStringRule {
+    	public ValueRule(String property) {
+    		super(property);
+    	}
+    	
+    	@Override
+        public void begin(String namespace_, String name_, Attributes attributes) {
+    		String renderDefaultAsPre = attributes.getValue("render-default-as-pre");
+    		if(renderDefaultAsPre != null) {
+    			Setting setting = (Setting) getDigester().peek();
+    			SettingType type = setting.getType();
+    			if( type instanceof StringSetting ) {
+    				try {
+    					BeanUtils.setProperty(type, RENDER_DEFAULT_AS_PRE, "yes".equals(renderDefaultAsPre));
+    				} catch (IllegalAccessException e) {
+                        throw new IllegalArgumentException("Could not access 'render-default-as-pre' property on " + type);
+                    } catch (InvocationTargetException e) {
+                        throw new IllegalArgumentException("Could not set 'render-default-as-pre' property on " + type);
+                    }
+    			}
+    				
+    		}
+    	}
     }
 
     static class BeanPropertyNullOnEmptyStringRule extends BeanPropertySetterRule {

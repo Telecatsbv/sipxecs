@@ -1,9 +1,11 @@
 aastra_PKGS = \
 	log4j \
 	commons-lang \
+	commons-logging \
 	commons-io \
 	commons-collections \
 	spring-beans \
 	sipxcommons \
 	sipxconfig-neoconf \
+	plugins/sipXhotprovisioning \
 	velocity

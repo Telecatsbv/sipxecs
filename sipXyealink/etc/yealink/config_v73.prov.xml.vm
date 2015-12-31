@@ -1,0 +1,95 @@
+## Copyright (c) 2011 Telecats B.V. All rights reserved. Contributed to SIPfoundry and eZuce, Inc. under a Contributor Agreement.
+## This library or application is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License (AGPL) as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+## This library or application is distributed in the hope that it will be useful, but WITHOUT
+## ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public License (AGPL) for more details. 
+#macro (keySettings $array)
+#set ($array = ${array})
+#set($settingsIndexMax = ${array.getSize()} - 1)
+#set ($i = 0)
+#foreach ($settingIndex in [0..$settingsIndexMax])
+#set($type = ${array.getSetting($settingIndex,"type")})
+#set ($sIndex = $settingIndex + 1)
+#if ($type.value == "99")
+## this means we have an auto speeddial key, do things differently
+#if ($i >= $cfg.SpeedDial.size())
+	<Item>${array.name}.${sIndex}.type = 0</Item>
+	<Item>${array.name}.${sIndex}.value = %NULL%</Item>
+	<Item>${array.name}.${sIndex}.line = %NULL%</Item>
+	<Item>${array.name}.${sIndex}.pickup_value = %NULL%</Item>
+	<Item>${array.name}.${sIndex}.label = %NULL%</Item>
+#else
+#if ($cfg.SpeedDial.get($i).Blf == "false")
+	<Item>${array.name}.${sIndex}.type = 13</Item>
+	<Item>${array.name}.${sIndex}.value = $cfg.SpeedDial.get($i).Number</Item>
+	<Item>${array.name}.${sIndex}.line = ${array.getSetting($settingIndex,"line").value}</Item>
+	<Item>${array.name}.${sIndex}.pickup_value = ${array.getSetting($settingIndex,"pickup_value").value}</Item>
+	<Item>${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Label</Item>
+#else
+	<Item>${array.name}.${sIndex}.type = 16</Item>
+	<Item>${array.name}.${sIndex}.value = $cfg.SpeedDial.get($i).Number</Item>
+	<Item>${array.name}.${sIndex}.line = ${array.getSetting($settingIndex,"line").value}</Item>
+	<Item>${array.name}.${sIndex}.pickup_value = ${array.getSetting($settingIndex,"pickup_value").value}</Item>
+	<Item>${array.name}.${sIndex}.label = $cfg.SpeedDial.get($i).Label</Item>
+#end
+#end
+#set ($i = $i + 1)
+#else
+## no autospeeddial key
+#foreach ($settingName in ${array.getSettingNames()})
+#set($s = ${array.getSetting($settingIndex,$settingName)})
+#if(${s.Value})
+	<Item>${array.name}.${sIndex}.${settingName} = $!{s.value}</Item>
+#else
+	<Item>${array.name}.${sIndex}.${settingName} = %NULL%</Item>
+#end
+#end
+#end
+#end
+#end
+##
+xml=<?xml version="1.0" encoding="ISO-8859-1"?>
+<YealinkIPPhoneConfiguration Beep="yes" setType="config">
+
+#foreach ($line in $phone.lines)
+#set ($lastLineID = $velocityCount)
+#set ($groupName = "account")
+#foreach ($group in $line.Settings.Values)
+#foreach ($setting in $group.Values)
+#if (${setting.name} == "label")
+#elseif (${setting.name} == "voice_mail.number")
+	<Item>${setting.name}.${lastLineID} = $!{setting.Value}</Item>
+#elseif (${setting.name} == "user_name")
+	<Item>${groupName}.${lastLineID}.${setting.name} = $!{setting.Value}</Item>
+	<Item>${groupName}.${lastLineID}.label = $!{setting.Value}</Item>
+#elseif (${setting.name} == "codec")
+##codecSetting($setting, $lastLineID)
+#else
+#if (${setting.Value})
+	<Item>${groupName}.$lastLineID.${setting.name} = $!{setting.Value}</Item>	
+#else
+	<Item>${groupName}.$lastLineID.${setting.name} = %NULL%</Item>	
+#end
+#end
+#end
+#end
+#end
+
+#phoneSetting($phone.Settings)
+
+</YealinkIPPhoneConfiguration>
+#macro (phoneSetting $settings)
+#if (${settings.getSize()})
+#if (${settings.name} == "memorykey")
+#keySettings ($settings)
+#elseif (${settings.name} == "linekey")
+#keySettings ($settings)
+#end
+#else
+#foreach ($s in $settings.Values)
+#if(${s.isLeaf()})
+#else
+#phoneSetting($s)
+#end
+#end
+#end
+#end

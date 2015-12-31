@@ -4,14 +4,10 @@
     "http://www.sipfoundry.org/sipXconfig/dtd/setting_2_0.dtd"
     [
 	<!ENTITY types SYSTEM "types.xml">
-	<!ENTITY types_v70 SYSTEM "types_v70.xml">
-	<!ENTITY types_v71 SYSTEM "types_v71.xml">
     ]
 >
 <model>
 &types;
-&types_v70;
-&types_v71;
     <group name="handsets" if="yealinkPhoneW52.*">
 	<collection name="handset" size="5">
 	    <setting name="name"></setting>
@@ -257,9 +253,9 @@
 	#######################################################################################
 	//-->
 	<!--// Specify the web language, the valid values are: English, Chinese_S, Turkish, Portuguese, Spanish, Italian, French, Russian, Deutsch and Czech. //-->
-	<setting name="lang.wui"><type refid="WebLanguage_type"/><value>English</value></setting>
+	<setting name="lang.wui"><type><string/></type><value>English</value></setting>
 	<!--// Specify the LCD language, the valid values are: English (default), Chinese_S, Chinese_T, German, French, Turkish, Italian, Polish, Spanish and Portuguese. lang.gui = English //-->
-	<setting name="lang.gui" advanced="yes" if="yealinkPhone(SIPT|VP).*"><type refid="LcdLanguage_type" /><value>English</value></setting>
+	<setting name="lang.gui" advanced="yes" if="yealinkPhone(SIPT|VP).*"><type><string/></type><value>English</value></setting>
 	<!--// 
 	#######################################################################################
 	##            Configure the access  URL of language file                             ##
@@ -279,7 +275,7 @@
 	    local_time.time_zone = +8
 	    local_time.time_zone_name = China(Beijing) //-->
 	<setting name="local_time.time_zone"><type refid="yealink-timezones_type"/><value>+8</value></setting>
-	<setting name="local_time.time_zone_name" advanced="yes"><type refid="TimeZoneName_type"/><value>China(Beijing)</value></setting>
+	<setting name="local_time.time_zone_name" advanced="yes"><type><string/></type></setting>
 	<!--// Configure the domain name or the IP address of the NTP server. The default value is cn.pool.ntp.org. //-->
 	<setting name="local_time.ntp_server1"><type><hostname/></type></setting>
 	<setting name="local_time.ntp_server2"><type><hostname/></type></setting>
@@ -388,12 +384,6 @@
 	    <!--// Define the "#" or "*" key as the send key; 0-Disabled, 1-# key(default), 2-* key; //-->
 	    <setting name="features.pound_key.mode"><type refid="yealink_poud_key_type"/><value>1</value></setting>
 	    <setting name="sip.use_23_as_pound"><type><boolean/></type><value>0</value></setting>
-
-	    <!--// It enables or disables the phone to suppress the display of DTMF digits; 0-Disabled (default), 1-Enabled; //-->
-	    <!--// We use 1 as default cause we do not want to show this if customer dials voicemail  //-->
-	    <setting name="features.dtmf.hide"><type><boolean/></type><value>1</value></setting>
-	    <!--// It enables or disables the phone to display the DTMF digits for a short period before displaying as sterisks when the parameter "features.dtmf.hide" is set to 1 (Enabled); 0-Disabled, 1-Enabled (default); //-->
-	    <setting name="features.dtmf.hide_delay"><type><boolean/></type><value>1</value></setting>
 
 	    <!--// #Configure the hotline number and delay time (in seconds). It ranges from 0 to 180, the default value is 4. //-->
 	    <setting name="features.hotline_number"><type><string/></type></setting>
@@ -578,9 +568,7 @@
 	<setting name="custom_softkey_talking.url" advanced="yes"><type><string/></type></setting>
     </group>
     <group name="DSSKeys" if="yealinkPhone((SIPT[1-4])|VP530).*">
-	<!--// Enable or disable extended length of the label displayed on the idle LDC screen for the line key; 0-Disabled (default), 1-Enabled;  //-->
-	<setting name="features.config_dsskey_length" if="yealinkPhone(SIPT46G|SIPT48G)"><type><boolean/></type><value>0</value></setting>
-	<group name="line-keys" hidden="yes">
+	<group name="line-keys">
 	<!--//
 	#######################################################################################
 	##                                 Line Key                                          ##
@@ -713,26 +701,10 @@
 	</group>
     </group>
     <group name="distinctive-ringer">
-		<setting name="distinctive_ringtones.alert-info.1.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.1.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
-		<setting name="distinctive_ringtones.alert-info.2.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.2.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
-		<setting name="distinctive_ringtones.alert-info.3.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.3.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
-		<setting name="distinctive_ringtones.alert-info.4.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.4.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
-		<setting name="distinctive_ringtones.alert-info.5.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.5.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
-		<setting name="distinctive_ringtones.alert-info.6.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.6.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
-		<setting name="distinctive_ringtones.alert-info.7.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.7.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
-		<setting name="distinctive_ringtones.alert-info.8.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.8.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
-		<setting name="distinctive_ringtones.alert-info.9.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.9.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
-		<setting name="distinctive_ringtones.alert-info.10.text"><type><string/></type></setting>
-		<setting name="distinctive_ringtones.alert-info.10.ringer"><type refid="ringer_type"/><value>Ring1.wav</value></setting>
+	<collection name="alert-info" size="10">
+	    <setting name="text"><type><string/></type></setting>
+	    <setting name="ringer"><type refid="ringer_type"/><value>1</value></setting>
+	</collection>
     </group>
     <group name="tones" if="yealinkPhone((SIPT[1-4])|(W5)).*">
 	<!--// Define the voice tone, the valid values can be Custom (default) or voice tone of different countries. For example, United States, France, Germany and so on. voice.tone.country = Custom //-->
@@ -940,15 +912,9 @@
 	    <!--// Specify whether to display the BSFT directory on the web user interface; 0-Disabled, 1-Enable (default);	Require reboot; //-->
 	    <setting name="bw.behave_bw_dir" if="yealinkPhone((SIPT[1-4])|(W5)).*"><type><boolean/></type><value>0</value></setting>
 	    <!--// Enable or disable the feature key synchronization; 0-Disabled (default), 1-Enabled; //-->
-	    <!-- Moved following setting to iant group! We need ability to enable this setting -->
-	    <!-- <setting name="bw.feature_key_sync"><type><boolean/></type><value>0</value></setting> //-->
+	    <setting name="bw.feature_key_sync"><type><boolean/></type><value>0</value></setting>
 	</group>
     </group>
-	<group name="iant" hidden="no">
-		<setting name="bw.feature_key_sync"><type><boolean/></type><value>0</value></setting>
-		<setting name="bw.enable"><type><boolean/></type><value>0</value></setting>
-		<setting name="sip.notify_reboot_enable"><type refid="CheckSyncReboot_type"/><value>0</value></setting>
-	</group>
     <group name="security">
 	<group name="PASSWORD">
 	    <!--//
@@ -973,7 +939,7 @@
 	    <setting name="security.user_password"><type><string/></type><value>admin:admin</value></setting>
 	    <!--// Enable or disable the 3-level permissions (open var); 0-Disabled (default), 1-Enabled;
 	    Require reboot; //-->
-	    <setting name="security.var_enable" if="yealinkPhone(SIPT[1-4]).*"><type><boolean/></type><value>1</value></setting>
+	    <setting name="security.var_enable" if="yealinkPhone(SIPT[1-4]).*"><type><boolean/></type><value>0</value></setting>
 	    <!--//
 	    #######################################################################################
 	    ##     Configuration files for Var                                                   ##

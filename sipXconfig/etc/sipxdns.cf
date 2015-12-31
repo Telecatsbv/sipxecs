@@ -34,6 +34,9 @@ bundle agent sipxdns {
     resolv::
       "any" usebundle => sipxdns_resolv;
 
+    sipxdns_call_domain::
+      "any" usebundle => sipxdns_call_domain;
+
     !src.!sipxdns_unmanaged::
       "any" usebundle => sipxdns_setup;
 
@@ -136,6 +139,73 @@ bundle agent sipxdns_config {
         edit_defaults => empty,
         transformer => "$(sipx.SIPX_LIBEXECDIR)/sipx-erb --in $(sipx.SIPX_CFDATA)/$(sipx.dnsviews).yaml --out $(this.promiser) --template $(sipx.SIPX_CONFDIR)/sipxdns/zone.erb --postpend $(sipx.SIPX_CFDATA)/$(sipx.dnsviews).custom",
         classes => if_repaired("reload_named");
+}
+
+bundle agent sipxdns_call_domain {
+  files:
+    any::
+      "/etc/named.conf$(sipxdns.managed_ext)"
+      comment => "install DNS call zone in named $(this.promiser)",
+      create => "false",
+      edit_line => named_conf_call_domain,
+      classes => if_repaired("update_call_domain_zone");
+
+    update_call_domain_zone::
+      "/var/named/call.zone$(sipxdns.managed_ext)"
+      comment => "install call domain zone $(this.propmiser)",
+      create => "true",
+      edit_line => call_domain_zone,
+      perms => mog(600, "named", "name"),
+      classes => if_repaired("reload_named");
+}
+
+bundle edit_line named_conf {
+  insert_lines:
+    "
+options {
+    directory  \"/var/named\";
+    dump-file \"/var/named/data/cache_dump.db\";
+    statistics-file \"/var/named/data/named_stats.txt\";
+    allow-query { any; };
+    forwarders {
+      $(sipx.sipxdns_forwarders)
+    };
+    empty-zones-enable yes;
+};
+
+zone \"$(sipx.domain)\"  IN  {
+     type master;
+     file \"$(sipx.domain).zone\";
+     allow-update { none; };
+};
+";
+}
+
+bundle edit_line named_conf_call_domain {
+  insert_lines:
+    "
+zone \"call\" IN {
+    type master;
+    file \"call.zone\";
+    allow-update { none; };};
+";
+}
+
+bundle edit_line call_domain_zone {
+  insert_lines:
+    "
+$TTL 1800
+call. IN SOA ns1.call. root.call. (
+    2013032205 ; serial#
+    1800 ; refresh, seconds
+    1800 ; retry, seconds
+    3d ; expire, seconds
+1800 ) ; minimum TTL, seconds
+
+call. IN NS server1.call.
+
+server1.call. IN A 10.10.1.10
+";
 }
 
 bundle edit_line resolv_conf {

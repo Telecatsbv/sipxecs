@@ -6,6 +6,7 @@
 package org.sipfoundry.voicemail;
 
 import org.sipfoundry.commons.freeswitch.PromptList;
+import org.sipfoundry.commons.userdb.User;
 import org.sipfoundry.sipxivr.ApplicationConfiguraton;
 import org.sipfoundry.sipxivr.common.IvrChoice;
 import org.sipfoundry.sipxivr.common.IvrChoice.IvrChoiceReason;
@@ -36,8 +37,9 @@ public class VmMenu extends org.sipfoundry.voicemail.Menu {
     public IvrChoice collectDigit(PromptList menuPl, String validDigits) {
         setInterDigitTimeout(0);
         setExtraDigitTimeout(0);
-        
-        return checkChoice(super.collectDigit(menuPl, validDigits+"0"));
+        User user = m_controller.getCurrentUser();
+        boolean operatorInIvr = user.hasOperatorInIvr();
+        return checkChoice(super.collectDigit(menuPl, operatorInIvr ? validDigits+"0" : validDigits ));
     }
 
     public IvrChoice collectDigitIgnoreFailureOrTimeout(PromptList menuPl, String validDigits) {

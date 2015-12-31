@@ -9,6 +9,9 @@
         <span jwcid="@setting/SettingsNavigation" bean="ognl:bean"
           activeSetting="ognl:activeSetting" groupsToHide="ognl:groupsToHide"
           editSettingsListener="listener:editSettings">
+          
+          <!-- <span jwcid="@common/Plugin" blockId="UserSettingsTop"/> -->
+          
           <span jwcid="@common/Tab" isActive="ognl:identificationTabActive">
             <a jwcid="editUserLink@DirectLink" listener="listener:editUser"
               parameters="ognl:bean.id">
@@ -105,6 +108,14 @@
 	          </span>
             </span>
           </span>
+          <span jwcid="@If" condition='ognl:isPluginFeatureEnabled("chefsec")'>
+	      	<span jwcid="chefsec@common/Tab" isActive='ognl:isPluginTabActive("plugin/ChefsecPage")' >
+	          	<a jwcid="chefsecLink@DirectLink"
+	              listener="listener:editPluginPage" parameters='ognl:{"plugin/ChefsecPage", bean.id}'>
+	              <span key="link.chefsec">CHEFSEC UserNavigation</span>
+	            </a>
+	        </span>
+	      </span>
           <span jwcid="@common/Plugin" blockId="UserNavigationBottom"/>
         </span>
       </div>

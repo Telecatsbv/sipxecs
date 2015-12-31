@@ -11,5 +11,9 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/sipXconfig-neoconf"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/sipXconfig-web"/>
+	<classpathentry kind="var" path="SIPX_COMMONS"/>
+	<classpathentry kind="var" path="SIPX_CONFIG"/>
+	<classpathentry kind="var" path="SIPX_JAVADIR"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sipXhotprovisioning"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

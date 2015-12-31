@@ -34,6 +34,11 @@
         <boolean/>
       </type>
     </setting>
+    <setting name="call_domain">
+      <type>
+        <boolean/>
+      </type>
+    </setting>
     <group name="unmanaged_servers">
       <setting name="unmanaged_0">
         <type>

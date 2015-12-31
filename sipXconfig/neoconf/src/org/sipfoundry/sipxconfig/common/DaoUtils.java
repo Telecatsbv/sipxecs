@@ -19,6 +19,8 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.functors.ChainedTransformer;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
@@ -39,6 +41,7 @@ import org.springframework.orm.hibernate3.HibernateTemplate;
  */
 public final class DaoUtils {
     public static final int PAGE_SIZE = 1000;
+    private static final Log LOG = LogFactory.getLog(DaoUtils.class);
     private static final String ID_PROPERTY_NAME = "id";
 
     private DaoUtils() {

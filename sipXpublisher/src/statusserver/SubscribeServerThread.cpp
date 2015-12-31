@@ -603,7 +603,12 @@ SubscribeServerThread::isAuthorized (
                         {
                             nextPermissionMatched = TRUE;
                             break;
-                        }
+                        } else if( pluginPermission->compareTo("voicemail", UtlString::ignoreCase ) == 0 ) {
+                            //Telecats: SIPXECS-705 (devel 25.1), SIPXECS-839 (devel-4.6.0-8.1)
+                            //Let phones without voicemail permission receive status OK on MWI subscription.
+                            //Otherwhise the phones will retry and retry without degrading gracefully
+                            nextPermissionMatched = TRUE;
+			}
                     }
                 }
                 delete pluginPermissionIterator;

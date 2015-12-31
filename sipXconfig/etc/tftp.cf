@@ -47,7 +47,7 @@ bundle edit_line tftp_xinet_config {
 # extra space is just so it looks good when in final config
   insert_lines:
 "        disable                 = $(disable)
-        server_args             = -s $(rootdir)
+        server_args             = -v -s $(rootdir)
 }";
 
   delete_lines:
